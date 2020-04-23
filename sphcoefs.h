@@ -5,13 +5,20 @@ functions to handle the preparations for the coefficient files
 
 clean version, MSP 22 April 2020
 
+add coefficient interpolation MSP 23 April 2020
+
  */
 
 using namespace std;
 
+#include "spline.h"
+
 // create 2- and 3-d array types
 typedef boost::multi_array<double, 3> array_type3;
 typedef boost::multi_array<double, 2> array_type2;
+
+// create a spline array for the coefficients
+typedef boost::multi_array<tk::spline, 2> spline_array;
 
 
 struct SphCoefs
@@ -24,8 +31,62 @@ struct SphCoefs
 
   array_type3 coefs;   // the coefficient table, sized NUMT,(LMAX+1)*(LMAX+1),NMAX
 
+  spline_array coefsplines; // spline version of the coefficients, sized (LMAX+1)*(LMAX+1),NMAX
+
 };
- 
+
+
+void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {
+  /*
+    interpolate to get the coefficient matrix at a specific time
+   */
+
+  int numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+
+  coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
+
+  for (int l=0; l<numl; l++){
+
+    for (int n=0; n<coeftable.NMAX; n++) {
+
+      coefs_at_time[l][n] = coeftable.coefsplines[l][n](desired_time);
+    
+    }
+
+  }
+  
+}
+
+
+
+
+void make_coef_splines( SphCoefs& coeftable) {
+  /* 
+  step through the coefficients and make splines.
+   */
+
+  // initialise an empty array to hold the coefficients per order
+  vector<double> tmparray(coeftable.NUMT);
+
+  int numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+
+  coeftable.coefsplines.resize(boost::extents[numl][coeftable.NMAX]);
+    
+  for (int l=0; l<numl; l++){
+
+    for (int n=0; n<coeftable.NMAX; n++) {
+
+      // recast to a vector: this may be a spot to speed up computation if needed?
+      for (int t=0; t<coeftable.NUMT; t++) tmparray[t] = coeftable.coefs[t][l][n];
+
+      // construct the splines
+      coeftable.coefsplines[l][n].set_points(coeftable.t,tmparray);
+    
+    }
+
+  }
+
+}
 
 
 void read_coef_file (string& coef_file, SphCoefs& coeftable) {
@@ -62,6 +123,11 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
     }
   }
 
+  make_coef_splines(coeftable);
+
   cout << "success!!" << endl;
 
 }
+
+
+

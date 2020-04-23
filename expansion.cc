@@ -26,8 +26,11 @@ clean version, MSP 22 April 2020
 // some basic basis elements
 #include "basis.h"
 
-// basic transformations
+// basic transformations from cartesian to spherical (and back)
 #include "transform.h"
+
+// basic translations from virial to physical units (and back)
+#include "translate.h"
 
 // the cachefile stuff, also brings in the modelfile stuff
 #include "sphcache.h"
@@ -234,53 +237,115 @@ int main () {
   string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
   string model_file_mw     = "data/SLGridSph.mw";
   string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s10";
-  string orient_file_mw    = "data/mw.simpleorient.run068s10";
+  string orient_file_mw    = "data/mw.simpleorient.run068s10s";
  
   // pull in the parts for the MW
   SphCache cachetablemw;
   SphModel modeltablemw;
   SphCoefs coeftablemw; 
   SphOrient orientmw;
+  
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw, cachetablemw, modeltablemw, coeftablemw, orientmw);
 
+  // try the LMC
+  string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
+  string model_file_lmc     = "data/SLGridSph.lmc";
+  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s10s";
+  string orient_file_lmc    = "data/lmc.simpleorient.run068s10s";
+ 
+  // pull in the parts for the LMC
+  SphCache cachetablelmc;
+  SphModel modeltablelmc;
+  SphCoefs coeftablelmc; 
+  SphOrient orientlmc;
+  
+  SphExpansion* LMC;
+  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc, cachetablelmc, modeltablelmc, coeftablelmc, orientlmc);
+
+  
   // pick a timestep to analyse from the coefs
-  int timestep = 0;
+  int timestep = 2100;
 
-  double intime = coeftablemw.t[timestep];
+  // or set a specific timestep here.
+  //double intime = coeftablemw.t[timestep];
+  double intime = 0.0001;
   cout << "The time is " << intime << endl;
-    
-  array_type2 coefsin = coeftablemw.coefs[timestep];
 
-  // get the offsets from the inertial
-  double xcen,ycen,zcen;
-  xcen = orientmw.xspline(intime);
-  ycen = orientmw.yspline(intime);
-  zcen = orientmw.zspline(intime);
+  // this would be a nice step to time. are we really hurting ourselves with the expensive spline interpolation?
+  // i.e. should we set up a simple interpolator?
+  array_type2 coefsinmw,coefsinlmc;
+  select_coefficient_time(coeftablemw.t[timestep], coeftablemw, coefsinmw);
+  select_coefficient_time(coeftablelmc.t[timestep], coeftablelmc, coefsinlmc);
+
+  // get the offsets from the inertial spatial locations
+
+  // step 1: hard-wire the zero-coordinates from the present-day MW
+  // this is the MW location in exp inertial space at Tpresent=0 (Tsim=2....)
+  double coordcenterx,coordcentery,coordcenterz;
+
+  
+  double xcenmw,ycenmw,zcenmw;
+  xcenmw = orientmw.xspline(intime);
+  ycenmw = orientmw.yspline(intime);
+  zcenmw = orientmw.zspline(intime);
+
+  double xcenlmc,ycenlmc,zcenlmc;
+  xcenlmc = orientlmc.xspline(intime);
+  ycenlmc = orientlmc.yspline(intime);
+  zcenlmc = orientlmc.zspline(intime);
+
+  // zero out the location dependence for now.
+  //xcenmw = ycenmw = zcenmw = 0.;
+  //xcenlmc = ycenlmc = zcenlmc = 0.;
 
   // print out the inertial offsets
-  cout << setw(18) << xcen << setw(18) << ycen << setw(18) << zcen << endl; 
+  cout << "MW centre:  " << setw(18) <<  xcenmw << setw(18) <<  ycenmw << setw(18) <<  zcenmw << endl; 
+  cout << "LMC centre: " << setw(18) << xcenlmc << setw(18) << ycenlmc << setw(18) << zcenlmc << endl; 
 
   double tpotl0,tpotl,fr,ft,fp,fx,fy,fz;
-  double xin,yin,zin,rin,phiin,thetain;
-  
-  // demo to make a rotation curve
-  for (int xx=0; xx<200; xx++) {
+  double xin,yin,zin;
+  double rinmw,phiinmw,thetainmw;
+  double rinlmc,phiinlmc,thetainlmc;
 
-  yin = xx*0.02 + 0.0001;
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys;
+
+  // demo to make a rotation curve
+  for (int xx=0; xx<100; xx++) {
+
+    // the location in inertial space of the points to check (yin,zin=0)
+  xin = xx*0.01 + 0.0001;
   
-  cartesian_to_spherical(xin, yin, zin, rin, phiin, thetain);
+  cartesian_to_spherical(xin-xcenmw, yin-ycenmw, zin-zcenmw, rinmw, phiinmw, thetainmw);
   
-  MW->determine_fields_at_point_sph(cachetablemw, coefsin,
-				rin,thetain,phiin,
+  MW->determine_fields_at_point_sph(cachetablemw, coefsinmw,
+				rinmw,thetainmw,phiinmw,
 				tpotl0,tpotl,
 				fr,ft,fp);
 
-  spherical_forces_to_cartesian(rin, phiin, thetain,
+  spherical_forces_to_cartesian(rinmw, phiinmw, thetainmw,
 				   fr, fp, ft,
 				fx, fy, fz);
 
-  cout << setw(18) << rin << setw(18) << fx << setw(18) << fy << setw(18) << fz << endl;
+  virial_to_physical_length(xin,yin,zin,xphys,yphys,zphys);
+  virial_to_physical_force (fx,fy,fz,fxphys,fyphys,fzphys);
+
+  cout << setw(14) << xphys << setw(14) << fxphys << setw(14) << fyphys << setw(14) << fzphys;
+
+  cartesian_to_spherical(xin-xcenlmc, yin-ycenlmc, zin-zcenlmc, rinlmc, phiinlmc, thetainlmc);
+  
+  LMC->determine_fields_at_point_sph(cachetablelmc, coefsinlmc,
+				rinlmc,thetainlmc,phiinlmc,
+				tpotl0,tpotl,
+				fr,ft,fp);
+    
+  spherical_forces_to_cartesian(rinlmc, phiinlmc, thetainlmc,
+				   fr, fp, ft,
+				fx, fy, fz);
+
+  virial_to_physical_force (fx,fy,fz,fxphys,fyphys,fzphys);
+
+  cout << setw(14) << fxphys << setw(14) << fyphys << setw(14) << fzphys << endl;
 
   }
   

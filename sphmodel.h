@@ -14,7 +14,7 @@ using namespace std;
 
 struct SphModel
 {
-  int NUMR;       // number of entries in the halo table
+  int NUMR;          // number of entries in the halo table
   vector<double> r;  // the radius array, len NUMR
   vector<double> d;  // the density array, len NUMR
   vector<double> m;  // the enclosed mass array, len NUMR
