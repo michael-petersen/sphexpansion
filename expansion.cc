@@ -4,9 +4,8 @@ the main expansion example code, demonstrating the capability to find the forces
 compile string: 
 clang++ -I/opt/local/include -L/opt/local/lib expansion.cc -o expansion
 
-if interested, see the various testing codes in slreadtest.cc
-
 clean version, MSP 22 April 2020
+revised for two-component models to spec, MSP 23 April 2020
 
 */
 
@@ -46,87 +45,66 @@ using namespace std;
 // create 2- and 3-d array types from boost
 typedef boost::multi_array<double, 3> array_type3;
 typedef boost::multi_array<double, 2> array_type2;
-typedef boost::multi_array<double, 1> array_type1;
-
-typedef vector<double> dbl_vector;
-typedef boost::multi_array<vector<dbl_vector>, 2> efarray;
-
 
 class SphExpansion
 {
 private:
-  int LMAX;
+
+  // doesn't need to be exposed to the outside world
+  SphModel modeltable;
   
   void initialise(string sph_cache_name,
-			   string model_file,
-			   string coef_file,
-		  string orient_file,
-		  SphCache& cachetable,
-		  SphModel& modeltable,
-		  SphCoefs& coeftable,
-		  SphOrient& orient);
+		  string model_file,
+		  string coef_file,
+		  string orient_file);
+
 public:
   // the constructor
   SphExpansion(string sph_cache_name,
 	       string model_file,
 	       string coef_file,
-	       string orient_file,
-	       SphCache& cachetable,
-			   SphModel& modeltable,
-			   SphCoefs& coeftable,
-			   SphOrient& orient);
+	       string orient_file);
 
+  // expose the important expansion data
+  SphCache cachetable;
+  SphOrient orient;
+  SphCoefs coeftable;
+  
   void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
 
-  void determine_fields_at_point_sph
-(SphCache& cachetable,
- array_type2& coefs,
- double r, double theta, double phi, 
- double& potl0, double& potl, 
- double& potr, double& pott, double& potp);
+  void determine_fields_at_point_sph(SphCache& cachetable,
+				     array_type2& coefs,
+				     double r, double theta, double phi, 
+				     double& potl0, double& potl, 
+				     double& potr, double& pott, double& potp);
 
-  
-  
 };
-
 
 SphExpansion::SphExpansion(string sph_cache_name,
 			   string model_file,
 			   string coef_file,
-			   string orient_file,
-			   SphCache& cachetable,
-			   SphModel& modeltable,
-			   SphCoefs& coeftable,
-			   SphOrient& orient)
+			   string orient_file)
 {
-  initialise(sph_cache_name, model_file, coef_file, orient_file, cachetable, modeltable, coeftable,orient);
+  initialise(sph_cache_name, model_file, coef_file, orient_file);
 }
 
 void SphExpansion::initialise(string sph_cache_name,
-			   string model_file,
-			   string coef_file,
-			      string orient_file,
-			      SphCache& cachetable,
-			      SphModel& modeltable,
-			      SphCoefs& coeftable,
-			      SphOrient& orient)
+			      string model_file,
+			      string coef_file,
+			      string orient_file)
 {
-  // pull in the parts for the MW
-  //SphCache cachetable;
-  read_sph_cache(sph_cache_name, cachetable);
+  // pull in the parts for the expansion
+  read_sph_cache(sph_cache_name, SphExpansion::cachetable);
 
-  //SphModel modeltable;
-  read_model(model_file, modeltable);
+  read_model(model_file, SphExpansion::modeltable);
 
-  //SphCoefs coeftable; 
-  read_coef_file (coef_file, coeftable);
+  read_coef_file (coef_file, SphExpansion::coeftable);
 
-  // finish setting up the model
-  init_table(modeltable, cachetable);
-
-  //SphOrient orient;
-  read_orient (orient_file, orient);
+  read_orient (orient_file, SphExpansion::orient);
   
+  // finish setting up the model
+  init_table(SphExpansion::modeltable, SphExpansion::cachetable);
+
 }
 
 
@@ -231,22 +209,121 @@ void SphExpansion::determine_fields_at_point_sph
 }
 
 
+// the best time is T=2.224: the present day. uniquely set per simulation
+double reference_time = 2.224;
+
+
+void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
+			      array_type2 mwcoefs, array_type2 lmccoefs,
+			      double t, double x, double y, double z,
+			      double& fx, double& fy, double& fz)
+{
+  /*
+    specs: take a time, x,y,z; return x,y,z forces.
+    input/output units must be physical
+    where x0,y0,z0 = present-day galactic centre
+       and      t0 = present day (so previous times are negative)
+
+   if we don't want to pass the entire SphExpansion objects, the necessary pieces can be broken out in a fairly straightforward way.
+
+   */
+  
+  // zero out forces
+  fx = fy = fz = 0.;
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // reset time to have the correct system zero
+  tvir += reference_time;
+
+  // get the present-day MW coordinates: the zero of the system
+  double zerox,zeroy,zeroz;
+  zerox = MW->orient.xspline(reference_time);
+  zeroy = MW->orient.yspline(reference_time);
+  zeroz = MW->orient.zspline(reference_time);
+
+  // grab the centres of the expansions at the specified times in exp reference space
+  double xcenmw,ycenmw,zcenmw;
+  xcenmw = MW->orient.xspline(tvir) - zerox;
+  ycenmw = MW->orient.yspline(tvir) - zeroy;
+  zcenmw = MW->orient.zspline(tvir) - zeroz;
+  
+  double xcenlmc,ycenlmc,zcenlmc;
+  xcenlmc = LMC->orient.xspline(tvir) - zerox;
+  ycenlmc = LMC->orient.yspline(tvir) - zeroy;
+  zcenlmc = LMC->orient.zspline(tvir) - zeroz;
+
+  // this would be a nice step to check the timing for. are we really hurting ourselves with the expensive spline interpolation?
+  // i.e. should we set up a simple interpolator?
+  //array_type2 coefsinmw,coefsinlmc;
+  //select_coefficient_time(tvir, MW->coeftable, coefsinmw);
+  //select_coefficient_time(tvir, LMC->coeftable, coefsinlmc);
+
+  // the answer is yes, spline is expensive. moving the call outside helps; a more simple interpolation may help even further.
+  // let's put a pin in this and if it's too slow, circle back.
+
+  double rtmp,phitmp,thetatmp;
+  double tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys;
+  
+  cartesian_to_spherical(xvir-xcenmw, yvir-ycenmw, zvir-zcenmw, rtmp, phitmp, thetatmp);
+  
+  MW->determine_fields_at_point_sph(MW->cachetable, mwcoefs,
+				rtmp,thetatmp,phitmp,
+				tpotl0,tpotl,
+				fr,ft,fp);
+
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+				fr, fp, ft,
+				fxtmp, fytmp, fztmp);
+
+  //virial_to_physical_length(x,y,z,xphys,yphys,zphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add MW force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+
+  // same procedure for LMC
+  cartesian_to_spherical(xvir-xcenlmc, yvir-ycenlmc, zvir-zcenlmc, rtmp, phitmp, thetatmp);
+  
+  LMC->determine_fields_at_point_sph(LMC->cachetable, lmccoefs,
+				rtmp,thetatmp,phitmp,
+				tpotl0,tpotl,
+				fr,ft,fp);
+
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+				fr, fp, ft,
+				fxtmp, fytmp, fztmp);
+
+  // reset to physical units
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add LMC force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+  
+}
+
+
 int main () {
 
-  // obviously these would all be better read in...depends on how your code interfaces
+  // obviously these would all be better read in . . . depends on how your code interfaces
   string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
   string model_file_mw     = "data/SLGridSph.mw";
-  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s10";
+  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s10s";
   string orient_file_mw    = "data/mw.simpleorient.run068s10s";
  
   // pull in the parts for the MW
-  SphCache cachetablemw;
-  SphModel modeltablemw;
-  SphCoefs coeftablemw; 
-  SphOrient orientmw;
-  
   SphExpansion* MW;
-  MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw, cachetablemw, modeltablemw, coeftablemw, orientmw);
+  MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // try the LMC
   string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
@@ -255,97 +332,40 @@ int main () {
   string orient_file_lmc    = "data/lmc.simpleorient.run068s10s";
  
   // pull in the parts for the LMC
-  SphCache cachetablelmc;
-  SphModel modeltablelmc;
-  SphCoefs coeftablelmc; 
-  SphOrient orientlmc;
-  
   SphExpansion* LMC;
-  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc, cachetablelmc, modeltablelmc, coeftablelmc, orientlmc);
+  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
-  
-  // pick a timestep to analyse from the coefs
-  int timestep = 2100;
+  // set a specific timestep here.
+  double intime = -4.225; // in Gyr. -4.225 is the earliest recorded time in the model
+  cout << "The time is " << intime << " Gyr from pericentre." << endl;
 
-  // or set a specific timestep here.
-  //double intime = coeftablemw.t[timestep];
-  double intime = 0.0001;
-  cout << "The time is " << intime << endl;
+  // get the time in exp system units by 1) converting the virial units, 2) applying time offset for present-day
+  double tvir;
+  physical_to_virial_time(intime,tvir);
+  tvir += reference_time;
 
   // this would be a nice step to time. are we really hurting ourselves with the expensive spline interpolation?
   // i.e. should we set up a simple interpolator?
-  array_type2 coefsinmw,coefsinlmc;
-  select_coefficient_time(coeftablemw.t[timestep], coeftablemw, coefsinmw);
-  select_coefficient_time(coeftablelmc.t[timestep], coeftablelmc, coefsinlmc);
-
-  // get the offsets from the inertial spatial locations
-
-  // step 1: hard-wire the zero-coordinates from the present-day MW
-  // this is the MW location in exp inertial space at Tpresent=0 (Tsim=2....)
-  double coordcenterx,coordcentery,coordcenterz;
-
+  array_type2 mwcoefs,lmccoefs;
+  select_coefficient_time(tvir, MW->coeftable, mwcoefs);
+  select_coefficient_time(tvir, LMC->coeftable, lmccoefs);
+  // see discussion above in return_forces_mw_and_lmc
   
-  double xcenmw,ycenmw,zcenmw;
-  xcenmw = orientmw.xspline(intime);
-  ycenmw = orientmw.yspline(intime);
-  zcenmw = orientmw.zspline(intime);
-
-  double xcenlmc,ycenlmc,zcenlmc;
-  xcenlmc = orientlmc.xspline(intime);
-  ycenlmc = orientlmc.yspline(intime);
-  zcenlmc = orientlmc.zspline(intime);
-
-  // zero out the location dependence for now.
-  //xcenmw = ycenmw = zcenmw = 0.;
-  //xcenlmc = ycenlmc = zcenlmc = 0.;
-
-  // print out the inertial offsets
-  cout << "MW centre:  " << setw(18) <<  xcenmw << setw(18) <<  ycenmw << setw(18) <<  zcenmw << endl; 
-  cout << "LMC centre: " << setw(18) << xcenlmc << setw(18) << ycenlmc << setw(18) << zcenlmc << endl; 
-
-  double tpotl0,tpotl,fr,ft,fp,fx,fy,fz;
   double xin,yin,zin;
-  double rinmw,phiinmw,thetainmw;
-  double rinlmc,phiinlmc,thetainlmc;
-
-  double xphys,yphys,zphys,fxphys,fyphys,fzphys;
+  double fx,fy,fz;
 
   // demo to make a rotation curve
   for (int xx=0; xx<100; xx++) {
 
-    // the location in inertial space of the points to check (yin,zin=0)
-  xin = xx*0.01 + 0.0001;
-  
-  cartesian_to_spherical(xin-xcenmw, yin-ycenmw, zin-zcenmw, rinmw, phiinmw, thetainmw);
-  
-  MW->determine_fields_at_point_sph(cachetablemw, coefsinmw,
-				rinmw,thetainmw,phiinmw,
-				tpotl0,tpotl,
-				fr,ft,fp);
+    // the location in inertial space of the points to check (yin=zin=0, just checking x-axis right now)
+    xin = xx*4. + 0.1; // in kpc
 
-  spherical_forces_to_cartesian(rinmw, phiinmw, thetainmw,
-				   fr, fp, ft,
-				fx, fy, fz);
+    return_forces_mw_and_lmc(MW, LMC,
+			     mwcoefs, lmccoefs,
+			     intime, xin, 0., 0.,
+			     fx, fy, fz);
 
-  virial_to_physical_length(xin,yin,zin,xphys,yphys,zphys);
-  virial_to_physical_force (fx,fy,fz,fxphys,fyphys,fzphys);
-
-  cout << setw(14) << xphys << setw(14) << fxphys << setw(14) << fyphys << setw(14) << fzphys;
-
-  cartesian_to_spherical(xin-xcenlmc, yin-ycenlmc, zin-zcenlmc, rinlmc, phiinlmc, thetainlmc);
-  
-  LMC->determine_fields_at_point_sph(cachetablelmc, coefsinlmc,
-				rinlmc,thetainlmc,phiinlmc,
-				tpotl0,tpotl,
-				fr,ft,fp);
-    
-  spherical_forces_to_cartesian(rinlmc, phiinlmc, thetainlmc,
-				   fr, fp, ft,
-				fx, fy, fz);
-
-  virial_to_physical_force (fx,fy,fz,fxphys,fyphys,fzphys);
-
-  cout << setw(14) << fxphys << setw(14) << fyphys << setw(14) << fzphys << endl;
+    cout << setw(14) << xin << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
 
   }
   

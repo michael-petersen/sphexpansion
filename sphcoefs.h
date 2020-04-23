@@ -123,6 +123,7 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
     }
   }
 
+  cout << "setting up coefficient interpolation . . . ";
   make_coef_splines(coeftable);
 
   cout << "success!!" << endl;
