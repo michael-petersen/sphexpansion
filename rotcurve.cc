@@ -25,10 +25,6 @@ MSP 24 April 2020
 // integration include
 #include "leapfrog.h"
 
-
-
-
-
 void make_rotation_curve(SphExpansion* S,
 			 array_type2 coefs,
 			 double xmin,
@@ -37,10 +33,13 @@ void make_rotation_curve(SphExpansion* S,
 			 string outfile)
 {
   /*
-  xmin and xmax are currently in system virial units
+  xmin and xmax come in PHYSICAL units
+  and the rotation curve is returned in physical units
    */
   ofstream mwrotation;
   mwrotation.open(outfile);
+
+  mwrotation << "# radius [kpc]; vcirc [km/s] ; f_x [km/s/s] ; f_y [km/s/s] ; f_z [km/s/s];" << endl;
 
   double dx = (xmax-xmin)/nsamples;
   double xin;
@@ -94,23 +93,49 @@ int main () {
   select_coefficient_time(0.0, MW->coeftable, mwcoefs);
   select_coefficient_time(0.0, LMC->coeftable, lmccoefs);
   
-
+  
   string rotationfile="tests/MWrotation.txt";
 
   make_rotation_curve(MW,
 		      mwcoefs,
-		      0.01,
+		      0.1,
 		      120.,
 		      1000,
 		      rotationfile);
 
+  
   rotationfile="tests/LMCrotation.txt";
 
   make_rotation_curve(LMC,
 		      lmccoefs,
-		      0.01,
+		      0.1,
 		      120.,
 		      1000,
 		      rotationfile);
+  
 
+  vector<double> xinit(3);
+  xinit[0] = 300.;
+  xinit[1] = 0.;
+  xinit[2] = 0.;
+
+  vector<double> vinit(3);
+  vinit[0] = 0.;
+  //vinit[1] = 220./1.4;
+  //vinit[1] = 150./1.4;
+  vinit[1] = 0.;
+  vinit[2] = 0.;
+
+  array_type2 orbit;
+  
+  leapfrog(MW, mwcoefs,
+	      xinit, vinit,
+	      1000,
+	      0.003,
+	      orbit);
+
+  string orbitfile="tests/circularorbit.txt";
+
+  print_orbit(orbit,orbitfile);
+  
 }

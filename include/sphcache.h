@@ -87,6 +87,7 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
     }
   }
 
+  //cout << cachetable.RMIN << endl;
   std::cerr << "success!!" << std::endl;
 }
 
@@ -149,6 +150,7 @@ void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
   double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
   double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
 
+  // this step would be great to change, for speed purposes.
   double pval = cachetable.modeltable.pspline(r);
 
   for (int l=0; l<=cachetable.LMAX; l++) {

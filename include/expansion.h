@@ -186,7 +186,16 @@ void SphExpansion::determine_fields_at_point_sph
 	moffset +=2;
       }
     }
-  } 
+  }
+
+  // zero out pott/potp if below resolution limit for forces
+  // (e.g. centre crossing problems)
+  //if (r<cachetable.RMIN) {
+  //  pott = 0.;
+  //  potp = 0.;
+  //}
+  
+  
 }
 
 void return_forces(SphExpansion* S,
@@ -199,34 +208,31 @@ void return_forces(SphExpansion* S,
    */
   
   // zero out forces
-  fx = fy = fz = 0.;
+  //fx = fy = fz = 0.;
 
   // translate all times and positions into exp virial units
   double xvir,yvir,zvir;
-  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+  physical_to_virial_length(x,y,z,xvir,yvir,zvir);
 
   double rtmp,phitmp,thetatmp;
   double tpotl0,tpotl,fr,ft,fp;
   double fxtmp,fytmp,fztmp;
-
-  double xphys,yphys,zphys,fxphys,fyphys,fzphys;
   
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  // we know these are being created correctly above
   
   S->determine_fields_at_point_sph(S->cachetable, coefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
 				fr,ft,fp);
 
+  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
+
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
 				fxtmp, fytmp, fztmp);
 
-  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
-
-  // add force to total
-  fx += fxphys;
-  fy += fyphys;
-  fz += fzphys;
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fx,fy,fz);
 
 }

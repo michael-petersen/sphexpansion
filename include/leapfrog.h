@@ -1,24 +1,52 @@
 /*
 very basic leapfrog integrator to test a circular orbit in the MW
 
+(just for testing purposes!)
+
  */
 
 typedef boost::multi_array<double, 2> array_type2;
 
 
-
-void mw_leapfrog(SphExpansion* MW,
-		 array_type2 mwcoefs,
-		 vector<double> xinit,
-		 vector<double> vinit,
-		 int nint,
-		 double dt,
-		 array_type2& orbit)
+void print_orbit(array_type2 orbit,
+		 string orbitfile)
 {
+  ofstream outorbit;
+  outorbit.open(orbitfile);
+
+  outorbit << "# x [kpc]; y [kpc]; z [kpc]; vx [km/s] ; vy [km/s] ; vz [km/s] ; f_x [km/s/s] ; f_y [km/s/s] ; f_z [km/s/s];" << endl;
+
+  for (int i=0; i<orbit.shape()[1]; i++) {
+
+    outorbit << setw(14) << orbit[9][i];
+    
+    for (int j=0; j<9; j++) {
+      outorbit << setw(14) << orbit[j][i];
+    }
+    outorbit << endl;
+  }
+
+  outorbit.close();
+  
+}
+
+
+
+void leapfrog(SphExpansion* S,
+	      array_type2 coefs,
+	      vector<double> xinit,
+	      vector<double> vinit,
+	      int nint,
+	      double dt,
+	      array_type2& orbit)
+{
+  /*
+
+   */
   double fx,fy,fz;
 
   // include the forces for now
-  orbit.resize(boost::extents[9][nint]);
+  orbit.resize(boost::extents[10][nint]);
 
   // initialise beginning values
   orbit[0][0] = xinit[0];
@@ -33,17 +61,20 @@ void mw_leapfrog(SphExpansion* MW,
   //
   int step = 1;
   
-  return_forces(MW, mwcoefs,0.0,
-		   orbit[0][0],orbit[1][0],orbit[2][0],
+  return_forces(S, coefs,0.0,
+		orbit[0][0],orbit[1][0],orbit[2][0],
 		fx,fy,fz);
 
-  orbit[6][0] = fx;
-  orbit[7][0] = fy;
-  orbit[8][0] = fz;
+  orbit[6][0] = -fx;
+  orbit[7][0] = -fy;
+  orbit[8][0] = -fz;
 
   int j;
 
   for (step=1; step<nint; step++) {
+
+    // advance timestep
+    orbit[9][step] = dt*step;
 
     // advance positions
     for (j=0; j<3; j++) {
@@ -51,13 +82,14 @@ void mw_leapfrog(SphExpansion* MW,
     }
 
     // calculate new forces
-    return_forces(MW, mwcoefs, 0.0,
-		   orbit[0][step],orbit[1][step],orbit[2][step],
+    return_forces(S, coefs, 0.0,
+		  orbit[0][step],orbit[1][step],orbit[2][step],
+		  //orbit[0][step],orbit[1][step],0.,
 		  fx,fy,fz);
 
-    orbit[6][step] = fx;
-    orbit[7][step] = fy;
-    orbit[8][step] = fz;
+    orbit[6][step] = -fx;
+    orbit[7][step] = -fy;
+    orbit[8][step] = -fz;
 
     // advance velocities
     for (j=3; j<6; j++) {
