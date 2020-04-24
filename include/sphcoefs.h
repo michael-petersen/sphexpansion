@@ -20,6 +20,7 @@ typedef boost::multi_array<double, 2> array_type2;
 // create a spline array for the coefficients
 typedef boost::multi_array<tk::spline, 2> spline_array;
 
+bool spline=false;
 
 struct SphCoefs
 {
@@ -37,6 +38,37 @@ struct SphCoefs
 
 
 void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {
+  /*
+    linear interpolation to get the coefficient matrix at a specific time
+   */
+
+  // coeftable.t is assumed to be evenly spaced
+  double dt = coeftable.t[1] - coeftable.t[0];
+
+  int indx = (int)( (desired_time-coeftable.t[0])/dt);
+  if (indx<0) indx = 0;
+  if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
+
+  double x1 = (coeftable.t[indx+1] - desired_time)/dt;
+  double x2 = (desired_time - coeftable.t[indx])/dt;
+  
+  int numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+
+  coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
+
+  for (int l=0; l<numl; l++){
+
+    for (int n=0; n<coeftable.NMAX; n++) {
+
+      coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[l][n][indx]);
+    }
+
+  }
+  
+}
+
+
+void spline_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {
   /*
     interpolate to get the coefficient matrix at a specific time
    */
@@ -123,8 +155,10 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
     }
   }
 
+  if (spline) {
   cout << "setting up coefficient interpolation . . . ";
   make_coef_splines(coeftable);
+  }
 
   cout << "success!!" << endl;
 
