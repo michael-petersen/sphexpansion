@@ -3,15 +3,20 @@ sphcoefs.h
 
 functions to handle the preparations for the coefficient files
 
-clean version, MSP 22 April 2020
+MSP 22 Apr 2020 clean version
+MSP 23 Apr 2020 add coefficient interpolation 
 
-add coefficient interpolation MSP 23 April 2020
+notes
+-the answer is yes, spline is expensive. moving the call outside helps; a more simple interpolation may help even further.
 
  */
 
 using namespace std;
 
+// set up for spline, specify if needed
 #include "spline.h"
+bool splinecoefs = false;
+
 
 // create 2- and 3-d array types
 typedef boost::multi_array<double, 3> array_type3;
@@ -20,7 +25,6 @@ typedef boost::multi_array<double, 2> array_type2;
 // create a spline array for the coefficients
 typedef boost::multi_array<tk::spline, 2> spline_array;
 
-bool spline=false;
 
 struct SphCoefs
 {
@@ -46,23 +50,25 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type
   double dt = coeftable.t[1] - coeftable.t[0];
 
   int indx = (int)( (desired_time-coeftable.t[0])/dt);
+
+  // guard against wanton extrapolation: should this stop the model?
+  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected." << endl;
+  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected." << endl;
+
   if (indx<0) indx = 0;
   if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
 
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
-  
+
   int numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
   coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
 
   for (int l=0; l<numl; l++){
-
     for (int n=0; n<coeftable.NMAX; n++) {
-
-      coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[l][n][indx]);
+      coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[indx+1][l][n]);
     }
-
   }
   
 }
@@ -155,7 +161,7 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
     }
   }
 
-  if (spline) {
+  if (splinecoefs) {
   cout << "setting up coefficient interpolation . . . ";
   make_coef_splines(coeftable);
   }

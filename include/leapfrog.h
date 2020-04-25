@@ -61,13 +61,13 @@ void leapfrog(SphExpansion* S,
   //
   int step = 1;
   
-  return_forces(S, coefs,0.0,
+  S->return_forces(S, coefs,
 		orbit[0][0],orbit[1][0],orbit[2][0],
 		fx,fy,fz);
 
-  orbit[6][0] = -fx;
-  orbit[7][0] = -fy;
-  orbit[8][0] = -fz;
+  orbit[6][0] = fx;
+  orbit[7][0] = fy;
+  orbit[8][0] = fz;
 
   int j;
 
@@ -82,14 +82,14 @@ void leapfrog(SphExpansion* S,
     }
 
     // calculate new forces
-    return_forces(S, coefs, 0.0,
+    S->return_forces(S, coefs,
 		  orbit[0][step],orbit[1][step],orbit[2][step],
 		  //orbit[0][step],orbit[1][step],0.,
 		  fx,fy,fz);
 
-    orbit[6][step] = -fx;
-    orbit[7][step] = -fy;
-    orbit[8][step] = -fz;
+    orbit[6][step] = fx;
+    orbit[7][step] = fy;
+    orbit[8][step] = fz;
 
     // advance velocities
     for (j=3; j<6; j++) {

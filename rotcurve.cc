@@ -6,7 +6,7 @@ tests for the initial MW and LMC
 compile string: 
 clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ rotcurve.cc -o rotcurve
 
-MSP 24 April 2020
+MSP 24 Apr 2020 first version
 
 */
 
@@ -51,12 +51,12 @@ void make_rotation_curve(SphExpansion* S,
     // the location in inertial space of the points to check (yin=zin=0, just checking x-axis right now)
     xin = xx*dx + xmin; // in kpc
 
-    return_forces(S,
+    S->return_forces(S,
 		  coefs,
-		  0.0, xin, 0., 0.,
+		  xin, 0., 0.,
 		  fx, fy, fz);
 
-    mwrotation << setw(14) << xin << setw(14) << sqrt(xin*fx) << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
+    mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
 
   }
   
@@ -68,23 +68,21 @@ void make_rotation_curve(SphExpansion* S,
 
 int main () {
 
-  // obviously these would all be better read in . . . depends on how your code interfaces
+  // MW
   string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
   string model_file_mw     = "data/SLGridSph.mw";
   string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s10s";
   string orient_file_mw    = "data/mw.simpleorient.run068s10s";
  
-  // pull in the parts for the MW
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
-  // try the LMC
+  // LMC
   string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
   string model_file_lmc     = "data/SLGridSph.lmc";
   string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s10s";
   string orient_file_lmc    = "data/lmc.simpleorient.run068s10s";
  
-  // pull in the parts for the LMC
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
@@ -121,21 +119,35 @@ int main () {
 
   vector<double> vinit(3);
   vinit[0] = 0.;
-  //vinit[1] = 220./1.4;
+  vinit[1] = 220./1.4;
   //vinit[1] = 150./1.4;
-  vinit[1] = 0.;
+  //vinit[1] = 0.;
   vinit[2] = 0.;
 
   array_type2 orbit;
+
+  double dtintegrate = 0.03; // this is fine for circular orbits, needs to be ~0.003 for centre-crossing
   
   leapfrog(MW, mwcoefs,
 	      xinit, vinit,
-	      1000,
-	      0.003,
+	      2000,
+	      dtintegrate,
 	      orbit);
 
-  string orbitfile="tests/circularorbit.txt";
+  string orbitfile="tests/circularorbitMW.txt";
+  print_orbit(orbit,orbitfile);
 
+  // also print an LMC orbit
+  xinit[0] = 100.;
+  vinit[1] = 90.;
+
+  leapfrog(LMC, lmccoefs,
+	      xinit, vinit,
+	      2000,
+	      dtintegrate,
+	      orbit);
+
+  orbitfile="tests/circularorbitLMC.txt";
   print_orbit(orbit,orbitfile);
   
 }

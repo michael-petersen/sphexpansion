@@ -3,8 +3,11 @@ transform.h
 
 helper functions driving transformations from (x,y,z) to (rho,phi,theta)
 
-clean version, MSP 22 April 2020
+MSP 22 Apr 2020 clean version
+MSP 24 Apr 2020 revised to handle edge cases 
 
+wishlist:
+-vector versions of the functions to stop having to pass so much text
 
  */
 
@@ -55,12 +58,13 @@ void spherical_forces_to_cartesian(double r3, double phi, double theta,
   spherical_to_cartesian(r3, phi, theta, x, y, z);
   double r2 = sqrt(x*x + y*y);
 
+  // check the handedness of the coordinate system.
   
-  fx = ( fr*(x/r3) - ft*(x*z/(r3*r3*r3))) + fp*(y/(r2*r2));
+  fx = - (( fr*(x/r3) - ft*(x*z/(r3*r3*r3))) + fp*(y/(r2*r2)));
 
-  fy = ( fr*(y/r3) - ft*(y*z/(r3*r3*r3))) - fp*(x/(r2*r2));
+  fy = - (( fr*(y/r3) - ft*(y*z/(r3*r3*r3))) - fp*(x/(r2*r2)));
     
-  fz = ( fr*(z/r3) + ft*( (r2*r2)/(r3*r3*r3)) );
+  fz = - ( fr*(z/r3) + ft*( (r2*r2)/(r3*r3*r3)) );
   
 }
 

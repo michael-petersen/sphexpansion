@@ -5,8 +5,8 @@ compute the forces at a given cartesian point resulting from the MW and the LMC
 compile string: 
 clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ expansion.cc -o expansion
 
-clean version, MSP 22 April 2020
-revised for two-component models to spec, MSP 23 April 2020
+MSP 22 Apr 2020 clean version
+MSP 23 Apr 2020 revised for two-component models to spec
 
 */
 
@@ -30,7 +30,7 @@ double reference_time = 2.224;
 void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
 			      array_type2 mwcoefs, array_type2 lmccoefs,
 			      double t, double x, double y, double z,
-			      double& fx, double& fy, double& fz)
+			      double& fx, double& fy, double& fz, bool verbose)
 {
   /*
     specs: take a time, x,y,z; return x,y,z forces.
@@ -50,42 +50,47 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   physical_to_virial_time(t,tvir);
   physical_to_virial_length(x,y,z, xvir,yvir,zvir);
 
-  // reset time to have the correct system zero
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
   tvir += reference_time;
 
+  //cout << "TIME=" << tvir << endl;
+
+  // initialise the centre vectors
+  vector<double> zerocoords(3),mw_centre(3),lmc_centre(3);
+
   // get the present-day MW coordinates: the zero of the system
-  double zerox,zeroy,zeroz;
-  zerox = MW->orient.xspline(reference_time);
-  zeroy = MW->orient.yspline(reference_time);
-  zeroz = MW->orient.zspline(reference_time);
+  return_centre(reference_time, MW->orient, zerocoords);
 
-  // grab the centres of the expansions at the specified times in exp reference space
-  double xcenmw,ycenmw,zcenmw;
-  xcenmw = MW->orient.xspline(tvir) - zerox;
-  ycenmw = MW->orient.yspline(tvir) - zeroy;
-  zcenmw = MW->orient.zspline(tvir) - zeroz;
-  
-  double xcenlmc,ycenlmc,zcenlmc;
-  xcenlmc = LMC->orient.xspline(tvir) - zerox;
-  ycenlmc = LMC->orient.yspline(tvir) - zeroy;
-  zcenlmc = LMC->orient.zspline(tvir) - zeroz;
+  //cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << endl; 
 
-  // this would be a nice step to check the timing for. are we really hurting ourselves with the expensive spline interpolation?
-  // i.e. should we set up a simple interpolator?
-  //array_type2 coefsinmw,coefsinlmc;
-  //select_coefficient_time(tvir, MW->coeftable, coefsinmw);
-  //select_coefficient_time(tvir, LMC->coeftable, coefsinlmc);
+  // get the centres of the expansions at the specified times in exp reference space
+  return_centre(tvir,  MW->orient,  mw_centre);
+  return_centre(tvir, LMC->orient, lmc_centre);
 
-  // the answer is yes, spline is expensive. moving the call outside helps; a more simple interpolation may help even further.
-  // let's put a pin in this and if it's too slow, circle back.
+  // shift the expansion centres to the pericentre coordinate system
+  for (int j=0;j<=2;j++) {
+    mw_centre[j]  -= zerocoords[j];
+    //cout << setw(14) << mw_centre[j];
+    lmc_centre[j] -= zerocoords[j];
+    //cout << setw(14) << lmc_centre[j];
+  }
+  //cout << endl;
+
+  if (verbose) {
+    cout << "MW virial centre (x,y,z)=(" << mw_centre[0] << ","<< mw_centre[1] << ","<< mw_centre[2] << ")" <<endl;
+    cout << "LMC virial centre (x,y,z)=(" << lmc_centre[0] << ","<< lmc_centre[1] << ","<< lmc_centre[2] << ")" <<endl;
+  }
 
   double rtmp,phitmp,thetatmp;
   double tpotl0,tpotl,fr,ft,fp;
   double fxtmp,fytmp,fztmp;
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys;
-  
-  cartesian_to_spherical(xvir-xcenmw, yvir-ycenmw, zvir-zcenmw, rtmp, phitmp, thetatmp);
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_spherical(xvir-mw_centre[0], yvir-mw_centre[1], zvir-mw_centre[2], rtmp, phitmp, thetatmp);
+
+  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
   
   MW->determine_fields_at_point_sph(MW->cachetable, mwcoefs,
 				rtmp,thetatmp,phitmp,
@@ -96,7 +101,6 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
 				fr, fp, ft,
 				fxtmp, fytmp, fztmp);
 
-  //virial_to_physical_length(x,y,z,xphys,yphys,zphys);
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
   // add MW force to total
@@ -105,8 +109,10 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   fz += fzphys;
 
   // same procedure for LMC
-  cartesian_to_spherical(xvir-xcenlmc, yvir-ycenlmc, zvir-zcenlmc, rtmp, phitmp, thetatmp);
-  
+  cartesian_to_spherical(xvir-lmc_centre[0], yvir-lmc_centre[1], zvir-lmc_centre[2], rtmp, phitmp, thetatmp);
+
+  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
+
   LMC->determine_fields_at_point_sph(LMC->cachetable, lmccoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
@@ -152,36 +158,42 @@ int main () {
 
   // set a specific timestep here.
   double intime = -4.225; // in Gyr. -4.225 is the earliest recorded time in the model
-  cout << "The time is " << intime << " Gyr from pericentre." << endl;
+
+  if (intime<0)  cout << "The time is " << -intime << " Gyr before pericentre." << endl;
+  if (intime>=0)  cout << "The time is " << intime << " Gyr after pericentre." << endl;
 
   // get the time in exp system units by 1) converting the virial units, 2) applying time offset for present-day
   double tvir;
   physical_to_virial_time(intime,tvir);
   tvir += reference_time;
 
-  // this would be a nice step to time. are we really hurting ourselves with the expensive spline interpolation?
-  // i.e. should we set up a simple interpolator?
   array_type2 mwcoefs,lmccoefs;
   select_coefficient_time(tvir, MW->coeftable, mwcoefs);
   select_coefficient_time(tvir, LMC->coeftable, lmccoefs);
-  // see discussion above in return_forces_mw_and_lmc
   
   double xin,yin,zin;
   double fx,fy,fz;
 
-  // demo to make a rotation curve
+  ofstream combinedforces;
+  combinedforces.open("tests/forcecurvex.txt");
+
+  combinedforces << "# x [kpc] ; f_x [km/s/s] ; f_y [km/s/s] ; f_z [km/s/s];" << endl;
+  // demo to make a force curve
   for (int xx=0; xx<100; xx++) {
 
-    // the location in inertial space of the points to check (yin=zin=0, just checking x-axis right now)
+    // the location in inertial space of the points to check (yin=zin=0, checking x-axis right now)
     xin = xx*4. + 0.1; // in kpc
 
     return_forces_mw_and_lmc(MW, LMC,
 			     mwcoefs, lmccoefs,
 			     intime, xin, 0., 0.,
-			     fx, fy, fz);
+			     fx, fy, fz, false);
 
-    cout << setw(14) << xin << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
+    
+    combinedforces << setw(14) << xin << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
 
   }
+
+  combinedforces.close();
   
 }

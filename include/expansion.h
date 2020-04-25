@@ -1,3 +1,11 @@
+/*
+definitions for the SphExpansion class
+
+MSP 24 Apr 2020 restructured
+
+*/
+
+
 
 // MSP headers
 // converters from r to xi (for mapping tables)
@@ -50,14 +58,23 @@ public:
   SphCache cachetable;
   SphOrient orient;
   SphCoefs coeftable;
-  
+
+  // get potential function weights
   void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
 
+  // the base spherical class
   void determine_fields_at_point_sph(SphCache& cachetable,
 				     array_type2& coefs,
 				     double r, double theta, double phi, 
 				     double& potl0, double& potl, 
-				     double& potr, double& pott, double& potp);
+				     double& potr, double& pott,
+				     double& potp);
+
+  // cartesian forces wrapper function
+  void return_forces(SphExpansion* S,
+		     array_type2 coefs,
+		     double x, double y, double z,
+		     double& fx, double& fy, double& fz);
 
 };
 
@@ -110,7 +127,6 @@ void SphExpansion::get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, 
   *p = -pp;
   *dp = -dpp;
 }
-
 
 
 void SphExpansion::determine_fields_at_point_sph
@@ -190,25 +206,22 @@ void SphExpansion::determine_fields_at_point_sph
 
   // zero out pott/potp if below resolution limit for forces
   // (e.g. centre crossing problems)
-  //if (r<cachetable.RMIN) {
-  //  pott = 0.;
-  //  potp = 0.;
-  //}
+  if (r<cachetable.RMIN) {
+    pott = 0.;
+    potp = 0.;
+  }
   
   
 }
 
-void return_forces(SphExpansion* S,
-		      array_type2 coefs,
-		      double t, double x, double y, double z,
-		      double& fx, double& fy, double& fz)
+void SphExpansion::return_forces(SphExpansion* S,
+		   array_type2 coefs,
+		   double x, double y, double z,
+		   double& fx, double& fy, double& fz)
 {
   /*
     test force return from just one component, from the centre of the expansion
    */
-  
-  // zero out forces
-  //fx = fy = fz = 0.;
 
   // translate all times and positions into exp virial units
   double xvir,yvir,zvir;
@@ -219,14 +232,13 @@ void return_forces(SphExpansion* S,
   double fxtmp,fytmp,fztmp;
   
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
-
-  // we know these are being created correctly above
   
   S->determine_fields_at_point_sph(S->cachetable, coefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
 				fr,ft,fp);
 
+  // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
