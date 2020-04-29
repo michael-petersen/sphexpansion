@@ -126,7 +126,7 @@ int main () {
 
   array_type2 orbit;
 
-  double dtintegrate = 0.03; // this is fine for circular orbits, needs to be ~0.003 for centre-crossing
+  double dtintegrate = 0.01; // this is fine for circular orbits, needs to be ~0.003 for centre-crossing
   
   leapfrog(MW, mwcoefs,
 	      xinit, vinit,

@@ -44,6 +44,8 @@ struct SphCoefs
 void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
+
+   time units must be virial time units to match the input coefficient table
    */
 
   // coeftable.t is assumed to be evenly spaced
@@ -52,14 +54,17 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type
   int indx = (int)( (desired_time-coeftable.t[0])/dt);
 
   // guard against wanton extrapolation: should this stop the model?
-  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected." << endl;
-  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected." << endl;
+  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
+  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
   if (indx<0) indx = 0;
   if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
 
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
+
+  // deep debug
+  //cout << "x1/x2=" << setw(14) << x1 << setw(14) << x2 << endl;
 
   int numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
