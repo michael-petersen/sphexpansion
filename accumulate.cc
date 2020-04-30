@@ -24,6 +24,7 @@ MSP 30 Apr 2020 initial commit
 // for print_orbit only, other integration pieces are below
 #include "accumulate.h"
 
+#include "rotate.h"
 
 
 int main () {
