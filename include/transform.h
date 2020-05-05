@@ -15,6 +15,40 @@ wishlist:
 
 double EPS=1.e-10;
 
+
+void cartesian_to_cylindrical(double  x, double    y,
+			      double& r, double& phi)
+{
+  r     = sqrt(x*x + y*y);
+  phi   = atan2(y,x);
+}
+
+
+void cylindrical_to_cartesian(double  r, double  phi,
+			      double& x, double&   y)
+{
+  x = r * cos(phi);
+  y = r * sin(phi);
+}
+
+void cylindrical_forces_to_cartesian(double  r, double phi,
+				     double fr, double fp,
+	                             double& fx, double& fy)
+{
+
+  double x,y;
+  cylindrical_to_cartesian(r, phi, x, y);
+
+  // check the handedness of the coordinate system.
+  
+  fx = (x*fr - y*fp)/r;
+
+  fy = (y*fr + x*fp)/r;
+
+}
+
+
+
 void cartesian_to_spherical(double  x, double    y, double      z,
 			    double& r, double& phi, double& theta)
 {

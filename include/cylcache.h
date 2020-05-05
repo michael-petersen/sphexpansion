@@ -8,7 +8,7 @@ clean version, MSP 5 May 2020
  */
 
 // include the mapping definitions
-#include "scaling.h"
+//#include "scaling.h"
 
 using namespace std;
 
@@ -258,7 +258,7 @@ void get_pot(double r, double z, CylCache cachetable, array_type2& Vc, array_typ
 
 
   
-void get_table_forces(double r, double z, CylCache cachetable, CylForce forcetable)
+void get_table_forces(double r, double z, CylCache cachetable, CylForce& forcetable)
 {
 
   // return 2d tables required to compute the forces
