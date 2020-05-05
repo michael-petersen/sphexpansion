@@ -132,6 +132,69 @@ void make_coef_splines( SphCoefs& coeftable) {
 }
 
 
+
+void read_coef_file_raw(string& coef_file, SphCoefs& coeftable) {
+
+  /*
+    read in the self-describing coefficient file
+
+  */
+  ifstream in(coef_file.c_str());
+
+  double tnow,scale;
+
+  char buf[64];
+  in.read((char *)&buf, 64*sizeof(char));
+  in.read((char *)&tnow, sizeof(double));
+  in.read((char *)&scale, sizeof(double));
+  in.read((char *)&coeftable.NMAX, sizeof(int));
+  in.read((char *)&coeftable.LMAX, sizeof(int));
+
+  double tmp;
+  int end,tmpint;
+  in.seekg (0, ios::end);
+  end = in.tellg();
+
+  int numl = (coeftable.LMAX+1) * (coeftable.LMAX+1);
+
+  // compute the number of full timesteps: extra 8s are for tnow,MMAX,NORDER ahead of every coefficient set
+  coeftable.NUMT = end/((numl*coeftable.NMAX)*sizeof(double)  + 8 + 16 + 64);
+
+  cout << "sphcoefs.read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
+  cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.LMAX <<
+    setw(18) << coeftable.NMAX << endl;
+
+  // resize the coefs array appropriately
+  coeftable.coefs.resize(boost::extents[coeftable.NUMT][numl][coeftable.NMAX]);
+  coeftable.t.resize(coeftable.NUMT);
+  
+  // now cycle through each time
+  for (int tt=0;tt<coeftable.NUMT;tt++) {
+
+    in.read((char *)&buf, 64*sizeof(char));
+    in.read((char *)&coeftable.t[tt], sizeof(double));
+    in.read((char *)&tmp, sizeof(double));
+    in.read((char *)&tmpint, sizeof(int));
+    in.read((char *)&tmpint, sizeof(int));
+    
+    for (int l=0; l<numl; l++) {
+      for (int ir=0; ir<coeftable.NMAX; ir++) {
+        in.read((char *)&coeftable.coefs[tt][l][ir], sizeof(double));
+      }
+    }
+  }
+
+  if (splinecoefs) {
+  cout << "setting up coefficient interpolation . . . ";
+  make_coef_splines(coeftable);
+  }
+
+  cout << "success!!" << endl;
+
+}
+
+
+
 void read_coef_file (string& coef_file, SphCoefs& coeftable) {
 
   /*

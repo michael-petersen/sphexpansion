@@ -3,7 +3,7 @@ accumulate.h
 
 compute coefficients from a distribution
 
-MSP 30 Apr 2020 first commite 
+MSP 30 Apr 2020 first committ
 
 
  */
@@ -57,6 +57,7 @@ void accumulate_coefficients(array_type2 particles, SphCache cachetable, AccCoef
   for (int l=0; l<=cachetable.LMAX; l++) {	// with current binding from derived class
     for (int n=0; n<cachetable.NMAX; n++) {
       normM[l][n]  = 1.;//norm(n-1,l); // what is this exactly?? see SphericalBasis.cc
+      // note: this is probably the spherical harmonic normalisation.
     }
   }
   
