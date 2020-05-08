@@ -15,17 +15,17 @@ MSP  6 May 2020 close the loop with Msun addition
 using namespace std;
 
 // set these parameters to tune the simulation virial units to the MW
-double mw_virial_radius        = 300.;                                  // virial radius of the MW, kpc/Rvir
-double solar_circular_velocity = 220.;                                  // circular velocity at the solar circle, km/s
+double mw_virial_radius        = 282.;                                  // virial radius of the MW, kpc/Rvir
+double solar_circular_velocity = 190.;                                  // circular velocity at the solar circle, km/s
 double rotation_peak           = 1.4 ;                                  // peak of the rotation curve from the MW spherical model (Vvir)
 
 // derived quantities
-doublt astronomicalG           = 0.0000043009125;                       // gravitational constant, (km/s)^2 * kpc / Msun
+double astronomicalG           = 0.0000043009125;                       // gravitational constant, (km/s)^2 * kpc / Msun
 double mw_vel_scale            = solar_circular_velocity/rotation_peak; // velocity scale of the MW, km/s/Vvir
 double mw_time_scale           = mw_virial_radius/mw_vel_scale;         // time scale for the MW, kpc/km/s
 double mw_force_scale          = mw_vel_scale/mw_time_scale;            // in km/s/s
 double mw_mass_scale           = mw_vel_scale * mw_vel_scale *
-                                 mw_virial_radius / astronomicalG       // mass units of the simulation, Msun
+                                 mw_virial_radius / astronomicalG;       // mass units of the simulation, Msun
 
 void virial_to_physical_time(double tvir, double& tphys)
 {

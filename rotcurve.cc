@@ -71,8 +71,8 @@ int main () {
   // MW
   string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
   string model_file_mw     = "data/SLGridSph.mw";
-  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s10s";
-  string orient_file_mw    = "data/mw.simpleorient.run068s10s";
+  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s16a";
+  string orient_file_mw    = "data/mw.simpleorient.run068s16a";
  
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
@@ -80,8 +80,8 @@ int main () {
   // LMC
   string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
   string model_file_lmc     = "data/SLGridSph.lmc";
-  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s10s";
-  string orient_file_lmc    = "data/lmc.simpleorient.run068s10s";
+  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s16a";
+  string orient_file_lmc    = "data/lmc.simpleorient.run068s16a";
  
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
