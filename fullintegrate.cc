@@ -26,7 +26,7 @@ MSP 28 Apr 2020 initial commit
 
 
 // the best time is T=2.224: the present day. uniquely set per simulation.
-double reference_time = 0;//2.224;
+double reference_time = 0;//2.224; 1.97012;
 
 
 
@@ -235,8 +235,8 @@ int main () {
   // obviously these would all be better read in . . . depends on how your code interfaces
   string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
   string model_file_mw     = "data/SLGridSph.mw";
-  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s10s";
-  string orient_file_mw    = "data/mw.simpleorient.run068s10s";
+  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s16a";
+  string orient_file_mw    = "data/mw.simpleorient.run068s16a";
  
   // pull in the parts for the MW
   SphExpansion* MW;
@@ -245,8 +245,8 @@ int main () {
   // try the LMC
   string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
   string model_file_lmc     = "data/SLGridSph.lmc";
-  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s10s";
-  string orient_file_lmc    = "data/lmc.simpleorient.run068s10s";
+  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s16a";
+  string orient_file_lmc    = "data/lmc.simpleorient.run068s16a";
  
   // pull in the parts for the LMC
   SphExpansion* LMC;
@@ -262,41 +262,34 @@ int main () {
   // get the time in exp system units by 1) converting the virial units, 2) applying time offset for present-day
 
   // initial position offset from centre
-  // 0.25297400000000003 0.9793989999999999 -0.1661203
   vector<double> xphys(3),xinit(3);
-  xphys[0] = 0.25297400000000003;
-  xphys[1] = 0.9793989999999999;
-  xphys[2] = -0.1661203;
+  vector<double> vxphys(3),vxinit(3);
 
-  // or not transformed, 0.123143 0.558696 0.0459567
+  // LMC ORBIT 1: reproduced
+  //-0.0276161 1.77453 -0.0771715
+  xphys[0] = -0.0276161;
+  xphys[1] = 1.77453;
+  xphys[2] = -0.0771715;
+  //-0.0451152 -0.351639 -0.199325
+  vxphys[0] = -0.0451152;
+  vxphys[1] = -0.351639;
+  vxphys[2] = -0.199325;
+
+  // LMC ORBIT 2: Closer to the centre
+  xphys[0] = 0.226053;
+  xphys[1] = 2.09839;
+  xphys[2] = -0.207248;
+  vxphys[0] = 0.0510511;
+  vxphys[1] = -0.458447;
+  vxphys[2] = -0.24932;
+
+  // MW ORBIT 1: Big loops
   xphys[0] = 0.123143;
   xphys[1] = 0.558696;
   xphys[2] = 0.0459567;
-
-  // initial velocity as read from file
-  // 0.457418 -0.464346 -0.124515
-  vector<double> vxphys(3),vxinit(3);
   vxphys[0] = 0.457418;
   vxphys[1] = -0.464346;
   vxphys[2] = -0.124515;
-
-  // 0.106459 0.0508656 0.103126
-  xphys[0] = 0.106459;
-  xphys[1] = 0.0508656;
-  xphys[2] = 0.103126;
-  //  -1.34426 1.69256 0.815283
-  vxphys[0] = -1.34426;
-  vxphys[1] = 1.69256;
-  vxphys[2] = 0.815283;
-
-  //0.567928 2.2214 -0.561674
-  xphys[0] = 0.567928;
-  xphys[1] = 2.2214;
-  xphys[2] = -0.561674;
-  //-0.00898586 -0.485074 -0.188528
-  vxphys[0] = -0.00898586;
-  vxphys[1] = -0.485074;
-  vxphys[2] = -0.188528;
 
   
   virial_to_physical_length(xphys[0],xphys[1],xphys[2],xinit[0],xinit[1],xinit[2]);
@@ -310,7 +303,7 @@ int main () {
   // call this time in kpc/km/s units
   double dt;
   // force sampling at the native rate of the exp simulation as an interpolation test
-  virial_to_physical_time(0.001,dt);
+  virial_to_physical_time(0.003,dt);
   array_type2 orbit;
 
   two_component_leapfrog(MW, MW->coeftable.coefs, LMC, LMC->coeftable.coefs,xinit, vxinit, nint, dt, orbit);

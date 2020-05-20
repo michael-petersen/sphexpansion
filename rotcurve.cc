@@ -67,26 +67,26 @@ void make_rotation_curve(SphExpansion* S,
 
 
 int main () {
-
+  
   // MW
-  string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
-  string model_file_mw     = "data/SLGridSph.mw";
-  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s16a";
-  string orient_file_mw    = "data/mw.simpleorient.run068s16a";
+  string sph_cache_name_mw =     "data/SLGridSph.cache.mw.run068s16ar2";
+  string model_file_mw                      = "data/SLGridSph.mw.16ar2";
+  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s16ar2";
+  string orient_file_mw           = "data/mw.simpleorient.run068s16ar2";
  
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
-  string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
-  string model_file_lmc     = "data/SLGridSph.lmc";
-  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s16a";
-  string orient_file_lmc    = "data/lmc.simpleorient.run068s16a";
+  string sph_cache_name_lmc     = "data/SLGridSph.cache.lmc.run068s16ar2";
+  string model_file_lmc                      = "data/SLGridSph.lmc.16ar2";
+  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s16ar2";
+  string orient_file_lmc           = "data/lmc.simpleorient.run068s16ar2";
  
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
-  
+
   array_type2 mwcoefs,lmccoefs;
   select_coefficient_time(0.0, MW->coeftable, mwcoefs);
   select_coefficient_time(0.0, LMC->coeftable, lmccoefs);
