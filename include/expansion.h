@@ -68,13 +68,14 @@ public:
 				     double r, double theta, double phi, 
 				     double& potl0, double& potl, 
 				     double& potr, double& pott,
-				     double& potp);
+				     double& potp, bool monopole=false);
 
   // cartesian forces wrapper function
   void return_forces(SphExpansion* S,
 		     array_type2 coefs,
 		     double x, double y, double z,
-		     double& fx, double& fy, double& fz);
+		     double& fx, double& fy, double& fz,
+		     bool monopole=false);
 
 };
 
@@ -134,7 +135,7 @@ void SphExpansion::determine_fields_at_point_sph
  array_type2& coefs,
  double r, double theta, double phi, 
  double& potl0, double& potl, 
- double& potr, double& pott, double& potp)
+ double& potr, double& pott, double& potp, bool monopole)
 {
   /*
   // skipping density for now --> decide later if interesting.
@@ -142,6 +143,13 @@ void SphExpansion::determine_fields_at_point_sph
   see the equivalent exp call in SphericalBasis.cc
 
   */
+
+  int numl;
+  if (monopole) {
+    numl = 1;
+  } else {
+    numl = cachetable.LMAX;
+  }
   
   int l,loffset,moffset,m;
   double rs,fac1,fac2,fac3,fac4,costh,dp;
@@ -153,17 +161,10 @@ void SphExpansion::determine_fields_at_point_sph
 
   fac1 = 0.25/M_PI;
 
-  array_type2 factrl;
-  factorial(cachetable.LMAX, factrl);
-
-  array_type2 legs, dlegs;
-  dlegendre_R(cachetable.LMAX, costh, legs, dlegs);
-
-  vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
-  sinecosine_R(cachetable.LMAX, phi, cosm, sinm);
-
   array_type2 potd,dpot;
   get_dpotl(r, cachetable, potd, dpot);
+
+  // is this ever evaluating the l=0,n>0 terms??
 
   // compute the monopole values
   get_pot_coefs(0, 0, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
@@ -172,7 +173,18 @@ void SphExpansion::determine_fields_at_point_sph
   pott = potp = 0.0;
 
   // l loop
-  for (l=1, loffset=1; l<=cachetable.LMAX; loffset+=(2*l+1), l++) {
+  if (monopole) return;
+
+   array_type2 factrl;
+  factorial(numl, factrl);
+
+  array_type2 legs, dlegs;
+  dlegendre_R(numl, costh, legs, dlegs);
+
+  vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
+  sinecosine_R(numl, phi, cosm, sinm);
+    
+  for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
     
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -217,7 +229,8 @@ void SphExpansion::determine_fields_at_point_sph
 void SphExpansion::return_forces(SphExpansion* S,
 		   array_type2 coefs,
 		   double x, double y, double z,
-		   double& fx, double& fy, double& fz)
+		   double& fx, double& fy, double& fz,
+		   bool monopole)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -236,7 +249,7 @@ void SphExpansion::return_forces(SphExpansion* S,
   S->determine_fields_at_point_sph(S->cachetable, coefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				fr,ft,fp);
+				   fr,ft,fp,monopole);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 

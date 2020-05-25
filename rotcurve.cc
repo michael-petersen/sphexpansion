@@ -30,12 +30,16 @@ void make_rotation_curve(SphExpansion* S,
 			 double xmin,
 			 double xmax,
 			 int nsamples,
-			 string outfile)
+			 string outfile,
+			 bool monopole=false)
 {
   /*
   xmin and xmax come in PHYSICAL units
   and the rotation curve is returned in physical units
    */
+
+  if (monopole) cout << "Only using monopole for rotation curve." << endl;
+  
   ofstream mwrotation;
   mwrotation.open(outfile);
 
@@ -54,7 +58,7 @@ void make_rotation_curve(SphExpansion* S,
     S->return_forces(S,
 		  coefs,
 		  xin, 0., 0.,
-		  fx, fy, fz);
+		     fx, fy, fz, true);
 
     mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
 
@@ -87,6 +91,7 @@ int main () {
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
 
+  bool onlymonopole = true;
   array_type2 mwcoefs,lmccoefs;
   select_coefficient_time(0.0, MW->coeftable, mwcoefs);
   select_coefficient_time(0.0, LMC->coeftable, lmccoefs);
@@ -99,7 +104,7 @@ int main () {
 		      0.1,
 		      120.,
 		      1000,
-		      rotationfile);
+		      rotationfile, onlymonopole);
 
   
   rotationfile="tests/LMCrotation.txt";

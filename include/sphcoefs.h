@@ -40,14 +40,20 @@ struct SphCoefs
 
 };
 
+void select_coefficient_time(double desired_time, SphCoefs coeftable,
+			     array_type2& coefs_at_time);
 
-void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {
+// something seems to be wrong with setting monopole here.
+void select_coefficient_time(double desired_time, SphCoefs coeftable,
+  array_type2& coefs_at_time) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
    time units must be virial time units to match the input coefficient table
    */
 
+  int numl;
+  
   // coeftable.t is assumed to be evenly spaced
   double dt = coeftable.t[1] - coeftable.t[0];
 
@@ -66,7 +72,7 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type
   // deep debug
   //cout << "x1/x2=" << setw(14) << x1 << setw(14) << x2 << endl;
 
-  int numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+  numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
   coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
 
@@ -77,6 +83,8 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable, array_type
   }
   
 }
+
+
 
 
 void spline_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {

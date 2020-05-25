@@ -6,6 +6,9 @@ functions to read in the orientation files
 MSP 22 Apr 2020 clean version
 MSP 25 Apr 2020 add linear interpolation for speed
 
+wishlist:
+-handle bad files gracefully
+
  */
 
 #include <iostream>

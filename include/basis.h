@@ -128,11 +128,16 @@ double factrl(int n)
 
 void factorial (int lmax, array_type2& factorial) {
 
-  factorial.resize(boost::extents[lmax+1][lmax+1]);
+  if (lmax>1) {
 
-  for (int l=0; l<=lmax; l++) {
-    for (int m=0; m<=l; m++) 
-      factorial[l][m] = factrl(l-m)/factrl(l+m);
+    factorial.resize(boost::extents[lmax+1][lmax+1]);
+
+    for (int l=0; l<=lmax; l++) {
+      for (int m=0; m<=l; m++) 
+        factorial[l][m] = factrl(l-m)/factrl(l+m);
+    }
+  } else {
+
   }
 
 }
