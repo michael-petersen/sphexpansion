@@ -16,7 +16,7 @@ using namespace std;
 
 // set these parameters to tune the simulation virial units to the MW
 double mw_virial_radius        = 282.;                                  // virial radius of the MW, kpc/Rvir
-double solar_circular_velocity = 232.;                                  // circular velocity at the solar circle, km/s
+double solar_circular_velocity = 190.;                                  // circular velocity at the solar circle, km/s
 double rotation_peak           = 1.4 ;                                  // peak of the rotation curve from the MW spherical model (Vvir)
 
 // derived quantities

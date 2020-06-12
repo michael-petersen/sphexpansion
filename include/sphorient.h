@@ -85,7 +85,7 @@ void read_orient (string orient_file, SphOrient& orient) {
   ifstream infile;
   infile.open(orient_file, ios::in);
   if (!infile) {
-        cout << "Unable to open file";
+        cout << "sphorient::read_orient: Unable to open file";
         exit(1); // terminate with error
   }
   

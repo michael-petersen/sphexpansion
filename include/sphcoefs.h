@@ -17,6 +17,8 @@ using namespace std;
 #include "spline.h"
 bool splinecoefs = false;
 
+bool debugcoefs = false;
+
 
 // create 2- and 3-d array types
 typedef boost::multi_array<double, 3> array_type3;
@@ -210,15 +212,23 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
 
   */
   ifstream in(coef_file.c_str());
-
+  if (!in) {
+        cout << "sphcoefs::read_coef_file: Unable to open file!\n";
+        exit(1);
+  }
+  
   // first thing in is NUMT,LMAX,NMAX
   in.read((char *)&coeftable.NUMT, sizeof(int));
   in.read((char *)&coeftable.LMAX, sizeof(int));
   in.read((char *)&coeftable.NMAX, sizeof(int));
 
-  cout << "sphcoefs.read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
+  cout << "sphcoefs.read_coef_file: reading coefficients from file . . . ";
+
+  if (debugcoefs) {
+  cout << endl << "sphcoefs.read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
   cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.LMAX <<
     setw(18) << coeftable.NMAX << endl;
+  }
 
   // resize the coefs array appropriately
   int numl = (coeftable.LMAX+1) * (coeftable.LMAX+1);

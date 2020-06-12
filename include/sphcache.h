@@ -19,6 +19,8 @@ typedef boost::multi_array<double, 2> array_type2;
 typedef vector<double> dbl_vector;
 typedef boost::multi_array<vector<dbl_vector>, 2> efarray;
 
+bool debug = false;
+
 
 // create the spherical cachefile array
 struct SphCache
@@ -52,6 +54,10 @@ struct SphCache
 void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
 
   ifstream in(sph_cache_name.c_str());
+  if (!in) {
+        cout << "sphcache::read_sph_cache: Unable to open file!\n";
+        exit(1);
+  }
 
   cerr << "sphcache.read_sph_cache: trying to read cached table . . . ";
 
@@ -64,6 +70,16 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
   in.read((char *)&cachetable.RMAX, sizeof(double));
   in.read((char *)&cachetable.SCL,  sizeof(double));
 
+  // debug
+  if (debug) 
+  cout << setw(10) << cachetable.LMAX
+       << setw(10) << cachetable.NMAX
+       << setw(10) << cachetable.NUMR
+       << setw(10) << cachetable.CMAP
+       << setw(10) << cachetable.RMIN
+       << setw(10) << cachetable.RMAX
+       << setw(10) << cachetable.SCL
+       << endl;
 
   // resize the arrays
   cachetable.eftable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX][cachetable.NUMR]);
