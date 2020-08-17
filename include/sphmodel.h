@@ -45,6 +45,11 @@ void read_model (string& model_file, SphModel& modeltable) {
   while (getline(infile, line)) {
     istringstream ss(line);
 
+    if(line.at(0) == '!') {
+      // just skip past this
+      numr = 0;
+    } else {
+
     if (linenum==0) {
 	ss >> modeltable.NUMR;
 	modeltable.r.resize(modeltable.NUMR);
@@ -59,7 +64,7 @@ void read_model (string& model_file, SphModel& modeltable) {
         modeltable.p[linenum-1];
     }
   linenum ++;
-
+    }
   }
 
   infile.close();
