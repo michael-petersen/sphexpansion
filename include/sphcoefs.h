@@ -62,25 +62,38 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable,
   int indx = (int)( (desired_time-coeftable.t[0])/dt);
 
   // guard against wanton extrapolation: should this stop the model?
-  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
+  //if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
   if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
-  if (indx<0) indx = 0;
-  if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
+  if (indx<0) {
+    // hard-set to earliest time
+    numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
-  double x1 = (coeftable.t[indx+1] - desired_time)/dt;
-  double x2 = (desired_time - coeftable.t[indx])/dt;
+    coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
 
-  // deep debug
-  //cout << "x1/x2=" << setw(14) << x1 << setw(14) << x2 << endl;
+    for (int l=0; l<numl; l++){
+      for (int n=0; n<coeftable.NMAX; n++) {
+        coefs_at_time[l][n] = coeftable.coefs[0][l][n];
+      }
+    }
+    
+  } else { indx = 0;
+    if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
 
-  numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+    double x1 = (coeftable.t[indx+1] - desired_time)/dt;
+    double x2 = (desired_time - coeftable.t[indx])/dt;
 
-  coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
+    // deep debug
+    //cout << "x1/x2=" << setw(14) << x1 << setw(14) << x2 << endl;
 
-  for (int l=0; l<numl; l++){
-    for (int n=0; n<coeftable.NMAX; n++) {
-      coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[indx+1][l][n]);
+    numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+
+    coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
+
+    for (int l=0; l<numl; l++){
+      for (int n=0; n<coeftable.NMAX; n++) {
+        coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[indx+1][l][n]);
+      }
     }
   }
   
