@@ -54,15 +54,26 @@ void interpolate_centre(double desired_time,
   double dt = orient.time[1] - orient.time[0];
 
   int indx = (int)( (desired_time-orient.time[0])/dt);
-  if (indx<0) indx = 0;
-  if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
+  if (havevelocity && indx<0) {
+    // interpolate the centre backwards in time before the simulation starts
+    // selects the earliest time
+    float dtime = (desired_time-orient.time[0]);
 
-  double x1 = (orient.time[indx+1] - desired_time)/dt;
-  double x2 = (desired_time - orient.time[indx])/dt;
+    centre[0] = orient.xcen[0] + dtime*orient.ucen[0];
+    centre[1] = orient.ycen[0] + dtime*orient.vcen[0];
+    centre[2] = orient.zcen[0] + dtime*orient.wcen[0];
+    
+  } else {
+    // standard mode
+    if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
 
-  centre[0] = (x1*orient.xcen[indx] + x2*orient.xcen[indx+1]);
-  centre[1] = (x1*orient.ycen[indx] + x2*orient.ycen[indx+1]);
-  centre[2] = (x1*orient.zcen[indx] + x2*orient.zcen[indx+1]);
+    double x1 = (orient.time[indx+1] - desired_time)/dt;
+    double x2 = (desired_time - orient.time[indx])/dt;
+
+    centre[0] = (x1*orient.xcen[indx] + x2*orient.xcen[indx+1]);
+    centre[1] = (x1*orient.ycen[indx] + x2*orient.ycen[indx+1]);
+    centre[2] = (x1*orient.zcen[indx] + x2*orient.zcen[indx+1]);
+  }
 
 }
 
@@ -72,11 +83,21 @@ void interpolate_velocity_centre(double desired_time,
 {
   // find the nearest time
   // the orient array MUST be evenly spaced, check exp output
+
+  
   double dt = orient.time[1] - orient.time[0];
 
   int indx = (int)( (desired_time-orient.time[0])/dt);
-  if (indx<0) indx = 0;
-  if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
+  if (indx<0) {
+    // if the desired_time is earlier than the simulation beginning
+    // just return the first velocity
+    velcentre[0] = orient.ucen[0];
+    velcentre[1] = orient.vcen[0];
+    velcentre[2] = orient.wcen[0];
+
+  } else {
+    // verify that this works? shouldn't ever get to this point.
+    if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
 
   double x1 = (orient.time[indx+1] - desired_time)/dt;
   double x2 = (desired_time - orient.time[indx])/dt;
@@ -84,6 +105,7 @@ void interpolate_velocity_centre(double desired_time,
   velcentre[0] = (x1*orient.ucen[indx] + x2*orient.ucen[indx+1]);
   velcentre[1] = (x1*orient.vcen[indx] + x2*orient.vcen[indx+1]);
   velcentre[2] = (x1*orient.wcen[indx] + x2*orient.wcen[indx+1]);
+  }
 
 }
 

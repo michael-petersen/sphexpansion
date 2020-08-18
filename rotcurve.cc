@@ -74,32 +74,21 @@ int main () {
   
   // MW
   cout << "Initialising MW ... " << endl;
-  //string sph_cache_name_mw =     "data/run068s22h/SLGridSph.cache.mw.run068s22h";
-  //string model_file_mw                      = "data/run068s22h/SLGridSph.mw.s22h";
-  //string coef_file_mw      = "data/run068s22h/simpleoutcoef.nofac.mw.run068s22h";
-  //string orient_file_mw           = "data/run068s22h/mw.orient.run068s22h.smth";
+  string sph_cache_name_mw  =     "data/run068s22h/SLGridSph.cache.mw.run068s22h";
+  string model_file_mw                      = "data/run068s22h/SLGridSph.mw.s22h";
+  string coef_file_mw       = "data/run068s22h/simpleoutcoef.nofac.mw.run068s22h";
+  string orient_file_mw             = "data/run068s22h/mw.orient.run068s22h.smth";
 
-  string sph_cache_name_mw =     "/Volumes/SIMSET/Disk068/m2/SLGridSph.cache.mw.run068s22hm2";
-  string model_file_mw                      = "/Volumes/SIMSET/Disk068/m2/SLGridSph.mw.nodisc";
-  string coef_file_mw      = "/Volumes/SIMSET/Disk068/m2/simpleoutcoef.nofac.mw.run068s22hm2";
-  string orient_file_mw           = "/Volumes/SIMSET/Disk068/m2/mw.orient.run068s22hm2.smth";
- 
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  //string sph_cache_name_lmc     = "data/run068s22h/SLGridSph.cache.lmc.run068s22h";
-  //string model_file_lmc                      = "data/run068s22h/SLGridSph.lmc.s22h";
-  //string coef_file_lmc      = "data/run068s22h/simpleoutcoef.nofac.lmc.run068s22h";
-  //string orient_file_lmc           = "data/run068s22h/lmc.orient.run068s22h.smth";
-
-  string sph_cache_name_lmc     = "/Volumes/SIMSET/Disk068/m2/SLGridSph.cache.lmc.run068s22hm2";
+  string sph_cache_name_lmc      = "data/run068s22h/SLGridSph.cache.lmc.run068s22h";
   string model_file_lmc                      = "data/run068s22h/SLGridSph.lmc.s22h";
-  string coef_file_lmc      = "/Volumes/SIMSET/Disk068/m2/simpleoutcoef.nofac.lmc.run068s22hm2";
-  string orient_file_lmc           = "/Volumes/SIMSET/Disk068/m2/lmc.orient.run068s22hm2.smth";
+  string coef_file_lmc       = "data/run068s22h/simpleoutcoef.nofac.lmc.run068s22h";
+  string orient_file_lmc             = "data/run068s22h/lmc.orient.run068s22h.smth";
 
-  
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
@@ -109,12 +98,32 @@ int main () {
   select_coefficient_time(0.0, MW->coeftable, mwcoefs);
   select_coefficient_time(0.0, LMC->coeftable, lmccoefs);
 
-  vector<double> velcentre(3);
+  vector<double> velcentre(3),centre(3);
   return_vel_centre(0.0, LMC->orient, velcentre);
+  cout << "C.O.M. velocity vx=" << velcentre[0] << " vy=" <<
+    velcentre[1] << " vz=" << velcentre[2] << endl;
 
+  return_centre(0.0, LMC->orient, centre);
+  cout << "C.O.M. x=" << centre[0] << " y=" <<
+    centre[1] << " z=" << centre[2] << endl;
+  
+  return_vel_centre(-1.0, LMC->orient, velcentre);
+  cout << "C.O.M. velocity vx=" << velcentre[0] << " vy=" <<
+    velcentre[1] << " vz=" << velcentre[2] << endl;
+
+  return_centre(-1.0, LMC->orient, centre);
+  cout << "C.O.M. x=" << centre[0] << " y=" <<
+    centre[1] << " z=" << centre[2] << endl;
+
+  return_vel_centre(-2.0, LMC->orient, velcentre);
   cout << "C.O.M. velocity vx=" << velcentre[0] << " vy=" <<
     velcentre[1] << " vz=" << velcentre[2] << endl;
   
+  return_centre(-2.0, LMC->orient, centre);
+  cout << "C.O.M. x=" << centre[0] << " y=" <<
+    centre[1] << " z=" << centre[2] << endl;
+    
+
   
   string rotationfile="tests/MWrotation.txt";
 

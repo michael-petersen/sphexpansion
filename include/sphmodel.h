@@ -37,6 +37,7 @@ void read_model (string& model_file, SphModel& modeltable) {
   
   string line;
 
+  // is numr a dummy variable?
   int numr;
   double rtmp,dtmp,mtmp,ptmp;
   
