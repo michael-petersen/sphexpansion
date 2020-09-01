@@ -53,29 +53,49 @@ int main () {
    */
   double reference_time = 1.50;
 
+ 
+  // open files to check trajectories
+  string trajectoryfile="tests/trajectories.txt";
+  ofstream traj;
+  traj.open(trajectoryfile);
+
+  traj << "# time ; mwx ; mwy ; mwz ; mwvx ; mwvy ; mwvz ; lmcx ; lmcy; lmcz; lmcvx; lmcvy; lmcvz;" << endl;
+
   // find the centres at the reference time
   vector<double> mw0centre(3),lmc0centre(3);
-  return_centre(reference_time, LMC->orient, lmc0centre);
-  return_centre(reference_time,  MW->orient,  mw0centre);
+  vector<double> mw0velcentre(3),lmc0velcentre(3);
 
-  cout << "MW C.O.M. x=" << mw0centre[0] << " y=" <<
-    mw0centre[1] << " z=" << mw0centre[2] << endl;
+  double intime;
   
-  cout << "LMC C.O.M. x=" << lmc0centre[0] << " y=" <<
-    lmc0centre[1] << " z=" << lmc0centre[2] << endl;
+  for (int i=0; i<1000; i++) {
 
-  // find the velocity centres at the reference time
-  vector<double> mw0velcentre(3),lmc0velcentre(3),lmcvelcentre(3);
-  return_vel_centre(reference_time, LMC->orient, lmc0velcentre);
-  return_vel_centre(reference_time,  MW->orient,  mw0velcentre);
+    intime = 0.004*i - 2.;
+    return_centre(intime, LMC->orient, lmc0centre);
+    return_centre(intime,  MW->orient,  mw0centre);
+    return_vel_centre(intime, LMC->orient, lmc0velcentre);
+    return_vel_centre(intime,  MW->orient,  mw0velcentre);
 
-  cout << "MW C.O.V. vx=" << mw0velcentre[0] << " vy=" <<
-    mw0velcentre[1] << " vz=" << mw0velcentre[2] << endl;
+    traj << setw(14) << intime
+	 << setw(14) << mw0centre[0]
+	 << setw(14) << mw0centre[1]
+	 << setw(14) << mw0centre[2]
+	 << setw(14) << mw0velcentre[0]
+	 << setw(14) << mw0velcentre[1]
+	 << setw(14) << mw0velcentre[2]
+	 << setw(14) << lmc0centre[0]
+	 << setw(14) << lmc0centre[1]
+	 << setw(14) << lmc0centre[2]
+	 << setw(14) << lmc0velcentre[0]
+	 << setw(14) << lmc0velcentre[1]
+	 << setw(14) << lmc0velcentre[2]
+	 << endl;
   
-  cout << "LMC C.O.V. vx=" << lmc0velcentre[0] << " vy=" <<
-    lmc0velcentre[1] << " vz=" << lmc0velcentre[2] << endl;
 
-    return_vel_centre(0.0, MW->orient, lmcvelcentre);
-  cout << "MW T=0. C.O.V. vx=" << lmcvelcentre[0] << " vy=" <<
-    lmcvelcentre[1] << " vz=" << lmcvelcentre[2] << endl;
+
+  }
+
+      traj.close();
+      
 }
+
+  
