@@ -4,6 +4,7 @@ discpotential
 expansion
 rotcurve
 data
+trajectory
 data/*
 .DS_Store
 tests/comparison*
