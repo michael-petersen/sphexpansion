@@ -70,9 +70,9 @@ int main () {
 
   double intime;
   
-  for (int i=0; i<100; i++) {
+  for (int i=0; i<500; i++) {
 
-    intime = 0.004*i - 2.;
+    intime = 0.008*i - 2.;
     return_centre(intime, LMC->orient, lmc0centre);
     return_centre(intime,  MW->orient,  mw0centre);
     return_vel_centre(intime, LMC->orient, lmc0velcentre);

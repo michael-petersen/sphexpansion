@@ -5,6 +5,7 @@ functions to handle the preparations for the coefficient files
 
 MSP 22 Apr 2020 clean version
 MSP 23 Apr 2020 add coefficient interpolation 
+MSP 15 Sep 2020 improve debug, fix pre-simulation interpolation
 
 notes
 -the answer is yes, spline is expensive. moving the call outside helps; a more simple interpolation may help even further.
@@ -69,6 +70,10 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable,
   // guard against going past the end of the simulation
   if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
+#ifdef DEEPDEBUGCOEFS
+  cout << indx << endl;
+#endif
+  
   if (indx<0) {
     // hard-set to earliest time
     numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);

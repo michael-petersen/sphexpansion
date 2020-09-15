@@ -10,6 +10,8 @@ MSP  1 Sep 2020 add new pre-simulation treatment with `backwards' flag
 
 wishlist:
 -handle bad files gracefully
+-initialise with zeros if a file is not passed (or maybe this belongs
+in expansion itself?)
 
  */
 
