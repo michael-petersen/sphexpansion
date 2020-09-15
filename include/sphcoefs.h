@@ -11,6 +11,8 @@ notes
 
  */
 
+//#define DEEPDEBUGCOEFS
+
 using namespace std;
 
 // set up for spline, specify if needed
@@ -45,7 +47,7 @@ struct SphCoefs
 void select_coefficient_time(double desired_time, SphCoefs coeftable,
 			     array_type2& coefs_at_time);
 
-// something seems to be wrong with setting monopole here.
+
 void select_coefficient_time(double desired_time, SphCoefs coeftable,
   array_type2& coefs_at_time) {
   /*
@@ -63,6 +65,8 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable,
 
   // guard against wanton extrapolation: should this stop the model?
   //if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
+
+  // guard against going past the end of the simulation
   if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
   if (indx<0) {
@@ -77,15 +81,21 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable,
       }
     }
     
-  } else { indx = 0;
-    if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
+  } else {
+
+    // case where the simulations are not before the beginning of the simulation
+    // interpolate from the two closest times
 
     double x1 = (coeftable.t[indx+1] - desired_time)/dt;
     double x2 = (desired_time - coeftable.t[indx])/dt;
 
-    // deep debug
-    //cout << "x1/x2=" << setw(14) << x1 << setw(14) << x2 << endl;
-
+#ifdef DEEPDEBUGCOEFS
+    cout << "dt=" << setw(16) << dt << "  t[indx+1]="  << setw(16) << coeftable.t[indx+1]
+	                            << "  t[indx]="  << setw(16) << coeftable.t[indx]
+                                    << "  desiredT="  << setw(16) << desired_time << endl;
+    cout << "x1/x2=" << setw(16) << x1 << setw(14) << x2 << endl;
+#endif
+    
     numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
     coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);

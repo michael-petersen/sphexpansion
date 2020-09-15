@@ -48,10 +48,13 @@ int main () {
 
   /*
   m2 is 20%: reference_time   = 1.47787
-  m2p5 is 25%: reference_time = 1.45625s
+  m2p5 is 25%: reference_time = 1.45625
   m3 is 30%: reference_time   = 1.4355
    */
   double reference_time = 1.50;
+  
+
+  array_type2 mwcoefs;
 
  
   // open files to check trajectories
@@ -67,13 +70,16 @@ int main () {
 
   double intime;
   
-  for (int i=0; i<1000; i++) {
+  for (int i=0; i<100; i++) {
 
     intime = 0.004*i - 2.;
     return_centre(intime, LMC->orient, lmc0centre);
     return_centre(intime,  MW->orient,  mw0centre);
     return_vel_centre(intime, LMC->orient, lmc0velcentre);
     return_vel_centre(intime,  MW->orient,  mw0velcentre);
+
+    select_coefficient_time(intime,MW->coeftable,
+			  mwcoefs);
 
     traj << setw(14) << intime
 	 << setw(14) << mw0centre[0]
