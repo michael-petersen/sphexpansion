@@ -79,7 +79,8 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 
   ifstream in(cyl_cache_name.c_str());
 
-  cerr << "cylcache.read_cyl_cache: trying to read cached table . . . ";
+  cerr << "cylcache.read_cyl_cache: trying to read cached table. . . ";
+
 
   int tmp;
 
@@ -98,6 +99,9 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
   in.read((char *)&cachetable.CYLMASS,sizeof(double));
   in.read((char *)&cachetable.TNOW,   sizeof(double));
 
+  //cout << setw(14) << cachetable.MMAX << setw(14) << cachetable.NORDER << endl;
+
+ 
   // resize the arrays
   cachetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
   cachetable.potS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);

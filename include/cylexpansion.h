@@ -94,7 +94,7 @@ void CylExpansion::initialise(string cyl_cache_name,
 
   read_coef_file (coef_file, CylExpansion::coeftable);
 
-  //read_orient (orient_file, CylExpansion::orient);
+  read_orient (orient_file, CylExpansion::orient);
 
 }
 

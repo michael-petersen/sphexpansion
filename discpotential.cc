@@ -85,9 +85,11 @@ int main () {
 
   string cyl_cache_name_mw = "data/.eof.cache.001";
   string cyl_coef_name_mw = "data/outcoef.star.run001s";
+  //string cyl_orient_name_mw = "data/outcoef.star.run001s";
+  string cyl_orient_name_mw = "data/run068s22h/mw.orient.run068s22h.smth";
 
   CylExpansion* MWDisc;
-  MWDisc = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, "");
+  MWDisc = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
 
   cout << "Step 1" << endl;
 
