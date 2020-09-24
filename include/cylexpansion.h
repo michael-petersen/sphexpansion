@@ -138,12 +138,10 @@ void CylExpansion::determine_fields_at_point_cyl
 
       fac = coscoefs[m][n] * ccos;
 
-      potl += fac * forcetable.potC[m][n];
-
       if (m==0 && n==0) potl0 += fac * forcetable.potC[m][n];
-
+      
+      potl += fac * forcetable.potC[m][n];
       fr   += fac * forcetable.rforceC[m][n];
-	
       fz   += fac * forcetable.zforceC[m][n];
 
       //d += np.sum(fac * (densC[mm,:,ix,iy]*c00 + densC[mm,:,ix+1,iy  ]*c10 + densC[mm,:,ix,iy+1]*c01 + densC[mm,:,ix+1,iy+1]*c11));
@@ -159,7 +157,6 @@ void CylExpansion::determine_fields_at_point_cyl
 	potl += fac * forcetable.potS[m][n];
 
 	fr  += fac * forcetable.rforceS[m][n];
-
 	fz  += fac * forcetable.zforceS[m][n];
 
 	//d += np.sum(fac * ( densS[mm,:,ix,iy] * c00 + densS[mm,:,ix+1,iy  ] * c10 + densS[mm,:,ix,iy+1] * c01 + densS[mm,:,ix+1,iy+1] * c11 ));
