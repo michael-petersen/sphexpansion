@@ -21,6 +21,10 @@ typedef boost::multi_array<vector<dbl_vector>, 2> efarray;
 
 bool debug = false;
 
+// use tabulated values for density rather than spline
+#define USE_TABLE 1
+
+
 
 // create the spherical cachefile array
 struct SphCache
@@ -166,13 +170,16 @@ void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
   double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
   double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
 
-  // this step would be great to change, for speed purposes.
-  double pval = cachetable.modeltable.pspline(r);
-
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
+
+      #ifdef USETABLE      
       pottable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1])/
-      sqrt(cachetable.evtable[l][n]) * pval;
+	sqrt(cachetable.evtable[l][n]) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
+      #else
+      pottable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1])/
+	sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.pspline(r);
+      #endif
     }
   }
 }
@@ -218,11 +225,57 @@ void get_force(double& r, SphCache& cachetable, array_type2& forcetable) {
 
 }
 
+void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
+{
+
+  // see equivalent call in SLGridMP2.cc
+  
+  densitytable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
+
+  double xi;
+  xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
+    
+  if (cachetable.CMAP==1) {
+        if (xi<-1.0) xi=-1.0;
+        if (xi>=1.0) xi=1.0-1.0e-08;
+  }
+
+  int indx = (int)( (xi-cachetable.xmin)/cachetable.dxi );
+  if (indx<0) indx = 0;
+  if (indx>cachetable.NUMR-2) indx = cachetable.NUMR - 2;
+
+  double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
+  double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
+
+
+  for (int l=0; l<=cachetable.LMAX; l++) {
+    for (int n=0; n<cachetable.NMAX; n++) {
+
+      #ifdef USETABLE
+      densitytable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
+        sqrt(cachetable.evtable[l][n]) * (x1*cachetable.d0[indx] + x2*cachetable.d0[indx+1]);
+      #else
+      densitytable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
+        sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.dspline(r);
+      #endif
+    }
+  }
+}
+
 
 void get_dpotl(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot) {
 
   // r comes in as the actual radius, NOT xi
   get_pot  (r, cachetable, potd);
   get_force(r, cachetable, dpot);
+
+}
+
+void get_dpotl_density(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot, array_type2& dend) {
+
+  // r comes in as the actual radius, NOT xi
+  get_pot  (r, cachetable, potd);
+  get_force(r, cachetable, dpot);
+  get_density(r, cachetable, dend);
 
 }

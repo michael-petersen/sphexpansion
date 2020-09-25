@@ -53,7 +53,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   double tvir,xvir,yvir,zvir;
   physical_to_virial_time(t,tvir);
   physical_to_virial_length(x,y,z, xvir,yvir,zvir);
-
+ 
   // reset time to have the correct system zero (e.g. pericentre is T=0)
   tvir += reference_time;
 

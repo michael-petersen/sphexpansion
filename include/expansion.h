@@ -142,22 +142,22 @@ void SphExpansion::get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, 
   *dp = -dpp;
 }
 
-void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *p)
+void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *d)
 {
   /*
     int l    : the harmonic order
     int indx : the indexed harmonic order (e.g. l and m values)
     
    */
-  double pp;
+  double dd;
   int i;
 
-  pp = 0.0;
+  dd = 0.0;
 
   for (i=0; i<=nmax; i++)
-    pp  += dend[l][i] * coefs[indx][i];
+    dd  += dend[l][i] * coefs[indx][i];
 
-  *p = pp;
+  *d = dd;
 }
 
 
@@ -170,6 +170,8 @@ void SphExpansion::determine_fields_at_point_sph
 {
   /*
   // version without density
+
+  // no potl0 definition?
   
   see the equivalent exp call in SphericalBasis.cc
 
@@ -267,8 +269,10 @@ void SphExpansion::determine_fields_at_point_sph
  double& potr, double& pott, double& potp, bool monopole)
 {
   /*
-  // version without density
+  // version WITH density
   
+  // no potl0/dens0 definition?
+
   see the equivalent exp call in SphericalBasis.cc
 
   */
@@ -282,7 +286,7 @@ void SphExpansion::determine_fields_at_point_sph
   
   int l,loffset,moffset,m;
   double rs,fac1,fac2,fac3,fac4,costh,dp;
-  double p,pc,dpc,ps,dps;
+  double p,pc,dpc,ps,dps,d;
 
   // block here, some problem with a zero in theta here. TBD.
   if (theta<1.e-6) theta = 1.e-6;
@@ -290,8 +294,8 @@ void SphExpansion::determine_fields_at_point_sph
 
   fac1 = 0.25/M_PI;
 
-  array_type2 potd,dpot;
-  get_dpotl(r, cachetable, potd, dpot);
+  array_type2 potd,dpot,dend;
+  get_dpotl_density(r, cachetable, potd, dpot, dend);
 
   // is this ever evaluating the l=0,n>0 terms??
 
@@ -300,6 +304,10 @@ void SphExpansion::determine_fields_at_point_sph
   potl = fac1*p;
   potr = fac1*dp;
   pott = potp = 0.0;
+
+  get_dens_coefs(0, 0, cachetable.NMAX, coefs, dend, &d);
+  dens = d;
+
 
   // l loop
   if (monopole) return;
@@ -350,6 +358,7 @@ void SphExpansion::determine_fields_at_point_sph
   if (r<cachetable.RMIN) {
     pott = 0.;
     potp = 0.;
+    dens = cachetable.d0[0]; // set to the smallest value of density. check if this is a good idea
   }
   
   
