@@ -483,6 +483,8 @@ int main () {
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
+  // MW 
+  cout << "Initialising MW disc ... " << endl;
   string cyl_cache_name_mw = "data/.eof.cache.001";
   string cyl_coef_name_mw = "data/outcoef.star.run001s";
   //string cyl_orient_name_mw = "data/outcoef.star.run001s";
@@ -530,6 +532,13 @@ int main () {
   vxphys[1] = -0.464346;
   vxphys[2] = -0.124515;
 
+  // MW ORBIT z: Disc-like orbit
+  xphys[0] = 0.03;
+  xphys[1] = 0.0;
+  xphys[2] = 0.0;
+  vxphys[0] = 0.0;
+  vxphys[1] = 1.4;
+  vxphys[2] = 0.;
   
   virial_to_physical_length(xphys[0],xphys[1],xphys[2],xinit[0],xinit[1],xinit[2]);
   virial_to_physical_velocity(vxphys[0],vxphys[1],vxphys[2],vxinit[0],vxinit[1],vxinit[2]);
@@ -537,12 +546,12 @@ int main () {
   cout << "Input pos/vel: " << xinit[0] << " " << xinit[1] << " " << xinit[2] << " " <<
     vxinit[0] << " " << vxinit[1] << " " << vxinit[2] << " " << endl;
 
-  double nint=100;
+  double nint=500;
 
   // call this time in kpc/km/s units
   double dt;
   // force sampling at the native rate of the exp simulation as an interpolation test
-  virial_to_physical_time(0.003,dt);
+  virial_to_physical_time(0.0005,dt);
   array_type2 orbit;
 
   two_component_leapfrog(MW, LMC, xinit, vxinit, nint, dt, orbit);

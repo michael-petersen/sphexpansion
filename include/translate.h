@@ -27,6 +27,14 @@ double mw_force_scale          = mw_vel_scale/mw_time_scale;            // in km
 double mw_mass_scale           = mw_vel_scale * mw_vel_scale *
                                  mw_virial_radius / astronomicalG;       // mass units of the simulation, Msun
 
+
+void virial_to_physical_density(double densvir, double& densphys)
+{
+  // convert Mvir/Rvir^3 to Msun/pc^3
+    
+  densphys = densvir * mw_mass_scale / pow(1000*mw_virial_radius,3);
+}
+
 void virial_to_physical_time(double tvir, double& tphys)
 {
   tphys = mw_time_scale * tvir;
@@ -54,6 +62,13 @@ void virial_to_physical_velocity(double vxvir, double vyvir, double vzvir,
   vxphys = mw_vel_scale * vxvir;
   vyphys = mw_vel_scale * vyvir;
   vzphys = mw_vel_scale * vzvir;
+}
+
+void physical_to_virial_density(double densphys, double& densvir)
+{
+  // convert Msun/pc^3 to Mvir/Rvir^3 
+    
+  densvir = densphys * pow(1000*mw_virial_radius,3)/mw_mass_scale;
 }
 
 void physical_to_virial_time(double tphys, double& tvir)
