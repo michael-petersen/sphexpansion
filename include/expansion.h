@@ -5,7 +5,9 @@ MSP 24 Apr 2020 restructured
 
 */
 
-
+// turn off the inclusion of boilerplate stuff for CylExpansion
+#undef STANDALONE
+#define STANDALONE 0
 
 // MSP headers
 // converters from r to xi (for mapping tables)
@@ -90,6 +92,13 @@ public:
 		     double& fx, double& fy, double& fz,
 		     bool monopole=false);
 
+  // cartesian forces wrapper function
+  void return_density(SphExpansion* S,
+		     array_type2 coefs,
+		     double x, double y, double z,
+		     double& d,
+		     bool monopole=false);
+
 };
 
 SphExpansion::SphExpansion(string sph_cache_name,
@@ -154,7 +163,7 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs,
 
   dd = 0.0;
 
-  for (i=0; i<=nmax; i++)
+  for (i=0; i<nmax; i++)
     dd  += dend[l][i] * coefs[indx][i];
 
   *d = dd;
@@ -286,7 +295,7 @@ void SphExpansion::determine_fields_at_point_sph
   
   int l,loffset,moffset,m;
   double rs,fac1,fac2,fac3,fac4,costh,dp;
-  double p,pc,dpc,ps,dps,d;
+  double p,pc,dpc,ps,dps,d,dc,ds;
 
   // block here, some problem with a zero in theta here. TBD.
   if (theta<1.e-6) theta = 1.e-6;
@@ -306,7 +315,9 @@ void SphExpansion::determine_fields_at_point_sph
   pott = potp = 0.0;
 
   get_dens_coefs(0, 0, cachetable.NMAX, coefs, dend, &d);
-  dens = d;
+  dens = d*fac1*fac1;
+  dens0 = d*fac1*fac1;
+
 
 
   // l loop
@@ -329,6 +340,9 @@ void SphExpansion::determine_fields_at_point_sph
       if (m==0) {
 	fac2 = fac1*legs[l][m];
 	
+	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend ,&d);
+	dens += fac1*fac2*d;
+	
 	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
 	potl += fac2*p;
 	potr += fac2*dp;
@@ -339,6 +353,10 @@ void SphExpansion::determine_fields_at_point_sph
 	fac2 = 2.0 * fac1 * factrl[l][m];
 	fac3 = fac2 *  legs[l][m];
 	fac4 = fac2 * dlegs[l][m];
+
+	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
+	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
+	dens += fac1*fac3*(pc*cosm[m] + ps*sinm[m]);
 	
 	get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
 	get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
@@ -397,5 +415,37 @@ void SphExpansion::return_forces(SphExpansion* S,
 				fxtmp, fytmp, fztmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fx,fy,fz);
+
+}
+
+
+void SphExpansion::return_density(SphExpansion* S,
+		   array_type2 coefs,
+		   double x, double y, double z,
+		   double& d,
+		   bool monopole)
+{
+  /*
+    return density
+   */
+
+  // translate all times and positions into exp virial units
+  double xvir,yvir,zvir;
+  physical_to_virial_length(x,y,z,xvir,yvir,zvir);
+
+  double rtmp,phitmp,thetatmp;
+  double tpotl0,tpotl,fr,ft,fp,tdens0;
+  
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+  
+  S->determine_fields_at_point_sph(S->cachetable, coefs,
+				   rtmp,thetatmp,phitmp,
+				   tdens0,d,
+				   tpotl0,tpotl,
+				   fr,ft,fp,monopole);
+
+  // DEEP debug
+  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
+
 
 }

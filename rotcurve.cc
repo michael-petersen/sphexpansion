@@ -47,7 +47,7 @@ void make_rotation_curve(SphExpansion* S,
 
   double dx = (xmax-xmin)/nsamples;
   double xin;
-  double fx,fy,fz;
+  double fx,fy,fz,d;
 
   // demo to make a rotation curve
   for (int xx=0; xx<nsamples; xx++) {
@@ -60,7 +60,14 @@ void make_rotation_curve(SphExpansion* S,
 		  xin, 0., 0.,
 		     fx, fy, fz, true);
 
-    mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) << setw(14) << fx << setw(14) << fy << setw(14) << fz << endl;
+    S->return_density(S,
+		  coefs,
+		  xin, 0., 0.,
+		     d, true);
+    
+    mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) <<
+                  setw(14) << fx << setw(14) << fy << setw(14) << fz <<
+                  setw(14) << d << endl;
 
   }
   

@@ -9,6 +9,9 @@ MSP 28 Apr 2020 initial commit
 
 */
 
+#define STANDALONE 1
+
+
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -18,8 +21,11 @@ MSP 28 Apr 2020 initial commit
 // boost includes
 #include "boost/multi_array.hpp"
 
-// the expansion headers
+// the spherical expansion headers
 #include "expansion.h"
+
+// the cylindrical expansion headers
+#include "cylexpansion.h"
 
 // for print_orbit only, other integration pieces are below
 #include "leapfrog.h"
@@ -136,9 +142,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
 
 
 void two_component_leapfrog(SphExpansion* MW,
-			    array_type3 mwcoefs,
 			    SphExpansion* LMC,
-			    array_type3 lmccoefs,
 			    vector<double> xinit,
 			    vector<double> vinit,
 			    int nint,
@@ -230,31 +234,266 @@ void two_component_leapfrog(SphExpansion* MW,
 
 
 
+void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, CylExpansion* MWD,
+			                array_type2 mwcoefs, array_type2 lmccoefs, array_type2 mwdcoscoefs, array_type2 mwdsincoefs,
+			                double t, double x, double y, double z,
+			                double& fx, double& fy, double& fz, bool verbose)
+{
+  /*
+    specs: take a time, x,y,z; return x,y,z forces, in physical units
+    input/output units must be physical
+    where x0,y0,z0 = present-day galactic centre
+       and      t0 = present day (so previous times are negative)
+
+   if we don't want to pass the entire SphExpansion objects, the necessary pieces can be broken out in a fairly straightforward way.
+
+   */
+  
+  // zero out forces
+  fx = fy = fz = 0.;
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+ 
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  //cout << "TIME=" << tvir << endl;
+
+  // initialise the centre vectors
+  vector<double> zerocoords(3),mw_centre(3),lmc_centre(3),mwd_centre(3);
+
+  // get the present-day MWD coordinates: the zero of the system
+  return_centre(reference_time, MWD->orient, zerocoords);
+
+  //cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << endl; 
+
+  // get the centres of the expansions at the specified times in exp reference space
+  return_centre(tvir,  MW->orient,  mw_centre);
+  return_centre(tvir, LMC->orient, lmc_centre);
+  return_centre(tvir, MWD->orient, mwd_centre);
+
+  // shift the expansion centres to the pericentre coordinate system
+  for (int j=0;j<=2;j++) {
+    mw_centre[j]  -= zerocoords[j];
+    lmc_centre[j] -= zerocoords[j];
+    mwd_centre[j] -= zerocoords[j];
+  }
+
+  if (verbose) {
+    cout << "MW virial centre (x,y,z)=(" << mw_centre[0] << ","<< mw_centre[1] << ","<< mw_centre[2] << ")" <<endl;
+    cout << "MWD virial centre (x,y,z)=(" << mwd_centre[0] << ","<< mwd_centre[1] << ","<< mwd_centre[2] << ")" <<endl;
+    cout << "LMC virial centre (x,y,z)=(" << lmc_centre[0] << ","<< lmc_centre[1] << ","<< lmc_centre[2] << ")" <<endl;
+  }
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys;
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_spherical(xvir-mwd_centre[0], yvir-mwd_centre[1], zvir-mwd_centre[2], rtmp, phitmp, thetatmp);
+
+  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
+  
+  MW->determine_fields_at_point_sph(MW->cachetable, mwcoefs,
+				rtmp,thetatmp,phitmp,
+				tpotl0,tpotl,
+				fr,ft,fp);
+
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+				fr, fp, ft,
+				fxtmp, fytmp, fztmp);
+
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add MW force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+
+  r2tmp = sqrt((xvir-mwd_centre[0])*(xvir-mwd_centre[0]) + (yvir-mwd_centre[1])*(yvir-mwd_centre[1]));
+
+  // same procedure for the disc
+  MWD->determine_fields_at_point_cyl(MWD->cachetable, mwdcoscoefs,mwdsincoefs,
+				     r2tmp,phitmp,zvir-mwd_centre[2],
+				     tpotl0,tpotl,
+				     fr,fp,fztmp);
+
+  cylindrical_forces_to_cartesian(rtmp, phitmp,
+				  fr, fp,
+				  fxtmp, fytmp);
+
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add MW force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+
+  // same procedure for LMC
+  cartesian_to_spherical(xvir-lmc_centre[0], yvir-lmc_centre[1], zvir-lmc_centre[2], rtmp, phitmp, thetatmp);
+
+  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
+
+  LMC->determine_fields_at_point_sph(LMC->cachetable, lmccoefs,
+				rtmp,thetatmp,phitmp,
+				tpotl0,tpotl,
+				fr,ft,fp);
+
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+				fr, fp, ft,
+				fxtmp, fytmp, fztmp);
+
+  // reset to physical units
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add LMC force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+  
+}
+
+
+
+void three_component_leapfrog(SphExpansion* MW,
+			      SphExpansion* LMC,
+			      CylExpansion* MWD,
+			      vector<double> xinit,
+			      vector<double> vinit,
+			      int nint,
+			      double dt,
+			      array_type2& orbit)
+{
+  /*
+
+   */
+  double fx,fy,fz;
+
+  
+  double tvir;
+
+  // include the forces for now
+  orbit.resize(boost::extents[10][nint]);
+
+  // initialise beginning values
+  orbit[0][0] = xinit[0];
+  orbit[1][0] = xinit[1];
+  orbit[2][0] = xinit[2];
+  orbit[3][0] = vinit[0];
+  orbit[4][0] = vinit[1];
+  orbit[5][0] = vinit[2];
+
+  //now step forward one, using leapfrog (drift-kick-drift) integrator?
+  //    https://en.wikipedia.org/wiki/Leapfrog_integration
+  //
+  int step = 1;
+
+  // get the initial coefficient values: the time here is in tvir units, so always start with 0
+  array_type2 tcoefsmw,tcoefslmc;
+  select_coefficient_time(0., MW->coeftable, tcoefsmw);
+  select_coefficient_time(0., LMC->coeftable, tcoefslmc);
+
+  array_type2 mwcoscoefs,mwsincoefs;
+  select_coefficient_time(0.0, MWD->coeftable, mwcoscoefs, mwsincoefs);
+
+  // not applying time offsets here; think about whether this is a problem
+  double tphys;
+  virial_to_physical_time(0.,tphys);
+  // return forces for the initial step
+  return_forces_mw_and_lmc_with_disc(MW, LMC, MWD,
+				     tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+				     tphys, orbit[0][0],orbit[1][0],orbit[2][0],
+				     fx, fy, fz, false);
+
+  orbit[6][0] = fx;
+  orbit[7][0] = fy;
+  orbit[8][0] = fz;
+
+  int j;
+
+  for (step=1; step<nint; step++) {
+
+    // advance timestep: this is in physical units by definition.
+    orbit[9][step] = dt*step;
+
+    // find the current virial time
+    physical_to_virial_time(dt*(step),tvir);
+
+    // check that this is incrementing correctly? it is.
+    //cout << "TVIR=" << tvir << endl;
+
+    // get coefficients at the current virial time
+    select_coefficient_time(tvir, MW->coeftable, tcoefsmw);
+    select_coefficient_time(tvir, LMC->coeftable, tcoefslmc);
+    select_coefficient_time(tvir, MWD->coeftable, mwcoscoefs, mwsincoefs);
+
+    // advance positions
+    for (j=0; j<3; j++) {
+      orbit[j][step] = orbit[j][step-1]   + (orbit[j+3][step-1]*dt  )  + (0.5*orbit[j+6][step-1]  * (dt*dt));
+    }
+
+    // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
+    return_forces_mw_and_lmc_with_disc(MW, LMC, MWD,
+				       tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+				       dt*(step-1), orbit[0][step],orbit[1][step],orbit[2][step],
+				       fx, fy, fz, false);
+
+    orbit[6][step] = fx;
+    orbit[7][step] = fy;
+    orbit[8][step] = fz;
+
+    // advance velocities
+    for (j=3; j<6; j++) {
+      orbit[j][step] = orbit[j][step-1] + (0.5*(orbit[j+3][step-1]+orbit[j+3][step])  * dt );
+    }
+    
+  }
+  
+}
+
+
+
+
+
+
 int main () {
 
-  // obviously these would all be better read in . . . depends on how your code interfaces
-  string sph_cache_name_mw = "data/SLGridSph.cache.mw.run068s10";
-  string model_file_mw     = "data/SLGridSph.mw";
-  string coef_file_mw      = "data/simpleoutcoef.nofac.mw.run068s16a";
-  string orient_file_mw    = "data/mw.simpleorient.run068s16a";
- 
-  // pull in the parts for the MW
+  // MW
+  cout << "Initialising MW ... " << endl;
+  string sph_cache_name_mw  =     "data/run068s22h/SLGridSph.cache.mw.run068s22h";
+  string model_file_mw                      = "data/run068s22h/SLGridSph.mw.s22h";
+  string coef_file_mw       = "data/run068s22h/simpleoutcoef.nofac.mw.run068s22h";
+  string orient_file_mw             = "data/run068s22h/mw.orient.run068s22h.smth";
+
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
-  // try the LMC
-  string sph_cache_name_lmc = "data/SLGridSph.cache.lmc.run068s10";
-  string model_file_lmc     = "data/SLGridSph.lmc";
-  string coef_file_lmc      = "data/simpleoutcoef.nofac.lmc.run068s16a";
-  string orient_file_lmc    = "data/lmc.simpleorient.run068s16a";
- 
-  // pull in the parts for the LMC
+  // LMC
+  cout << "Initialising LMC ... " << endl;
+  string sph_cache_name_lmc      = "data/run068s22h/SLGridSph.cache.lmc.run068s22h";
+  string model_file_lmc                      = "data/run068s22h/SLGridSph.lmc.s22h";
+  string coef_file_lmc       = "data/run068s22h/simpleoutcoef.nofac.lmc.run068s22h";
+  string orient_file_lmc             = "data/run068s22h/lmc.orient.run068s22h.smth";
+
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
+  string cyl_cache_name_mw = "data/.eof.cache.001";
+  string cyl_coef_name_mw = "data/outcoef.star.run001s";
+  //string cyl_orient_name_mw = "data/outcoef.star.run001s";
+  string cyl_orient_name_mw = "data/run068s22h/mw.orient.run068s22h.smth";
+
+  CylExpansion* MWD;
+  MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
+
 
   vector<double> zerocoords(3);
-  return_centre(reference_time, MW->orient, zerocoords);
+  return_centre(reference_time, MWD->orient, zerocoords);
 
   cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << endl; 
   
@@ -298,7 +537,7 @@ int main () {
   cout << "Input pos/vel: " << xinit[0] << " " << xinit[1] << " " << xinit[2] << " " <<
     vxinit[0] << " " << vxinit[1] << " " << vxinit[2] << " " << endl;
 
-  double nint=500;
+  double nint=100;
 
   // call this time in kpc/km/s units
   double dt;
@@ -306,9 +545,15 @@ int main () {
   virial_to_physical_time(0.003,dt);
   array_type2 orbit;
 
-  two_component_leapfrog(MW, MW->coeftable.coefs, LMC, LMC->coeftable.coefs,xinit, vxinit, nint, dt, orbit);
+  two_component_leapfrog(MW, LMC, xinit, vxinit, nint, dt, orbit);
 
   string orbitfile="tests/comparisonorbit6.txt";
+  print_orbit(orbit,orbitfile);
+
+  // try with the disk as well!
+  three_component_leapfrog(MW, LMC, MWD, xinit, vxinit, nint, dt, orbit);
+
+  orbitfile="tests/comparisonorbit7.txt";
   print_orbit(orbit,orbitfile);
   
 }

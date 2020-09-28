@@ -8,9 +8,7 @@ of something around, would like to track down what exactly is going on.
 
 */
 
-
-
-// MSP headers
+#if STANDALONE
 // converters from r to xi (for mapping tables)
 #include "scaling.h"
 
@@ -23,14 +21,19 @@ of something around, would like to track down what exactly is going on.
 // basic translations from virial to physical units (and back)
 #include "translate.h"
 
+// the orientation stuff for centering the expansions
+#include "sphorient.h"
+#endif
+
+
 // the cachefile stuff, also brings in the modelfile stuff
 #include "cylcache.h"
 
 // the coefficient stuff
 #include "cylcoefs.h"
 
-// the orientation stuff for centering the expansions
-#include "sphorient.h"
+
+
 
 using namespace std;
 

@@ -247,6 +247,8 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
   double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
   double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
 
+  cout << cachetable.d0[indx] << endl;
+
 
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
