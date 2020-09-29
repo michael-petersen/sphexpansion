@@ -3,7 +3,10 @@ sphcache.h
 
 functions to handle the preparations for the cachefile(s)
 
-clean version, MSP 22 April 2020
+MSP 22 Apr 2020 clean version
+MSP 26 Sep 2020 add density calls: to be fully verified
+MSP 27 Sep 2020 add USE_TABLE preprocessor directive
+
 
  */
 
@@ -247,7 +250,7 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
   double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
   double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
 
-  cout << cachetable.d0[indx] << endl;
+  //cout << cachetable.d0[indx] << endl;
 
 
   for (int l=0; l<=cachetable.LMAX; l++) {
@@ -265,19 +268,17 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
 }
 
 
-void get_dpotl(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot) {
-
+void get_dpotl(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot)
+{
   // r comes in as the actual radius, NOT xi
   get_pot  (r, cachetable, potd);
   get_force(r, cachetable, dpot);
-
 }
 
-void get_dpotl_density(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot, array_type2& dend) {
-
+void get_dpotl_density(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot, array_type2& dend)
+{
   // r comes in as the actual radius, NOT xi
   get_pot  (r, cachetable, potd);
   get_force(r, cachetable, dpot);
   get_density(r, cachetable, dend);
-
 }

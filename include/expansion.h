@@ -301,6 +301,7 @@ void SphExpansion::determine_fields_at_point_sph
   if (theta<1.e-6) theta = 1.e-6;
   costh = cos(theta);
 
+  //fac0 = 4.*M_PI;
   fac1 = 0.25/M_PI;
 
   array_type2 potd,dpot,dend;
@@ -315,8 +316,8 @@ void SphExpansion::determine_fields_at_point_sph
   pott = potp = 0.0;
 
   get_dens_coefs(0, 0, cachetable.NMAX, coefs, dend, &d);
-  dens = d*fac1*fac1;
-  dens0 = d*fac1*fac1;
+  dens = d*fac1;
+  dens0 = d*fac1;
 
 
 
@@ -341,7 +342,7 @@ void SphExpansion::determine_fields_at_point_sph
 	fac2 = fac1*legs[l][m];
 	
 	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend ,&d);
-	dens += fac1*fac2*d;
+	dens += fac2*d;
 	
 	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
 	potl += fac2*p;
@@ -356,7 +357,7 @@ void SphExpansion::determine_fields_at_point_sph
 
 	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
 	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
-	dens += fac1*fac3*(pc*cosm[m] + ps*sinm[m]);
+	dens += fac3*(pc*cosm[m] + ps*sinm[m]);
 	
 	get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
 	get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);

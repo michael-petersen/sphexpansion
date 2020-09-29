@@ -4,11 +4,11 @@ translate.h
 functions to take virial units and make physical units
 
 notes from call
--force is in units of km/s/s: needs a translation too
 -1 Gyr ~ 1 kpc/km/s ... but we'll stick with kpc/km/s
 
 MSP 23 Apr 2020 clean version
 MSP  6 May 2020 close the loop with Msun addition
+MSP 28 Sep 2020 add density translation
 
  */
 

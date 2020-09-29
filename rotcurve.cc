@@ -7,6 +7,7 @@ compile string:
 clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ rotcurve.cc -o rotcurve
 
 MSP 24 Apr 2020 first version
+MSP 29 Sep 2020 use as a test for density
 
 */
 

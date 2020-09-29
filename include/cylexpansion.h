@@ -1,7 +1,8 @@
 /*
 definitions for the CylExpansion class
 
-MSP 5 May 2020 first commit
+MSP  5 May 2020 first commit
+MSP 29 Sep 2020 test first model
 
 this should be able to go much faster. obviously I'm passing too much
 of something around, would like to track down what exactly is going on.
