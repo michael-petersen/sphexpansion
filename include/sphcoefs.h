@@ -12,7 +12,7 @@ notes
 
  */
 
-//#define DEEPDEBUGCOEFS
+#define DEEPDEBUGCOEFS 0
 
 using namespace std;
 
@@ -46,18 +46,26 @@ struct SphCoefs
 };
 
 void select_coefficient_time(double desired_time, SphCoefs coeftable,
-			     array_type2& coefs_at_time);
+			     array_type2& coefs_at_time, int order=-1);
 
 
 void select_coefficient_time(double desired_time, SphCoefs coeftable,
-  array_type2& coefs_at_time) {
+			     array_type2& coefs_at_time, int order) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
-   time units must be virial time units to match the input coefficient table
+   time units must be virial time units to match the input coefficient
+   table
+
+   if order<0, will select all orders. if order>0, will select only
+   specified order.
    */
 
   int numl;
+
+  numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+
+  coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);  
   
   // coeftable.t is assumed to be evenly spaced
   double dt = coeftable.t[1] - coeftable.t[0];
@@ -70,15 +78,12 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable,
   // guard against going past the end of the simulation
   if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
-#ifdef DEEPDEBUGCOEFS
+#if DEEPDEBUGCOEFS
   cout << indx << endl;
 #endif
   
   if (indx<0) {
-    // hard-set to earliest time
-    numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
-    coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
@@ -94,21 +99,31 @@ void select_coefficient_time(double desired_time, SphCoefs coeftable,
     double x1 = (coeftable.t[indx+1] - desired_time)/dt;
     double x2 = (desired_time - coeftable.t[indx])/dt;
 
-#ifdef DEEPDEBUGCOEFS
+#if DEEPDEBUGCOEFS
     cout << "dt=" << setw(16) << dt << "  t[indx+1]="  << setw(16) << coeftable.t[indx+1]
 	                            << "  t[indx]="  << setw(16) << coeftable.t[indx]
                                     << "  desiredT="  << setw(16) << desired_time << endl;
     cout << "x1/x2=" << setw(16) << x1 << setw(14) << x2 << endl;
 #endif
-    
-    numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
-
-    coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
         coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[indx+1][l][n]);
       }
+    }
+  }
+
+  // go through and zero out non-selected orders
+
+  if (order>0) {
+    for (int l=0; l<numl; l++){
+    
+      if (l == order) continue;
+      
+      for (int n=0; n<coeftable.NMAX; n++) {
+        coefs_at_time[l][n] = 0.0;
+      }
+      
     }
   }
   
