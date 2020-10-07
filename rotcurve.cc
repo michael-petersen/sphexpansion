@@ -48,7 +48,7 @@ void make_rotation_curve(SphExpansion* S,
 
   double dx = (xmax-xmin)/nsamples;
   double xin;
-  double fx,fy,fz,d;
+  double fx,fy,fz,d,physdens;
 
   // demo to make a rotation curve
   for (int xx=0; xx<nsamples; xx++) {
@@ -65,10 +65,13 @@ void make_rotation_curve(SphExpansion* S,
 		  coefs,
 		  xin, 0., 0.,
 		     d, true);
+
+    
+    virial_to_physical_density(d, physdens);
     
     mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) <<
                   setw(14) << fx << setw(14) << fy << setw(14) << fz <<
-                  setw(14) << d << endl;
+                  setw(14) << d << setw(14) << physdens << endl;
 
   }
   

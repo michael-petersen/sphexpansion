@@ -2,6 +2,7 @@
 definitions for the SphExpansion class
 
 MSP 24 Apr 2020 restructured
+MSP  7 Oct 2020 fix density normalisation
 
 */
 
@@ -65,7 +66,7 @@ public:
   void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
 
   // get density function weights
-  void get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *p);
+  void get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *d);
 
   
   // the base spherical class
@@ -316,8 +317,8 @@ void SphExpansion::determine_fields_at_point_sph
   pott = potp = 0.0;
 
   get_dens_coefs(0, 0, cachetable.NMAX, coefs, dend, &d);
-  dens = d*fac1;
-  dens0 = d*fac1;
+  dens = fac1*d;
+  dens0 = fac1*d;
 
 
 
@@ -379,7 +380,7 @@ void SphExpansion::determine_fields_at_point_sph
     potp = 0.;
     dens = cachetable.d0[0]; // set to the smallest value of density. check if this is a good idea
   }
-  
+
   
 }
 

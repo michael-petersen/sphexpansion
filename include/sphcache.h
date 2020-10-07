@@ -4,9 +4,9 @@ sphcache.h
 functions to handle the preparations for the cachefile(s)
 
 MSP 22 Apr 2020 clean version
-MSP 26 Sep 2020 add density calls: to be fully verified
+MSP 26 Sep 2020 add density calls
 MSP 27 Sep 2020 add USE_TABLE preprocessor directive
-
+MSP  7 Oct 2020 fix density normalisation (decide on final location of -4pi from Poisson)
 
  */
 
@@ -256,11 +256,12 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
 
+      // negative for normalisation
       #ifdef USETABLE
-      densitytable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
+      densitytable[l][n] = -(x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
         sqrt(cachetable.evtable[l][n]) * (x1*cachetable.d0[indx] + x2*cachetable.d0[indx+1]);
       #else
-      densitytable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
+      densitytable[l][n] = -(x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
         sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.dspline(r);
       #endif
     }
