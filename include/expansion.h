@@ -66,7 +66,7 @@ public:
   void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
 
   // get density function weights
-  void get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *d);
+  void get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *dd);
 
   
   // the base spherical class
@@ -152,22 +152,22 @@ void SphExpansion::get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, 
   *dp = -dpp;
 }
 
-void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *d)
+void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *dd)
 {
   /*
     int l    : the harmonic order
     int indx : the indexed harmonic order (e.g. l and m values)
     
    */
-  double dd;
+  double daccum;
   int i;
 
-  dd = 0.0;
+  daccum = 0.0;
 
   for (i=0; i<nmax; i++)
-    dd  += dend[l][i] * coefs[indx][i];
+    daccum  += dend[l][i] * coefs[indx][i];
 
-  *d = dd;
+  *dd = daccum;
 }
 
 
@@ -187,16 +187,20 @@ void SphExpansion::determine_fields_at_point_sph
 
   */
 
+  /*
   int numl;
   if (monopole) {
     numl = 1;
   } else {
     numl = cachetable.LMAX;
   }
-  
+  */
+
+  int numl = cachetable.LMAX;
+
   int l,loffset,moffset,m;
   double rs,fac1,fac2,fac3,fac4,costh,dp;
-  double p,pc,dpc,ps,dps,dens;
+  double p,pc,dpc,ps,dps;//,dens;
 
   // block here, some problem with a zero in theta here. TBD.
   if (theta<1.e-6) theta = 1.e-6;
@@ -287,12 +291,16 @@ void SphExpansion::determine_fields_at_point_sph
 
   */
 
+  /*
   int numl;
   if (monopole) {
     numl = 1;
   } else {
     numl = cachetable.LMAX;
   }
+  */
+
+  int numl = cachetable.LMAX;
   
   int l,loffset,moffset,m;
   double rs,fac1,fac2,fac3,fac4,costh,dp;
@@ -341,7 +349,7 @@ void SphExpansion::determine_fields_at_point_sph
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
 	fac2 = fac1*legs[l][m];
-	
+
 	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
 	dens += fac2*d;
 	
@@ -358,7 +366,7 @@ void SphExpansion::determine_fields_at_point_sph
 
 	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
 	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
-	dens += fac3*(pc*cosm[m] + ps*sinm[m]);
+	dens += fac3*(dc*cosm[m] + ds*sinm[m]);
 	
 	get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
 	get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
@@ -437,6 +445,7 @@ void SphExpansion::return_density(SphExpansion* S,
 
   double rtmp,phitmp,thetatmp;
   double tpotl0,tpotl,fr,ft,fp,tdens0;
+  d = 0;
   
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
   

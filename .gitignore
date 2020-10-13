@@ -5,6 +5,7 @@ expansion
 rotcurve
 data
 trajectory
+density
 data/*
 .DS_Store
 tests/comparison*
