@@ -342,7 +342,7 @@ void SphExpansion::determine_fields_at_point_sph
       if (m==0) {
 	fac2 = fac1*legs[l][m];
 	
-	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend ,&d);
+	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
 	dens += fac2*d;
 	
 	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
@@ -441,10 +441,13 @@ void SphExpansion::return_density(SphExpansion* S,
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
   
   S->determine_fields_at_point_sph(S->cachetable, coefs,
+				   //determine_fields_at_point_sph(cachetable, coefs,
 				   rtmp,thetatmp,phitmp,
 				   tdens0,d,
 				   tpotl0,tpotl,
 				   fr,ft,fp,monopole);
+
+  //cout << setw(14) << tdens0 << setw(14) << d << endl;
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 

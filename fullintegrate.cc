@@ -5,7 +5,11 @@ integrate an orbit in the MW-LMC potential and compare to exp output
 compile string: 
 clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ fullintegrate.cc -o fullintegrate
 
+-O3 doesn't add much.
+-g -O0 really slows down.
+
 MSP 28 Apr 2020 initial commit
+MSP 13 Oct 2020 new model validation
 
 */
 
@@ -465,30 +469,29 @@ int main () {
 
   // MW
   cout << "Initialising MW ... " << endl;
-  string sph_cache_name_mw  =     "data/run068s22h/SLGridSph.cache.mw.run068s22h";
-  string model_file_mw                      = "data/run068s22h/SLGridSph.mw.s22h";
-  string coef_file_mw       = "data/run068s22h/simpleoutcoef.nofac.mw.run068s22h";
-  string orient_file_mw             = "data/run068s22h/mw.orient.run068s22h.smth";
+  string sph_cache_name_mw  =     "/Volumes/External1/Disk068/Run22Disk/SLGridSph.cache.mw.run068s22hdm3";
+  string model_file_mw                      = "/Volumes/External1/Disk068/Run22Disk/SLGridSph.mw.nodisc";
+  string coef_file_mw       = "/Volumes/External1/Disk068/Run22Disk/simpleoutcoef.nofac.mw.run068s22hdm3";
+  string orient_file_mw             = "/Volumes/External1/Disk068/Run22Disk/mw.orient.run068s22hdm3.smth";
 
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  string sph_cache_name_lmc      = "data/run068s22h/SLGridSph.cache.lmc.run068s22h";
-  string model_file_lmc                      = "data/run068s22h/SLGridSph.lmc.s22h";
-  string coef_file_lmc       = "data/run068s22h/simpleoutcoef.nofac.lmc.run068s22h";
-  string orient_file_lmc             = "data/run068s22h/lmc.orient.run068s22h.smth";
+  string sph_cache_name_lmc      = "/Volumes/External1/Disk068/Run22Disk/SLGridSph.cache.lmc.run068s22hdm3";
+  string model_file_lmc                      = "/Volumes/External1/Disk068/Run22Disk/SLGridSph.lmc.c17.m3";
+  string coef_file_lmc       = "/Volumes/External1/Disk068/Run22Disk/simpleoutcoef.nofac.lmc.run068s22hdm3";
+  string orient_file_lmc             = "/Volumes/External1/Disk068/Run22Disk/lmc.orient.run068s22hdm3.smth";
 
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
   // MW 
   cout << "Initialising MW disc ... " << endl;
-  string cyl_cache_name_mw = "data/.eof.cache.001";
-  string cyl_coef_name_mw = "data/outcoef.star.run001s";
-  //string cyl_orient_name_mw = "data/outcoef.star.run001s";
-  string cyl_orient_name_mw = "data/run068s22h/mw.orient.run068s22h.smth";
+  string cyl_cache_name_mw = "/Volumes/External1/Disk068/Run22Disk/.disc.cache.run068s22hdm3";
+  string cyl_coef_name_mw = "/Volumes/External1/Disk068/Run22Disk/outcoef.disc.run068s22hdm3";
+  string cyl_orient_name_mw = "/Volumes/External1/Disk068/Run22Disk/disc.orient.run068s22hdm3.smth";
 
   CylExpansion* MWD;
   MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
@@ -554,10 +557,10 @@ int main () {
   virial_to_physical_time(0.0005,dt);
   array_type2 orbit;
 
-  two_component_leapfrog(MW, LMC, xinit, vxinit, nint, dt, orbit);
+  //two_component_leapfrog(MW, LMC, xinit, vxinit, nint, dt, orbit);
 
   string orbitfile="tests/comparisonorbit6.txt";
-  print_orbit(orbit,orbitfile);
+  //print_orbit(orbit,orbitfile);
 
   // try with the disk as well!
   three_component_leapfrog(MW, LMC, MWD, xinit, vxinit, nint, dt, orbit);

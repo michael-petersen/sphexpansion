@@ -3,6 +3,7 @@ definitions for the CylExpansion class
 
 MSP  5 May 2020 first commit
 MSP 29 Sep 2020 test first model
+MSP 13 Oct 2020 add monopole capability
 
 this should be able to go much faster. obviously I'm passing too much
 of something around, would like to track down what exactly is going on.
@@ -71,14 +72,15 @@ public:
 				     double r, double phi, double z, 
 				     double& potl0, double& potl, 
 				     double& potr, double& potp,
-				     double& potz);
+				     double& potz, bool monopole=false);
 
   // cartesian forces wrapper function
   void return_forces(CylExpansion* C,
 		     array_type2 coscoefs,
 		     array_type2 sincoefs,
 		     double x, double y, double z,
-		     double& fx, double& fy, double& fz);
+		     double& fx, double& fy, double& fz,
+		     bool monopole=false);
 
 };
 
@@ -111,7 +113,8 @@ void CylExpansion::determine_fields_at_point_cyl
          array_type2& sincoefs,
          double r, double phi, double z, 
          double& potl0, double& potl, 
-         double& fr, double& fp, double& fz)
+         double& fr, double& fp, double& fz,
+	 bool monopole)
 {
   /*
   // skipping density for now --> decide later if interesting.
@@ -134,6 +137,8 @@ void CylExpansion::determine_fields_at_point_cyl
   fp     = 0.0;
 
   for (m=0; m<=cachetable.MMAX; m++) {
+
+    if (monopole && m>0) return;
 
     ccos = cos(phi*m);
     ssin = sin(phi*m);
@@ -180,7 +185,8 @@ void CylExpansion::return_forces(CylExpansion* C,
 		   array_type2 coscoefs,
 		   array_type2 sincoefs,
 		   double x, double y, double z,
-		   double& fx, double& fy, double& fz)
+		   double& fx, double& fy, double& fz,
+		   bool monopole)
 {
   /*
     test force return from just one component, from the centre of the expansion

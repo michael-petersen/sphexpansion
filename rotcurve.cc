@@ -59,12 +59,12 @@ void make_rotation_curve(SphExpansion* S,
     S->return_forces(S,
 		  coefs,
 		  xin, 0., 0.,
-		     fx, fy, fz, true);
+		     fx, fy, fz, monopole);
 
     S->return_density(S,
 		  coefs,
 		  xin, 0., 0.,
-		     d, true);
+		     d, monopole);
 
     
     virial_to_physical_density(d, physdens);
@@ -104,7 +104,7 @@ int main () {
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
 
-  bool onlymonopole = true;
+  bool onlymonopole = false;
   array_type2 mwcoefs,lmccoefs;
   select_coefficient_time(0.0, MW->coeftable, mwcoefs);
   select_coefficient_time(0.0, LMC->coeftable, lmccoefs);
@@ -142,8 +142,8 @@ int main () {
 		      mwcoefs,
 		      0.1,
 		      120.,
-		      1000,
-		      rotationfile, onlymonopole);
+		      50,
+		      rotationfile, true);
 
   
   rotationfile="tests/LMCrotation.txt";
@@ -152,10 +152,11 @@ int main () {
 		      lmccoefs,
 		      0.1,
 		      120.,
-		      1000,
-		      rotationfile);
+		      50,
+		      rotationfile, true);
   
-
+  /*
+    // skip test integration for now.
   vector<double> xinit(3);
   xinit[0] = 300.;
   xinit[1] = 0.;
@@ -193,5 +194,6 @@ int main () {
 
   orbitfile="tests/circularorbitLMC.txt";
   print_orbit(orbit,orbitfile);
+  */
   
 }

@@ -8,3 +8,4 @@ trajectory
 data/*
 .DS_Store
 tests/comparison*
+rotcurve.dSYM/Contents/Info.plist
