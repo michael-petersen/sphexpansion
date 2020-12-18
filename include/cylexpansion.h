@@ -47,12 +47,15 @@ typedef boost::multi_array<double, 2> array_type2;
 class CylExpansion
 {
 private:
-  
+
+  CylCoefs coeftable;
+  CylForce forcetable;
+  CylCache cachetable;
+
   void initialise(string cyl_cache_name,
 		  string coef_file,
 		  string orient_file);
   
-  // read up on 'protected'
   
 public:
   // the constructor
@@ -61,13 +64,10 @@ public:
 	       string orient_file);
 
   // expose the important expansion data
-  CylCache cachetable;
   SphOrient orient;
-  CylCoefs coeftable;
 
   // the base spherical class
-  void determine_fields_at_point_cyl(CylCache& cachetable,
-				     array_type2& coscoefs,
+  void determine_fields_at_point_cyl(array_type2& coscoefs,
 				     array_type2& sincoefs,
 				     double r, double phi, double z, 
 				     double& potl0, double& potl, 
@@ -75,12 +75,17 @@ public:
 				     double& potz, bool monopole=false);
 
   // cartesian forces wrapper function
-  void return_forces(CylExpansion* C,
-		     array_type2 coscoefs,
+  void return_forces(array_type2 coscoefs,
 		     array_type2 sincoefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
 		     bool monopole=false);
+
+  void select_coefficient_time(double desired_time,
+			     array_type2& coscoefs_at_time,
+			       array_type2& sincoefs_at_time);
+
+  void get_table_forces(double r, double z, CylForce& forcetable);
 
 };
 
@@ -107,14 +112,12 @@ void CylExpansion::initialise(string cyl_cache_name,
 
 
 
-void CylExpansion::determine_fields_at_point_cyl
-        (CylCache& cachetable,
-         array_type2& coscoefs,
-         array_type2& sincoefs,
-         double r, double phi, double z, 
-         double& potl0, double& potl, 
-         double& fr, double& fp, double& fz,
-	 bool monopole)
+void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
+						 array_type2& sincoefs,
+						 double r, double phi, double z, 
+						 double& potl0, double& potl, 
+						 double& fr, double& fp, double& fz,
+						 bool monopole)
 {
   /*
   // skipping density for now --> decide later if interesting.
@@ -126,9 +129,9 @@ void CylExpansion::determine_fields_at_point_cyl
   int m,n;
 
   double ccos,ssin,fac;
-  
-  CylForce forcetable;
-  get_table_forces(r, z, cachetable, forcetable);
+
+  //get_table_forces(r, z, cachetable, forcetable);
+  get_table_forces(r, z, forcetable);
 
   potl0  = 0.0;
   potl   = 0.0;
@@ -181,8 +184,7 @@ void CylExpansion::determine_fields_at_point_cyl
   
 }
 
-void CylExpansion::return_forces(CylExpansion* C,
-		   array_type2 coscoefs,
+void CylExpansion::return_forces(array_type2 coscoefs,
 		   array_type2 sincoefs,
 		   double x, double y, double z,
 		   double& fx, double& fy, double& fz,
@@ -202,7 +204,7 @@ void CylExpansion::return_forces(CylExpansion* C,
   
   cartesian_to_cylindrical(xvir, yvir, rtmp, phitmp);
   
-  C->determine_fields_at_point_cyl(C->cachetable, coscoefs, sincoefs,
+  determine_fields_at_point_cyl(coscoefs, sincoefs,
 				   rtmp,phitmp,z,
 				   potl0,potl,
 				   fr,fp,fz);
@@ -217,3 +219,154 @@ void CylExpansion::return_forces(CylExpansion* C,
   virial_to_physical_force (fxtmp,fytmp,fztmp,fx,fy,fz);
 
 }
+
+
+
+void CylExpansion::select_coefficient_time(double desired_time,
+			     array_type2& coscoefs_at_time,
+			     array_type2& sincoefs_at_time) {
+  /*
+    linear interpolation to get the coefficient matrix at a specific time
+
+   time units must be virial time units to match the input coefficient table
+   */
+
+  // coeftable.t is assumed to be evenly spaced
+  double dt = coeftable.t[1] - coeftable.t[0];
+
+  int indx = (int)( (desired_time-coeftable.t[0])/dt);
+
+  // guard against wanton extrapolation: should this stop the model?
+  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
+  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
+
+  if (indx<0) indx = 0;
+  if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
+
+  double x1 = (coeftable.t[indx+1] - desired_time)/dt;
+  double x2 = (desired_time - coeftable.t[indx])/dt;
+
+  coscoefs_at_time.resize(boost::extents[coeftable.MMAX+1][coeftable.NORDER]);
+  sincoefs_at_time.resize(boost::extents[coeftable.MMAX+1][coeftable.NORDER]);
+
+  for (int m=0; m<=coeftable.MMAX; m++){
+    for (int n=0; n<coeftable.NORDER; n++) {
+      coscoefs_at_time[m][n] = (x1*coeftable.coscoefs[indx][m][n] + x2*coeftable.coscoefs[indx+1][m][n]);
+
+      if (m) sincoefs_at_time[m][n] = (x1*coeftable.sincoefs[indx][m][n] + x2*coeftable.sincoefs[indx+1][m][n]);
+    }
+  }
+  
+}
+
+
+  
+void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
+{
+
+  // return 2d tables required to compute the forces
+  
+  forcetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.potS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+
+  forcetable.rforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.rforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+
+  forcetable.zforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.zforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+
+
+  if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
+  if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
+
+  double X = (r_to_xi(r,cachetable.CMAP,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
+  double Y = (z_to_y(z,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
+
+  int ix = (int)X;
+  int iy = (int)Y;
+
+  if (ix < 0) {
+    ix = 0;
+  }
+  if (iy < 0) {
+    iy = 0;
+  }
+  
+  if (ix >= cachetable.NUMX) {
+    ix = cachetable.NUMX-1;
+  }
+  if (iy >= cachetable.NUMY) {
+    iy = cachetable.NUMY-1;
+  }
+
+  double delx0 = (double)ix + 1.0 - X;
+  double dely0 = (double)iy + 1.0 - Y;
+  double delx1 = X - (double)ix;
+  double dely1 = Y - (double)iy;
+
+  double c00 = delx0*dely0;
+  double c10 = delx1*dely0;
+  double c01 = delx0*dely1;
+  double c11 = delx1*dely1;
+
+  for (int mm=0; mm<=cachetable.MMAX; mm++) {
+    
+    for (int n=0; n<cachetable.NORDER; n++) {
+
+      forcetable.potC[mm][n] = 
+	(
+	 cachetable.potC[mm][n][ix  ][iy  ] * c00 +
+	 cachetable.potC[mm][n][ix+1][iy  ] * c10 +
+	 cachetable.potC[mm][n][ix  ][iy+1] * c01 +
+	 cachetable.potC[mm][n][ix+1][iy+1] * c11 
+	 );
+
+      forcetable.rforceC[mm][n] = 
+	(
+	 cachetable.rforceC[mm][n][ix  ][iy  ] * c00 +
+	 cachetable.rforceC[mm][n][ix+1][iy  ] * c10 +
+	 cachetable.rforceC[mm][n][ix  ][iy+1] * c01 +
+	 cachetable.rforceC[mm][n][ix+1][iy+1] * c11 
+	 );
+
+      forcetable.zforceC[mm][n] = 
+	(
+	 cachetable.zforceC[mm][n][ix  ][iy  ] * c00 +
+	 cachetable.zforceC[mm][n][ix+1][iy  ] * c10 +
+	 cachetable.zforceC[mm][n][ix  ][iy+1] * c01 +
+	 cachetable.zforceC[mm][n][ix+1][iy+1] * c11 
+	 );
+
+      // get sine values for m>0
+      if (mm) {
+
+	forcetable.potS[mm][n] = 
+	  (
+	   cachetable.potS[mm][n][ix  ][iy  ] * c00 +
+	   cachetable.potS[mm][n][ix+1][iy  ] * c10 +
+	   cachetable.potS[mm][n][ix  ][iy+1] * c01 +
+	   cachetable.potS[mm][n][ix+1][iy+1] * c11 
+	   );
+
+        forcetable.rforceS[mm][n] = 
+	  (
+	   cachetable.rforceS[mm][n][ix  ][iy  ] * c00 +
+	   cachetable.rforceS[mm][n][ix+1][iy  ] * c10 +
+	   cachetable.rforceS[mm][n][ix  ][iy+1] * c01 +
+	   cachetable.rforceS[mm][n][ix+1][iy+1] * c11 
+	   );
+
+        forcetable.zforceS[mm][n] = 
+	  (
+	   cachetable.zforceS[mm][n][ix  ][iy  ] * c00 +
+	   cachetable.zforceS[mm][n][ix+1][iy  ] * c10 +
+	   cachetable.zforceS[mm][n][ix  ][iy+1] * c01 +
+	   cachetable.zforceS[mm][n][ix+1][iy+1] * c11 
+	   );
+      }
+
+    } // end NORDER loop
+  } // end MMAX loop
+
+}
+

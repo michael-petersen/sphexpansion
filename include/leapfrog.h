@@ -33,6 +33,7 @@ void print_orbit(array_type2 orbit,
 }
 
 
+/*
 
 void leapfrog(SphExpansion* S,
 	      array_type2 coefs,
@@ -42,9 +43,7 @@ void leapfrog(SphExpansion* S,
 	      double dt,
 	      array_type2& orbit)
 {
-  /*
 
-   */
   double fx,fy,fz;
 
   // include the forces for now
@@ -111,9 +110,7 @@ void evolving_leapfrog(SphExpansion* S,
 	               double dt,
 	               array_type2& orbit)
 {
-  /*
 
-   */
   double fx,fy,fz;
 
   // include the forces for now
@@ -133,9 +130,9 @@ void evolving_leapfrog(SphExpansion* S,
   int step = 1;
 
   array_type2 tcoefs;
-  select_coefficient_time(0., S->coeftable, tcoefs);
+  S->select_coefficient_time(0., tcoefs);
   
-  S->return_forces(S, tcoefs,
+  S->return_forces(tcoefs,
 		orbit[0][0],orbit[1][0],orbit[2][0],
 		fx,fy,fz);
 
@@ -151,7 +148,7 @@ void evolving_leapfrog(SphExpansion* S,
     orbit[9][step] = dt*step;
 
     // pull coefficients at this time
-    select_coefficient_time(orbit[9][step], S->coeftable, tcoefs);
+    S->select_coefficient_time(orbit[9][step], tcoefs);
     
     // advance positions
     for (j=0; j<3; j++) {
@@ -159,10 +156,9 @@ void evolving_leapfrog(SphExpansion* S,
     }
 
     // calculate new forces
-    S->return_forces(S, tcoefs,
-		  orbit[0][step],orbit[1][step],orbit[2][step],
-		  //orbit[0][step],orbit[1][step],0.,
-		  fx,fy,fz);
+    S->return_forces(tcoefs,
+		     orbit[0][step],orbit[1][step],orbit[2][step],
+		     fx,fy,fz);
 
     orbit[6][step] = fx;
     orbit[7][step] = fy;
@@ -176,3 +172,4 @@ void evolving_leapfrog(SphExpansion* S,
   }
   
 }
+*/

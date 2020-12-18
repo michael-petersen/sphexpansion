@@ -122,7 +122,7 @@ int main () {
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
-  double reftime = 1.50;
+  double reftime = 1.53;
   bool onlymonopole = false;
 
   array_type2 mwcoefs,lmccoefs;

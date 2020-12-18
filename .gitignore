@@ -6,7 +6,9 @@ rotcurve
 data
 trajectory
 density
+speed
 data/*
 .DS_Store
 tests/comparison*
 rotcurve.dSYM/Contents/Info.plist
+.legacy*

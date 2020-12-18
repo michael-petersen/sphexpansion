@@ -103,7 +103,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
 
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
   
-  MW->determine_fields_at_point_sph(MW->cachetable, mwcoefs,
+  MW->determine_fields_at_point_sph(mwcoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
 				fr,ft,fp);
@@ -124,7 +124,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
 
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
-  LMC->determine_fields_at_point_sph(LMC->cachetable, lmccoefs,
+  LMC->determine_fields_at_point_sph( lmccoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
 				fr,ft,fp);
@@ -179,8 +179,8 @@ void two_component_leapfrog(SphExpansion* MW,
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
   array_type2 tcoefsmw,tcoefslmc;
-  select_coefficient_time(0., MW->coeftable, tcoefsmw);
-  select_coefficient_time(0., LMC->coeftable, tcoefslmc);
+  MW->select_coefficient_time(0.,tcoefsmw);
+  LMC->select_coefficient_time(0., tcoefslmc);
 
   // not applying time offsets here; think about whether this is a problem
   double tphys;
@@ -209,8 +209,8 @@ void two_component_leapfrog(SphExpansion* MW,
     //cout << "TVIR=" << tvir << endl;
 
     // get coefficients at the current virial time
-    select_coefficient_time(tvir, MW->coeftable, tcoefsmw);
-    select_coefficient_time(tvir, LMC->coeftable, tcoefslmc);
+    MW->select_coefficient_time(tvir, tcoefsmw);
+    LMC->select_coefficient_time(tvir,  tcoefslmc);
 
     // advance positions
     for (j=0; j<3; j++) {
@@ -303,7 +303,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
 
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
   
-  MW->determine_fields_at_point_sph(MW->cachetable, mwcoefs,
+  MW->determine_fields_at_point_sph( mwcoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
 				fr,ft,fp);
@@ -322,7 +322,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   r2tmp = sqrt((xvir-mwd_centre[0])*(xvir-mwd_centre[0]) + (yvir-mwd_centre[1])*(yvir-mwd_centre[1]));
 
   // same procedure for the disc
-  MWD->determine_fields_at_point_cyl(MWD->cachetable, mwdcoscoefs,mwdsincoefs,
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
 				     r2tmp,phitmp,zvir-mwd_centre[2],
 				     tpotl0,tpotl,
 				     fr,fp,fztmp);
@@ -343,7 +343,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
 
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
-  LMC->determine_fields_at_point_sph(LMC->cachetable, lmccoefs,
+  LMC->determine_fields_at_point_sph(lmccoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
 				fr,ft,fp);
@@ -399,11 +399,11 @@ void three_component_leapfrog(SphExpansion* MW,
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
   array_type2 tcoefsmw,tcoefslmc;
-  select_coefficient_time(0., MW->coeftable, tcoefsmw);
-  select_coefficient_time(0., LMC->coeftable, tcoefslmc);
+  MW->select_coefficient_time(0., tcoefsmw);
+  LMC->select_coefficient_time(0., tcoefslmc);
 
   array_type2 mwcoscoefs,mwsincoefs;
-  select_coefficient_time(0.0, MWD->coeftable, mwcoscoefs, mwsincoefs);
+  MWD->select_coefficient_time(0.0, mwcoscoefs, mwsincoefs);
 
   // not applying time offsets here; think about whether this is a problem
   double tphys;
@@ -432,9 +432,9 @@ void three_component_leapfrog(SphExpansion* MW,
     //cout << "TVIR=" << tvir << endl;
 
     // get coefficients at the current virial time
-    select_coefficient_time(tvir, MW->coeftable, tcoefsmw);
-    select_coefficient_time(tvir, LMC->coeftable, tcoefslmc);
-    select_coefficient_time(tvir, MWD->coeftable, mwcoscoefs, mwsincoefs);
+    MW->select_coefficient_time(tvir, tcoefsmw);
+    LMC->select_coefficient_time(tvir, tcoefslmc);
+    MWD->select_coefficient_time(tvir, mwcoscoefs, mwsincoefs);
 
     // advance positions
     for (j=0; j<3; j++) {
@@ -549,7 +549,7 @@ int main () {
   cout << "Input pos/vel: " << xinit[0] << " " << xinit[1] << " " << xinit[2] << " " <<
     vxinit[0] << " " << vxinit[1] << " " << vxinit[2] << " " << endl;
 
-  double nint=500;
+  double nint=1000;
 
   // call this time in kpc/km/s units
   double dt;

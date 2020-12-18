@@ -44,6 +44,7 @@ private:
 
   // doesn't need to be exposed to the outside world
   SphModel modeltable;
+  SphCoefs coeftable;
   
   void initialise(string sph_cache_name,
 		  string model_file,
@@ -60,7 +61,6 @@ public:
   // expose the important expansion data
   SphCache cachetable;
   SphOrient orient;
-  SphCoefs coeftable;
 
   // get potential function weights
   void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
@@ -70,16 +70,14 @@ public:
 
   
   // the base spherical class
-  void determine_fields_at_point_sph(SphCache& cachetable,
-				     array_type2& coefs,
+  void determine_fields_at_point_sph(array_type2& coefs,
 				     double r, double theta, double phi, 
 				     double& potl0, double& potl, 
 				     double& potr, double& pott,
 				     double& potp, bool monopole=false);
 
   // version with density return
-  void determine_fields_at_point_sph(SphCache& cachetable,
-				     array_type2& coefs,
+  void determine_fields_at_point_sph(array_type2& coefs,
 				     double r, double theta, double phi, 
 				     double& dens0, double& dens, 
 				     double& potl0, double& potl, 
@@ -87,18 +85,20 @@ public:
 				     double& potp, bool monopole=false);
   
   // cartesian forces wrapper function
-  void return_forces(SphExpansion* S,
-		     array_type2 coefs,
+  void return_forces(array_type2& coefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
 		     bool monopole=false);
 
   // cartesian forces wrapper function
-  void return_density(SphExpansion* S,
-		     array_type2 coefs,
-		     double x, double y, double z,
-		     double& d,
-		     bool monopole=false);
+  void return_density(array_type2& coefs,
+		      double x, double y, double z,
+		      double& d,
+		      bool monopole=false);
+
+  // coefficient interpolator
+  void select_coefficient_time(double desired_time,
+			       array_type2& coefs_at_time, int order=-1);
 
 };
 
@@ -172,8 +172,7 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs,
 
 
 void SphExpansion::determine_fields_at_point_sph
-(SphCache& cachetable,
- array_type2& coefs,
+(array_type2& coefs,
  double r, double theta, double phi, 
  double& potl0, double& potl, 
  double& potr, double& pott, double& potp, bool monopole)
@@ -275,8 +274,7 @@ void SphExpansion::determine_fields_at_point_sph
 
 
 void SphExpansion::determine_fields_at_point_sph
-(SphCache& cachetable,
- array_type2& coefs,
+(array_type2& coefs,
  double r, double theta, double phi, 
  double& dens0, double& dens, 
  double& potl0, double& potl, 
@@ -392,11 +390,9 @@ void SphExpansion::determine_fields_at_point_sph
   
 }
 
-void SphExpansion::return_forces(SphExpansion* S,
-		   array_type2 coefs,
-		   double x, double y, double z,
-		   double& fx, double& fy, double& fz,
-		   bool monopole)
+void SphExpansion::return_forces(array_type2& coefs, double x, double y, double z,
+				 double& fx, double& fy, double& fz,
+				 bool monopole)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -412,10 +408,9 @@ void SphExpansion::return_forces(SphExpansion* S,
   
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
   
-  S->determine_fields_at_point_sph(S->cachetable, coefs,
-				rtmp,thetatmp,phitmp,
+  determine_fields_at_point_sph(coefs, rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				   fr,ft,fp,monopole);
+				fr,ft,fp,monopole);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
@@ -429,11 +424,10 @@ void SphExpansion::return_forces(SphExpansion* S,
 }
 
 
-void SphExpansion::return_density(SphExpansion* S,
-		   array_type2 coefs,
-		   double x, double y, double z,
-		   double& d,
-		   bool monopole)
+void SphExpansion::return_density(array_type2& coefs,
+				  double x, double y, double z,
+				  double& d,
+				  bool monopole)
 {
   /*
     return density
@@ -449,9 +443,8 @@ void SphExpansion::return_density(SphExpansion* S,
   
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
   
-  S->determine_fields_at_point_sph(S->cachetable, coefs,
-				   //determine_fields_at_point_sph(cachetable, coefs,
-				   rtmp,thetatmp,phitmp,
+  determine_fields_at_point_sph(coefs,
+				rtmp,thetatmp,phitmp,
 				   tdens0,d,
 				   tpotl0,tpotl,
 				   fr,ft,fp,monopole);
@@ -463,3 +456,86 @@ void SphExpansion::return_density(SphExpansion* S,
 
 
 }
+
+void SphExpansion::select_coefficient_time(double desired_time,
+			     array_type2& coefs_at_time, int order) {
+  /*
+    linear interpolation to get the coefficient matrix at a specific time
+
+   time units must be virial time units to match the input coefficient
+   table
+
+   if order<0, will select all orders. if order>0, will select only
+   specified order.
+   */
+
+  int numl;
+
+  numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
+
+  coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);  
+  
+  // coeftable.t is assumed to be evenly spaced
+  double dt = coeftable.t[1] - coeftable.t[0];
+
+  int indx = (int)( (desired_time-coeftable.t[0])/dt);
+
+  // guard against wanton extrapolation: should this stop the model?
+  //if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
+
+  // guard against going past the end of the simulation
+  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
+
+#if DEEPDEBUGCOEFS
+  cout << indx << endl;
+#endif
+  
+  if (indx<0) {
+
+
+    for (int l=0; l<numl; l++){
+      for (int n=0; n<coeftable.NMAX; n++) {
+        coefs_at_time[l][n] = coeftable.coefs[0][l][n];
+      }
+    }
+    
+  } else {
+
+    // case where the simulations are not before the beginning of the simulation
+    // interpolate from the two closest times
+
+    double x1 = (coeftable.t[indx+1] - desired_time)/dt;
+    double x2 = (desired_time - coeftable.t[indx])/dt;
+
+#if DEEPDEBUGCOEFS
+    cout << "dt=" << setw(16) << dt << "  t[indx+1]="  << setw(16) << coeftable.t[indx+1]
+	                            << "  t[indx]="  << setw(16) << coeftable.t[indx]
+                                    << "  desiredT="  << setw(16) << desired_time << endl;
+    cout << "x1/x2=" << setw(16) << x1 << setw(14) << x2 << endl;
+#endif
+
+    for (int l=0; l<numl; l++){
+      for (int n=0; n<coeftable.NMAX; n++) {
+        coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[indx+1][l][n]);
+      }
+    }
+  }
+
+  // go through and zero out non-selected orders
+
+  if (order>0) {
+    for (int l=0; l<numl; l++){
+    
+      if (l == order) continue;
+      
+      for (int n=0; n<coeftable.NMAX; n++) {
+        coefs_at_time[l][n] = 0.0;
+      }
+      
+    }
+  }
+  
+}
+
+
+
