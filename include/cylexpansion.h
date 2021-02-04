@@ -4,6 +4,7 @@ definitions for the CylExpansion class
 MSP  5 May 2020 first commit
 MSP 29 Sep 2020 test first model
 MSP 13 Oct 2020 add monopole capability
+MSP  4 Feb 2021 add dipole and quadrupole capability
 
 this should be able to go much faster. obviously I'm passing too much
 of something around, would like to track down what exactly is going on.
@@ -63,23 +64,31 @@ public:
 	       string coef_file,
 	       string orient_file);
 
-  // expose the important expansion data
+  // expose the important expansion data: use the spherical code, it works here!
   SphOrient orient;
 
-  // the base spherical class
+  // the base cylindrical class
+  // the flags at the end can specify which components you want to control specifically
+  // monopole  =true means that only the monopole is considered, but at all spatial scales
+  // dipole    =true means that only the monopole and the dipole are considered
+  // quadrupole=true means that only the monopole and the quadrupole are considered
+  //
+  // notes: if monopole is true, dipole and quadrupole are forced to be false.
+  //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
   void determine_fields_at_point_cyl(array_type2& coscoefs,
 				     array_type2& sincoefs,
 				     double r, double phi, double z, 
 				     double& potl0, double& potl, 
 				     double& potr, double& potp,
-				     double& potz, bool monopole=false);
+				     double& potz,
+				     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   // cartesian forces wrapper function
   void return_forces(array_type2 coscoefs,
 		     array_type2 sincoefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
-		     bool monopole=false);
+		     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   void select_coefficient_time(double desired_time,
 			     array_type2& coscoefs_at_time,
@@ -117,7 +126,7 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 						 double r, double phi, double z, 
 						 double& potl0, double& potl, 
 						 double& fr, double& fp, double& fz,
-						 bool monopole)
+						 bool monopole, bool dipole, bool quadrupole)
 {
   /*
   // skipping density for now --> decide later if interesting.
@@ -141,7 +150,22 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 
   for (m=0; m<=cachetable.MMAX; m++) {
 
-    if (monopole && m>0) return;
+    if (monopole   &&   m>0) {
+      return;
+    }
+
+    if (dipole && quadrupole) {
+      if (m>2) continue;
+    } else {
+      
+      if (dipole     && m!=0 && m!=1) {
+        continue;
+      }
+    
+      if (quadrupole && m!=0 && m!=2) {
+        continue;
+      }
+    }
 
     ccos = cos(phi*m);
     ssin = sin(phi*m);
@@ -156,8 +180,6 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
       fr   += fac * forcetable.rforceC[m][n];
       fz   += fac * forcetable.zforceC[m][n];
 
-      //d += np.sum(fac * (densC[mm,:,ix,iy]*c00 + densC[mm,:,ix+1,iy  ]*c10 + densC[mm,:,ix,iy+1]*c01 + densC[mm,:,ix+1,iy+1]*c11));
-
       fac = coscoefs[m][n] * ssin;
 
       fp += fac * m * forcetable.potC[m][n];
@@ -170,8 +192,6 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 
 	fr  += fac * forcetable.rforceS[m][n];
 	fz  += fac * forcetable.zforceS[m][n];
-
-	//d += np.sum(fac * ( densS[mm,:,ix,iy] * c00 + densS[mm,:,ix+1,iy  ] * c10 + densS[mm,:,ix,iy+1] * c01 + densS[mm,:,ix+1,iy+1] * c11 ));
 
 	fac = -sincoefs[m][n] * ccos;
 
@@ -188,10 +208,10 @@ void CylExpansion::return_forces(array_type2 coscoefs,
 		   array_type2 sincoefs,
 		   double x, double y, double z,
 		   double& fx, double& fy, double& fz,
-		   bool monopole)
+		   bool monopole, bool dipole, bool quadrupole)
 {
   /*
-    test force return from just one component, from the centre of the expansion
+    force return from just one component, from the centre of the expansion
    */
 
   // translate all times and positions into exp virial units
@@ -205,9 +225,9 @@ void CylExpansion::return_forces(array_type2 coscoefs,
   cartesian_to_cylindrical(xvir, yvir, rtmp, phitmp);
   
   determine_fields_at_point_cyl(coscoefs, sincoefs,
-				   rtmp,phitmp,z,
-				   potl0,potl,
-				   fr,fp,fz);
+				rtmp,phitmp,z,
+				potl0,potl,
+				fr,fp,fz,monopole,dipole,quadrupole);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 

@@ -104,9 +104,9 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
   
   MW->determine_fields_at_point_sph(mwcoefs,
-				rtmp,thetatmp,phitmp,
-				tpotl0,tpotl,
-				fr,ft,fp);
+				    rtmp,thetatmp,phitmp,
+				    tpotl0,tpotl,
+				    fr,ft,fp,true,true,true);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -124,10 +124,10 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
 
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
-  LMC->determine_fields_at_point_sph( lmccoefs,
-				rtmp,thetatmp,phitmp,
-				tpotl0,tpotl,
-				fr,ft,fp);
+  LMC->determine_fields_at_point_sph(lmccoefs,
+				     rtmp,thetatmp,phitmp,
+				     tpotl0,tpotl,
+				     fr,ft,fp,true,true,true);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -306,7 +306,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   MW->determine_fields_at_point_sph( mwcoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				fr,ft,fp);
+				     fr,ft,fp,false,false,false);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -325,7 +325,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
 				     r2tmp,phitmp,zvir-mwd_centre[2],
 				     tpotl0,tpotl,
-				     fr,fp,fztmp);
+				     fr,fp,fztmp,false,false,false);
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
 				  fr, fp,
@@ -346,7 +346,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   LMC->determine_fields_at_point_sph(lmccoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				fr,ft,fp);
+				     fr,ft,fp,false,false,false);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -549,7 +549,7 @@ int main () {
   cout << "Input pos/vel: " << xinit[0] << " " << xinit[1] << " " << xinit[2] << " " <<
     vxinit[0] << " " << vxinit[1] << " " << vxinit[2] << " " << endl;
 
-  double nint=1000;
+  double nint=10;
 
   // call this time in kpc/km/s units
   double dt;

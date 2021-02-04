@@ -3,6 +3,7 @@ definitions for the SphExpansion class
 
 MSP 24 Apr 2020 restructured
 MSP  7 Oct 2020 fix density normalisation
+MSP  4 Feb 2021 add dipole and quadrupole capability
 
 */
 
@@ -70,11 +71,18 @@ public:
 
   
   // the base spherical class
+  // the flags at the end can specify which components you want to control specifically
+  // monopole  =true means that only the monopole is considered, but at all spatial scales
+  // dipole    =true means that only the monopole and the dipole are considered
+  // quadrupole=true means that only the monopole and the quadrupole are considered
+  //
+  // notes: if monopole is true, dipole and quadrupole are forced to be false.
+  //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
   void determine_fields_at_point_sph(array_type2& coefs,
 				     double r, double theta, double phi, 
 				     double& potl0, double& potl, 
 				     double& potr, double& pott,
-				     double& potp, bool monopole=false);
+				     double& potp, bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   // version with density return
   void determine_fields_at_point_sph(array_type2& coefs,
@@ -82,19 +90,19 @@ public:
 				     double& dens0, double& dens, 
 				     double& potl0, double& potl, 
 				     double& potr, double& pott,
-				     double& potp, bool monopole=false);
+				     double& potp, bool monopole=false, bool dipole=false, bool quadrupole=false);
   
   // cartesian forces wrapper function
   void return_forces(array_type2& coefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
-		     bool monopole=false);
+		     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   // cartesian forces wrapper function
   void return_density(array_type2& coefs,
 		      double x, double y, double z,
 		      double& d,
-		      bool monopole=false);
+		      bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   // coefficient interpolator
   void select_coefficient_time(double desired_time,
@@ -175,7 +183,8 @@ void SphExpansion::determine_fields_at_point_sph
 (array_type2& coefs,
  double r, double theta, double phi, 
  double& potl0, double& potl, 
- double& potr, double& pott, double& potp, bool monopole)
+ double& potr, double& pott, double& potp,
+ bool monopole, bool dipole, bool quadrupole)
 {
   /*
   // version without density
@@ -186,14 +195,7 @@ void SphExpansion::determine_fields_at_point_sph
 
   */
 
-  /*
-  int numl;
-  if (monopole) {
-    numl = 1;
-  } else {
-    numl = cachetable.LMAX;
-  }
-  */
+  //cout << dipole << " " << quadrupole << endl;
 
   int numl = cachetable.LMAX;
 
@@ -220,8 +222,8 @@ void SphExpansion::determine_fields_at_point_sph
 
   // l loop
   if (monopole) return;
-
-   array_type2 factrl;
+  
+  array_type2 factrl;
   factorial(numl, factrl);
 
   array_type2 legs, dlegs;
@@ -231,6 +233,14 @@ void SphExpansion::determine_fields_at_point_sph
   sinecosine_R(numl, phi, cosm, sinm);
     
   for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
+
+    // advance loops if dipole or quadrupole flags are flown
+    if (dipole && quadrupole && l>2) {
+      continue;
+    } else {
+      if ( dipole && !quadrupole && l!=1) continue;
+      if (!dipole &&  quadrupole && l!=2) continue;
+    }
     
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -273,12 +283,12 @@ void SphExpansion::determine_fields_at_point_sph
 }
 
 
-void SphExpansion::determine_fields_at_point_sph
-(array_type2& coefs,
+void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
  double r, double theta, double phi, 
  double& dens0, double& dens, 
  double& potl0, double& potl, 
- double& potr, double& pott, double& potp, bool monopole)
+ double& potr, double& pott, double& potp,
+ bool monopole, bool dipole, bool quadrupole)
 {
   /*
   // version WITH density
@@ -289,14 +299,6 @@ void SphExpansion::determine_fields_at_point_sph
 
   */
 
-  /*
-  int numl;
-  if (monopole) {
-    numl = 1;
-  } else {
-    numl = cachetable.LMAX;
-  }
-  */
 
   int numl = cachetable.LMAX;
   
@@ -327,7 +329,6 @@ void SphExpansion::determine_fields_at_point_sph
   dens0 = fac1*d;
 
 
-
   // l loop
   if (monopole) return;
 
@@ -341,6 +342,15 @@ void SphExpansion::determine_fields_at_point_sph
   sinecosine_R(numl, phi, cosm, sinm);
     
   for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
+
+    // advance loops if dipole or quadrupole flags are flown
+    if (dipole && quadrupole && l>2) {
+      continue;
+    } else {
+      if ( dipole && !quadrupole && l!=1) continue;
+      if (!dipole &&  quadrupole && l!=2) continue;
+    }
+    
     
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -392,7 +402,7 @@ void SphExpansion::determine_fields_at_point_sph
 
 void SphExpansion::return_forces(array_type2& coefs, double x, double y, double z,
 				 double& fx, double& fy, double& fz,
-				 bool monopole)
+				 bool monopole, bool dipole, bool quadrupole)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -410,7 +420,7 @@ void SphExpansion::return_forces(array_type2& coefs, double x, double y, double 
   
   determine_fields_at_point_sph(coefs, rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				fr,ft,fp,monopole);
+				fr,ft,fp,monopole,dipole,quadrupole);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
@@ -427,7 +437,7 @@ void SphExpansion::return_forces(array_type2& coefs, double x, double y, double 
 void SphExpansion::return_density(array_type2& coefs,
 				  double x, double y, double z,
 				  double& d,
-				  bool monopole)
+				  bool monopole, bool dipole, bool quadrupole)
 {
   /*
     return density
@@ -447,9 +457,7 @@ void SphExpansion::return_density(array_type2& coefs,
 				rtmp,thetatmp,phitmp,
 				   tdens0,d,
 				   tpotl0,tpotl,
-				   fr,ft,fp,monopole);
-
-  //cout << setw(14) << tdens0 << setw(14) << d << endl;
+				   fr,ft,fp,monopole,dipole,quadrupole);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
