@@ -469,29 +469,29 @@ int main () {
 
   // MW
   cout << "Initialising MW ... " << endl;
-  string sph_cache_name_mw  =     "/Volumes/External1/Disk068/Run22Disk/SLGridSph.cache.mw.run068s22hdm3";
-  string model_file_mw                      = "/Volumes/External1/Disk068/Run22Disk/SLGridSph.mw.nodisc";
-  string coef_file_mw       = "/Volumes/External1/Disk068/Run22Disk/simpleoutcoef.nofac.mw.run068s22hdm3";
-  string orient_file_mw             = "/Volumes/External1/Disk068/Run22Disk/mw.orient.run068s22hdm3.smth";
+  string sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw.run7mld";
+  string model_file_mw      = "/Volumes/External1/Disk076/ErkalMW.model";
+  string coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef.nofac.mw.run7mld";
+  string orient_file_mw     = "/Volumes/External1/Disk076/mw.orient.run7mld.smth";
 
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  string sph_cache_name_lmc      = "/Volumes/External1/Disk068/Run22Disk/SLGridSph.cache.lmc.run068s22hdm3";
-  string model_file_lmc                      = "/Volumes/External1/Disk068/Run22Disk/SLGridSph.lmc.c17.m3";
-  string coef_file_lmc       = "/Volumes/External1/Disk068/Run22Disk/simpleoutcoef.nofac.lmc.run068s22hdm3";
-  string orient_file_lmc             = "/Volumes/External1/Disk068/Run22Disk/lmc.orient.run068s22hdm3.smth";
+  string sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc.run7mld";
+  string model_file_lmc     = "/Volumes/External1/Disk076/ErkalLMC.model";
+  string coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef.nofac.lmc.run7mld";
+  string orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient.run7mld.smth";
 
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
   // MW 
   cout << "Initialising MW disc ... " << endl;
-  string cyl_cache_name_mw = "/Volumes/External1/Disk068/Run22Disk/.disc.cache.run068s22hdm3";
-  string cyl_coef_name_mw = "/Volumes/External1/Disk068/Run22Disk/outcoef.disc.run068s22hdm3";
-  string cyl_orient_name_mw = "/Volumes/External1/Disk068/Run22Disk/disc.orient.run068s22hdm3.smth";
+  string cyl_cache_name_mw = "/Volumes/External1/Disk076/.disc.cache.run7mld";
+  string cyl_coef_name_mw = "/Volumes/External1/Disk076/outcoef.disc.run7mld";
+  string cyl_orient_name_mw = "/Volumes/External1/Disk076/disc.orient.run7mld.smth";
 
   CylExpansion* MWD;
   MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);

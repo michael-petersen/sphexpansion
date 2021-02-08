@@ -124,12 +124,18 @@ void SphExpansion::initialise(string sph_cache_name,
 			      string orient_file)
 {
   // pull in the parts for the expansion
-  read_sph_cache(sph_cache_name, SphExpansion::cachetable);
+  try {
+    read_sph_cache(sph_cache_name, SphExpansion::cachetable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
 
   read_model(model_file, SphExpansion::modeltable);
 
   read_coef_file (coef_file, SphExpansion::coeftable);
 
+  // if no orient file, assume zeros? 
   read_orient (orient_file, SphExpansion::orient);
   
   // finish setting up the model

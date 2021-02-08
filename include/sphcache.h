@@ -61,12 +61,12 @@ struct SphCache
 void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
 
   ifstream in(sph_cache_name.c_str());
+  
   if (!in) {
-        cout << "sphcache::read_sph_cache: Unable to open file!\n";
-        exit(1);
+    throw "sphcache::read_sph_cache: Unable to open file!\n";
   }
 
-  cerr << "sphcache.read_sph_cache: trying to read cached table . . . ";
+  std::cerr << "sphcache::read_sph_cache: trying to read cached table . . . ";
 
   // read the parameters from the cachefile
   in.read((char *)&cachetable.LMAX, sizeof(int));
@@ -76,6 +76,10 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
   in.read((char *)&cachetable.RMIN, sizeof(double));
   in.read((char *)&cachetable.RMAX, sizeof(double));
   in.read((char *)&cachetable.SCL,  sizeof(double));
+
+  if (cachetable.LMAX > 32) {
+    throw "\nsphcache::read_sph_cache: LMAX>32 set. If intended, adjust guards in sphcache.h. If not intended, check if sph_cache is the correct file?";
+  }
 
   // debug
   if (debug) 
@@ -110,7 +114,6 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
     }
   }
 
-  //cout << cachetable.RMIN << endl;
   std::cerr << "success!!" << std::endl;
 }
 

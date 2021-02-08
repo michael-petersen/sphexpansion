@@ -3,7 +3,9 @@ accumulate.h
 
 compute coefficients from a distribution
 
-MSP 30 Apr 2020 first committ
+MSP 30 Apr 2020 first commit
+
+Plan:
 
 
  */
