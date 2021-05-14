@@ -5,11 +5,15 @@ helper functions driving transformations from (x,y,z) to (rho,phi,theta)
 
 MSP 22 Apr 2020 clean version
 MSP 24 Apr 2020 revised to handle edge cases 
+MSP 14 May 2021 added header guard
+
 
 wishlist:
 -vector versions of the functions to stop having to pass so much text
 
  */
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 
 #include <math.h>
 
@@ -102,3 +106,4 @@ void spherical_forces_to_cartesian(double r3, double phi, double theta,
   
 }
 
+#endif

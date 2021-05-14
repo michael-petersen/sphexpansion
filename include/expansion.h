@@ -8,6 +8,7 @@ MSP  4 Feb 2021 add dipole and quadrupole capability
 */
 
 // turn off the inclusion of boilerplate stuff for CylExpansion
+// in theory this should be fixed (as in, not needed) by header guard additions. check at some point?
 #undef STANDALONE
 #define STANDALONE 0
 
@@ -214,11 +215,10 @@ void SphExpansion::determine_fields_at_point_sph
   costh = cos(theta);
 
   fac1 = 0.25/M_PI;
-
+  
+  // retrieve the potential at the r location
   array_type2 potd,dpot;
   get_dpotl(r, cachetable, potd, dpot);
-
-  // is this ever evaluating the l=0,n>0 terms??
 
   // compute the monopole values
   get_pot_coefs(0, 0, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
@@ -226,9 +226,12 @@ void SphExpansion::determine_fields_at_point_sph
   potr = fac1*dp;
   pott = potp = 0.0;
 
-  // l loop
+  // l loop, return if monopole and skip everything else
+  // note that this tabulates the entire monopole, e.g. all spherically-symmetric terms.
+  //   this is NOT necessarily the lowest-order input term.
   if (monopole) return;
   
+  // this should be a global to avoid recomputing every time.
   array_type2 factrl;
   factorial(numl, factrl);
 

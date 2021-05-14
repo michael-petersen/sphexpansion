@@ -6,6 +6,8 @@ functions to handle the preparations for the coefficient files
 MSP 22 Apr 2020 clean version
 MSP 23 Apr 2020 add coefficient interpolation 
 MSP 15 Sep 2020 improve debug, fix pre-simulation interpolation
+MSP 14 May 2021 added self-gravity normalisation coefficients
+
 
 notes
 -the answer is yes, spline is expensive. moving the call outside helps; a more simple interpolation may help even further.
@@ -13,6 +15,8 @@ notes
  */
 
 #define DEEPDEBUGCOEFS 0
+
+#include "basis.h"
 
 using namespace std;
 
@@ -301,3 +305,46 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
 
 
 
+void get_selfgravity_coefficients(SphCoefs coeftable,
+			          array_type3& self_grav_coefs, int lorder=-1, int norder=-1, bool monopolenorm=false)
+{
+  // function to produce coefficients that have been normalised such that the self-gravity can be compared
+  // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
+  // this will set up another copy of the coefficients, so be warned: this could be large
+
+  // todo: 
+  // add options for single lorder,morder return
+  // add monopolenorm option
+
+
+  int numl = coeftable.LMAX;
+  int numn = coeftable.NMAX;
+  int l,loffset,moffset,m,n,t;
+
+  self_grav_coefs.resize(boost::extents[coeftable.NUMT][(coeftable.LMAX+1)*(coeftable.LMAX+1)][coeftable.NMAX]);
+
+  double fac1,fac2;
+
+  fac1 = 0.25/M_PI;
+  
+  array_type2 factrl;
+  factorial(numl, factrl);
+
+  for (t=0;t<coeftable.NUMT;t++) {
+
+    for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = fac1*coeftable.coefs[t][0][n];
+
+    for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
+      for (m=0, moffset=0; m<=l; m++) {
+        fac1 = (2.0*l+1.0)/(4.0*M_PI);
+        if (m==0) {
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac1*coeftable.coefs[t][loffset+moffset][n];
+        } else {
+	  fac2 = 2.0 * fac1 * factrl[l][m];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac2*coeftable.coefs[t][loffset+moffset][n];
+        }
+      }
+    }
+  }
+
+}

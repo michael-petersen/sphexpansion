@@ -2,8 +2,12 @@
 rotation matrices and helper rotation functions
 
 MSP 30 Apr 2020 first version
+MSP 14 May 2021 added header guard
+
 
  */
+#ifndef ROTATE_H
+#define ROTATE_H
 
 #include <eigen3/Eigen/Dense>
 
@@ -42,3 +46,5 @@ MatrixXd return_euler_slater(double PHI, double THETA, double PSI, int BODY)
   else
     return euler;
 }
+
+#endif

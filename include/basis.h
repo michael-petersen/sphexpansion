@@ -3,9 +3,13 @@ basis.h
 
 Basic basis elements. See Basis.cc/.H for original implementation.
 
-clean version, MSP 22 April 2020
+MSP 22 Apr 2020 clean version
+MSP 14 May 2021 added header guard
 
  */
+#ifndef BASIS_H
+#define BASIS_H
+
 
 #include "boost/multi_array.hpp"
 
@@ -14,7 +18,7 @@ typedef boost::multi_array<double, 2> array_type2;
 // Machine constant for Legendre (note constexpr is not good in clang)
 double MINEPS = 1.e-20;
 
-using namespace std;
+//using namespace std;
 
 void legendre_R(int lmax, double x, array_type2& p)
 {
@@ -29,7 +33,7 @@ void legendre_R(int lmax, double x, array_type2& p)
       pll *= -fact*somx2;
       p[m][m] = pll;
       if (std::isnan(p[m][m]))
-	cerr << "legendre_R: p[" << m << "][" << m << "]: pll=" << pll << "\n";
+	std::cerr << "legendre_R: p[" << m << "][" << m << "]: pll=" << pll << "\n";
       fact += 2.0;
     }
   }
@@ -40,7 +44,7 @@ void legendre_R(int lmax, double x, array_type2& p)
     for (l=m+2; l<=lmax; l++) {
       p[l][m] = pll = (x*(2*l-1)*pl1-(l+m-1)*pl2)/(l-m);
       if (std::isnan(p[l][m]))
-	cerr << "legendre_R: p[" << l << "][" << m << "]: pll=" << pll << "\n";
+	std::cerr << "legendre_R: p[" << l << "][" << m << "]: pll=" << pll << "\n";
 
       pl2 = pl1;
       pl1 = pll;
@@ -48,11 +52,11 @@ void legendre_R(int lmax, double x, array_type2& p)
   }
 
   if (std::isnan(x))
-    cerr << "legendre_R: x\n";
+    std::cerr << "legendre_R: x\n";
   for(l=0; l<=lmax; l++)
     for (m=0; m<=l; m++)
       if (std::isnan(p[l][m]))
-	cerr << "legendre_R: p[" << l << "][" << m << "] lmax=" 
+	std::cerr << "legendre_R: p[" << l << "][" << m << "] lmax=" 
 	     << lmax << "\n";
 
 }
@@ -101,7 +105,7 @@ void dlegendre_R(int lmax, double x, array_type2& p, array_type2& dp)
   }
 }
 
-void sinecosine_R(int mmax, double phi, vector<double>& c, vector<double>& s)
+void sinecosine_R(int mmax, double phi, std::vector<double>& c, std::vector<double>& s)
 {
   int m;
 
@@ -141,3 +145,8 @@ void factorial (int lmax, array_type2& factorial) {
   }
 
 }
+
+
+#endif
+// https://www.acodersjourney.com/top-10-c-header-file-mistakes-and-how-to-fix-them/
+// see mistake #1

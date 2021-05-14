@@ -9,8 +9,12 @@ notes from call
 MSP 23 Apr 2020 clean version
 MSP  6 May 2020 close the loop with Msun addition
 MSP 28 Sep 2020 add density translation
+MSP 14 May 2021 added header guard
+
 
  */
+#ifndef TRANSLATE_H
+#define TRANSLATE_H
 
 using namespace std;
 
@@ -99,3 +103,6 @@ void physical_to_virial_velocity(double  vxphys, double vyphys, double vzphys,
   vyvir = vyphys/mw_vel_scale;
   vzvir = vzphys/mw_vel_scale;
 }
+
+
+#endif
