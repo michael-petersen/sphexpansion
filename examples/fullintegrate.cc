@@ -4,6 +4,7 @@ integrate an orbit in the MW-LMC potential and compare to exp output
 
 compile string: 
 clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ fullintegrate.cc -o fullintegrate
+clang++ -I/opt/local/include -L/opt/local/lib -I../include/ fullintegrate.cc -o obj/fullintegrate
 
 -O3 doesn't add much.
 -g -O0 really slows down.
