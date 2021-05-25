@@ -107,7 +107,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   MW->determine_fields_at_point_sph(mwcoefs,
 				    rtmp,thetatmp,phitmp,
 				    tpotl0,tpotl,
-				    fr,ft,fp,true,true,true);
+				    fr,ft,fp,false,false,false,2);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,

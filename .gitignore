@@ -12,3 +12,4 @@ data/*
 tests/comparison*
 rotcurve.dSYM/Contents/Info.plist
 .legacy*
+examples/obj/*

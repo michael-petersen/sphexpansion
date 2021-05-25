@@ -4,11 +4,11 @@ definitions for the SphExpansion class
 MSP 24 Apr 2020 restructured
 MSP  7 Oct 2020 fix density normalisation
 MSP  4 Feb 2021 add dipole and quadrupole capability
+MSP 25 May 2021 add ltrunc option; add self-gravitating coefficient calculation
 
 */
 
 // turn off the inclusion of boilerplate stuff for CylExpansion
-// in theory this should be fixed (as in, not needed) by header guard additions. check at some point?
 #undef STANDALONE
 #define STANDALONE 0
 
@@ -61,7 +61,7 @@ public:
 	       string orient_file);
 
   // expose the important expansion data
-  SphCache cachetable;
+  SphCache cachetable; // does this actually have to be exposed?
   SphOrient orient;
 
   // get potential function weights
@@ -76,6 +76,7 @@ public:
   // monopole  =true means that only the monopole is considered, but at all spatial scales
   // dipole    =true means that only the monopole and the dipole are considered
   // quadrupole=true means that only the monopole and the quadrupole are considered
+  // ltrunc          is an integer that specifies the maximum number of l harmonics to return
   //
   // notes: if monopole is true, dipole and quadrupole are forced to be false.
   //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
@@ -83,7 +84,9 @@ public:
 				     double r, double theta, double phi, 
 				     double& potl0, double& potl, 
 				     double& potr, double& pott,
-				     double& potp, bool monopole=false, bool dipole=false, bool quadrupole=false);
+				     double& potp,
+				     bool monopole=false, bool dipole=false, bool quadrupole=false,
+				     int ltrunc=1000);
 
   // version with density return
   void determine_fields_at_point_sph(array_type2& coefs,
@@ -91,24 +94,31 @@ public:
 				     double& dens0, double& dens, 
 				     double& potl0, double& potl, 
 				     double& potr, double& pott,
-				     double& potp, bool monopole=false, bool dipole=false, bool quadrupole=false);
+				     double& potp,
+				     bool monopole=false, bool dipole=false, bool quadrupole=false,
+				     int ltrunc=1000);
   
   // cartesian forces wrapper function
   void return_forces(array_type2& coefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
-		     bool monopole=false, bool dipole=false, bool quadrupole=false);
+		     bool monopole=false, bool dipole=false, bool quadrupole=false,
+		     int ltrunc=1000);
 
   // cartesian forces wrapper function
   void return_density(array_type2& coefs,
 		      double x, double y, double z,
 		      double& d,
-		      bool monopole=false, bool dipole=false, bool quadrupole=false);
+		      bool monopole=false, bool dipole=false, bool quadrupole=false,
+		      int ltrunc=1000);
 
   // coefficient interpolator
   void select_coefficient_time(double desired_time,
 			       array_type2& coefs_at_time, int order=-1);
 
+  // return self-gravitating coefficients
+  void get_selfgravity_coefficients(array_type3& self_grav_coefs, int lorder=-1, int norder=-1, bool monopolenorm=false);
+  
 };
 
 SphExpansion::SphExpansion(string sph_cache_name,
@@ -191,7 +201,8 @@ void SphExpansion::determine_fields_at_point_sph
  double r, double theta, double phi, 
  double& potl0, double& potl, 
  double& potr, double& pott, double& potp,
- bool monopole, bool dipole, bool quadrupole)
+ bool monopole, bool dipole, bool quadrupole,
+ int ltrunc)
 {
   /*
   // version without density
@@ -215,10 +226,11 @@ void SphExpansion::determine_fields_at_point_sph
   costh = cos(theta);
 
   fac1 = 0.25/M_PI;
-  
-  // retrieve the potential at the r location
+
   array_type2 potd,dpot;
   get_dpotl(r, cachetable, potd, dpot);
+
+  // is this ever evaluating the l=0,n>0 terms??
 
   // compute the monopole values
   get_pot_coefs(0, 0, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
@@ -226,12 +238,9 @@ void SphExpansion::determine_fields_at_point_sph
   potr = fac1*dp;
   pott = potp = 0.0;
 
-  // l loop, return if monopole and skip everything else
-  // note that this tabulates the entire monopole, e.g. all spherically-symmetric terms.
-  //   this is NOT necessarily the lowest-order input term.
+  // l loop
   if (monopole) return;
   
-  // this should be a global to avoid recomputing every time.
   array_type2 factrl;
   factorial(numl, factrl);
 
@@ -250,6 +259,9 @@ void SphExpansion::determine_fields_at_point_sph
       if ( dipole && !quadrupole && l!=1) continue;
       if (!dipole &&  quadrupole && l!=2) continue;
     }
+
+    // flag for selecting higher order terms
+    if (l>ltrunc) continue;
     
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -297,7 +309,8 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
  double& dens0, double& dens, 
  double& potl0, double& potl, 
  double& potr, double& pott, double& potp,
- bool monopole, bool dipole, bool quadrupole)
+ bool monopole, bool dipole, bool quadrupole,
+ int ltrunc)
 {
   /*
   // version WITH density
@@ -360,6 +373,8 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
       if (!dipole &&  quadrupole && l!=2) continue;
     }
     
+    // flag for selecting higher order terms
+    if (l>ltrunc) continue;
     
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -411,7 +426,8 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
 
 void SphExpansion::return_forces(array_type2& coefs, double x, double y, double z,
 				 double& fx, double& fy, double& fz,
-				 bool monopole, bool dipole, bool quadrupole)
+				 bool monopole, bool dipole, bool quadrupole,
+				 int ltrunc)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -429,7 +445,7 @@ void SphExpansion::return_forces(array_type2& coefs, double x, double y, double 
   
   determine_fields_at_point_sph(coefs, rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				fr,ft,fp,monopole,dipole,quadrupole);
+				fr,ft,fp,monopole,dipole,quadrupole,ltrunc);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
@@ -446,7 +462,7 @@ void SphExpansion::return_forces(array_type2& coefs, double x, double y, double 
 void SphExpansion::return_density(array_type2& coefs,
 				  double x, double y, double z,
 				  double& d,
-				  bool monopole, bool dipole, bool quadrupole)
+				  bool monopole, bool dipole, bool quadrupole, int ltrunc)
 {
   /*
     return density
@@ -464,9 +480,9 @@ void SphExpansion::return_density(array_type2& coefs,
   
   determine_fields_at_point_sph(coefs,
 				rtmp,thetatmp,phitmp,
-				   tdens0,d,
-				   tpotl0,tpotl,
-				   fr,ft,fp,monopole,dipole,quadrupole);
+				tdens0,d,
+			        tpotl0,tpotl,
+				fr,ft,fp,monopole,dipole,quadrupole,ltrunc);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
@@ -556,3 +572,45 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
 
 
+void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, int lorder, int norder, bool monopolenorm)
+{
+  
+  // function to produce coefficients that have been normalised such that the self-gravity can be compared
+  // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
+  // this will set up another copy of the coefficients, so be warned: this could be large
+
+  // todo: 
+  // add options for single lorder,morder return
+  // add monopolenorm option
+
+  int numl = coeftable.LMAX;
+  int numn = coeftable.NMAX;
+  int l,loffset,moffset,m,n,t;
+
+  self_grav_coefs.resize(boost::extents[coeftable.NUMT][(coeftable.LMAX+1)*(coeftable.LMAX+1)][coeftable.NMAX]);
+
+  double fac1,fac2;
+
+  fac1 = 0.25/M_PI;
+  
+  array_type2 factrl;
+  factorial(numl, factrl);
+
+  for (t=0;t<coeftable.NUMT;t++) {
+
+    for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = fac1*coeftable.coefs[t][0][n];
+
+    for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
+      for (m=0, moffset=0; m<=l; m++) {
+        fac1 = (2.0*l+1.0)/(4.0*M_PI);
+        if (m==0) {
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac1*coeftable.coefs[t][loffset+moffset][n];
+        } else {
+	  fac2 = 2.0 * fac1 * factrl[l][m];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac2*coeftable.coefs[t][loffset+moffset][n];
+        }
+      }
+    }
+  }
+
+}

@@ -316,6 +316,7 @@ void get_selfgravity_coefficients(SphCoefs coeftable,
   // add options for single lorder,morder return
   // add monopolenorm option
 
+  // the full version is in expansion.h, where the tables are exposed.
 
   int numl = coeftable.LMAX;
   int numn = coeftable.NMAX;
