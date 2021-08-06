@@ -498,8 +498,8 @@ void SphExpansion::select_coefficient_time(double desired_time,
    time units must be virial time units to match the input coefficient
    table
 
-   if order<0, will select all orders. if order>0, will select only
-   specified order.
+   if order<0, will select all orders. if order>0, will truncate at
+   the specified n_max.
    */
 
   int numl;
@@ -559,9 +559,9 @@ void SphExpansion::select_coefficient_time(double desired_time,
   if (order>0) {
     for (int l=0; l<numl; l++){
     
-      if (l == order) continue;
+      //if (l == order) continue;
       
-      for (int n=0; n<coeftable.NMAX; n++) {
+      for (int n=order; n<coeftable.NMAX; n++) {
         coefs_at_time[l][n] = 0.0;
       }
       
