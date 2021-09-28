@@ -7,7 +7,13 @@ MSP 5 May 2020 clean version
 
 now takes raw outcoef files -- need helper functions to check for data corruption from restarts, etc.
 
+todo:
+  - convert to eigen arrays
+
  */
+#ifndef CYLCOEFS_H
+#define CYLCOEFS_H
+
 
 using namespace std;
 
@@ -136,3 +142,4 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
 
 
 
+#endif

@@ -6,6 +6,8 @@ very basic leapfrog integrator to test a circular orbit in the MW
 MSP 25 Apr 2020 version with changing coefficients
 
  */
+#ifndef LEAPFROG_H
+#define LEAPFROG_H
 
 typedef boost::multi_array<double, 2> array_type2;
 
@@ -34,6 +36,9 @@ void print_orbit(array_type2 orbit,
 
 
 /*
+// these are deprecated because they appear in the relevant test code
+// may be deleted without warning!
+
 
 void leapfrog(SphExpansion* S,
 	      array_type2 coefs,
@@ -173,3 +178,5 @@ void evolving_leapfrog(SphExpansion* S,
   
 }
 */
+
+#endif

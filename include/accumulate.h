@@ -9,6 +9,8 @@ Plan:
 
 
  */
+#ifndef ACCUMULATE_H
+#define ACCUMULATE_H
 
 using namespace std;
 
@@ -116,3 +118,4 @@ void accumulate_coefficients(array_type2 particles, SphCache cachetable, AccCoef
 
 
 
+#endif

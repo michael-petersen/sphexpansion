@@ -6,6 +6,9 @@ helper definitions for converting to scaled coordinates
 
 
  */
+#ifndef SCALING_H
+#define SCALING_H
+
 
 #include <stdio.h>
 #include <math.h>
@@ -105,3 +108,4 @@ double y_to_z(double y, double hscale)
       }
 
 
+#endif

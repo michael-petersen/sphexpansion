@@ -13,6 +13,9 @@ notes
 -the answer is yes, spline is expensive. moving the call outside helps; a more simple interpolation may help even further.
 
  */
+#ifndef SPHCOEFS_H
+#define SPHCOEFS_H
+
 
 #define DEEPDEBUGCOEFS 0
 
@@ -349,3 +352,5 @@ void get_selfgravity_coefficients(SphCoefs coeftable,
   }
 
 }
+
+#endif
