@@ -4,10 +4,11 @@ tests for the initial MW and LMC
 - integrate a circular orbit
 
 compile string: 
-clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ rotcurve.cc -o rotcurve
+clang++ -I/opt/local/include -L/opt/local/lib -I../include/ rotcurve.cc -o obj/rotcurve
 
 MSP 24 Apr 2020 first version
 MSP 29 Sep 2020 use as a test for density
+MSP 28 Sep 2021 fix for modern compatibility
 
 */
 
@@ -56,12 +57,12 @@ void make_rotation_curve(SphExpansion* S,
     // the location in inertial space of the points to check (yin=zin=0, just checking x-axis right now)
     xin = xx*dx + xmin; // in kpc
 
-    S->return_forces(S,
+    S->return_forces(
 		  coefs,
 		  xin, 0., 0.,
 		     fx, fy, fz, monopole);
 
-    S->return_density(S,
+    S->return_density(
 		  coefs,
 		  xin, 0., 0.,
 		     d, monopole);
@@ -106,8 +107,8 @@ int main () {
 
   bool onlymonopole = false;
   array_type2 mwcoefs,lmccoefs;
-  select_coefficient_time(0.0, MW->coeftable, mwcoefs);
-  select_coefficient_time(0.0, LMC->coeftable, lmccoefs);
+  MW->select_coefficient_time(0.0, mwcoefs);
+  LMC->select_coefficient_time(0.0, lmccoefs);
 
   vector<double> velcentre(3),centre(3);
   return_vel_centre(0.0, LMC->orient, velcentre);

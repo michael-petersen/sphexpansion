@@ -400,7 +400,7 @@ void three_component_leapfrog(SphExpansion* MW,
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
   array_type2 tcoefsmw,tcoefslmc;
-  MW->select_coefficient_time(0., tcoefsmw);
+  MW->select_coefficient_time(0., tcoefsmw,15);
   LMC->select_coefficient_time(0., tcoefslmc);
 
   array_type2 mwcoscoefs,mwsincoefs;

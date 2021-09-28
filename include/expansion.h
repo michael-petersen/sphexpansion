@@ -5,6 +5,7 @@ MSP 24 Apr 2020 restructured
 MSP  7 Oct 2020 fix density normalisation
 MSP  4 Feb 2021 add dipole and quadrupole capability
 MSP 25 May 2021 add ltrunc option; add self-gravitating coefficient calculation
+MSP 28 Sep 2021 adjust radial order (nmax) truncation
 
 */
 
@@ -113,10 +114,12 @@ public:
 		      int ltrunc=1000);
 
   // coefficient interpolator
+  //  this call may also be used as a coarse method to truncate coefficient series.
+  //  however, it will not result in any speedup, as the coefficients are still evaluated (as zeros).
   void select_coefficient_time(double desired_time,
-			       array_type2& coefs_at_time, int order=-1);
+			       array_type2& coefs_at_time, int ntrunc=-1, int ltrunc=0);
 
-  // return self-gravitating coefficients
+  // return self-gravitating coefficients (i.e. apply spherical harmonic norm)
   void get_selfgravity_coefficients(array_type3& self_grav_coefs, int lorder=-1, int norder=-1, bool monopolenorm=false);
   
 };
@@ -484,22 +487,25 @@ void SphExpansion::return_density(array_type2& coefs,
 			        tpotl0,tpotl,
 				fr,ft,fp,monopole,dipole,quadrupole,ltrunc);
 
-  // DEEP debug
-  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
-
+#if DEEPDEBUGCOEFS
+  cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
+#endif
 
 }
 
 void SphExpansion::select_coefficient_time(double desired_time,
-			     array_type2& coefs_at_time, int order) {
+			     array_type2& coefs_at_time, int ntrunc, int ltrunc) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
    time units must be virial time units to match the input coefficient
    table
 
-   if order<0, will select all orders. if order>0, will truncate at
-   the specified n_max.
+   if ntrunc<0, will select all orders. if ntrunc>=0, will truncate at
+   the specified n_max by setting all coefficients above order to 0.0.
+
+   the ntrunc limit will be applied for all orders at or above ltrunc.
+   by default, the ntruncation will be applied for all l orders.
    */
 
   int numl;
@@ -555,13 +561,13 @@ void SphExpansion::select_coefficient_time(double desired_time,
   }
 
   // go through and zero out non-selected orders
+  //   note: will be applied for all l orders >= ltrunc
 
-  if (order>0) {
-    for (int l=0; l<numl; l++){
+  if (ntrunc>=0) {
+    for (int l=ltrunc*ltrunc; l<numl; l++){
     
-      //if (l == order) continue;
-      
-      for (int n=order; n<coeftable.NMAX; n++) {
+      // start at order+1 so this call will work if n=0.
+      for (int n=ntrunc+1; n<coeftable.NMAX; n++) {
         coefs_at_time[l][n] = 0.0;
       }
       

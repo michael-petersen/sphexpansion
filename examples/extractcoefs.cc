@@ -54,6 +54,14 @@ int main () {
   array_type3 self_grav_coefs;
   MW->get_selfgravity_coefficients(self_grav_coefs, -1,-1, true);
   for (int i=1;i<1000;i++)
-  cout << self_grav_coefs[i][16][0] << endl;
-  
+    cout << self_grav_coefs[i][16][0] << endl;
+
+  array_type2 trunc_coefs;
+
+  // example: keep 4 radial terms for l>1 (but keep all monopole terms)
+  MW->select_coefficient_time(0.0,trunc_coefs,4,1);
+  for (int i=0;i<10;i++) {
+    cout << "(0," << i << "):" << trunc_coefs[0][i] << endl;
+    cout << "(1," << i << "):" << trunc_coefs[1][i] << endl;
+  }
 }
