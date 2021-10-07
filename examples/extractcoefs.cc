@@ -52,16 +52,24 @@ int main () {
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
   array_type3 self_grav_coefs;
-  MW->get_selfgravity_coefficients(self_grav_coefs, -1,-1, true);
-  for (int i=1;i<1000;i++)
-    cout << self_grav_coefs[i][16][0] << endl;
+  MW->get_selfgravity_coefficients(self_grav_coefs, true);
+  for (int i=0;i<MW->NUMT;i++)
+    cout << self_grav_coefs[i][0][1] << endl;
 
-  array_type2 trunc_coefs;
 
+  LMC->get_selfgravity_coefficients(self_grav_coefs, true);
+  for (int i=0;i<LMC->NUMT;i++)
+    cout << self_grav_coefs[i][1][2] << endl;
+  cout << LMC->NUMT << endl;
+
+  /*
   // example: keep 4 radial terms for l>1 (but keep all monopole terms)
+  array_type2 trunc_coefs;
   MW->select_coefficient_time(0.0,trunc_coefs,4,1);
   for (int i=0;i<10;i++) {
     cout << "(0," << i << "):" << trunc_coefs[0][i] << endl;
     cout << "(1," << i << "):" << trunc_coefs[1][i] << endl;
+
   }
+  */
 }

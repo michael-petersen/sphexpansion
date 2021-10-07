@@ -65,6 +65,12 @@ public:
   SphCache cachetable; // does this actually have to be exposed?
   SphOrient orient;
 
+  // expose the basic parameters of the expansion
+  int LMAX; // maximum azimuthal order in expansion
+  int NMAX; // maximum radial order in expansion
+  int NUMT; // number of timesteps in the coefficients
+  // can use these for checking that different files match!
+
   // get potential function weights
   void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
 
@@ -120,7 +126,7 @@ public:
 			       array_type2& coefs_at_time, int ntrunc=-1, int ltrunc=0);
 
   // return self-gravitating coefficients (i.e. apply spherical harmonic norm)
-  void get_selfgravity_coefficients(array_type3& self_grav_coefs, int lorder=-1, int norder=-1, bool monopolenorm=false);
+  void get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm=false);
   
 };
 
@@ -148,6 +154,9 @@ void SphExpansion::initialise(string sph_cache_name,
   read_model(model_file, SphExpansion::modeltable);
 
   read_coef_file (coef_file, SphExpansion::coeftable);
+  LMAX = coeftable.LMAX;
+  NMAX = coeftable.NMAX;
+  NUMT = coeftable.NUMT;
 
   // if no orient file, assume zeros? 
   read_orient (orient_file, SphExpansion::orient);
@@ -578,16 +587,22 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
 
 
-void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, int lorder, int norder, bool monopolenorm)
+void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm)
 {
   
-  // function to produce coefficients that have been normalised such that the self-gravity can be compared
+  // function to produce coefficients that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
   // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
   // this will set up another copy of the coefficients, so be warned: this could be large
 
+  // The theory:
+  // -The biorthogonality condition is the integral of the density and and the potential over 3d space.
+  // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficients in the expansion.
+  // -Physically, that is 2 times the gravitational potential energy.
+
+  // Note that this function _does not_ return the squared sum, so if you want to compute energy, compare the squares of different terms.
+
   // todo: 
-  // add options for single lorder,morder return
-  // add monopolenorm option
+  // consider options for single lorder,morder return
 
   int numl = coeftable.LMAX;
   int numn = coeftable.NMAX;
@@ -596,6 +611,7 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, in
   self_grav_coefs.resize(boost::extents[coeftable.NUMT][(coeftable.LMAX+1)*(coeftable.LMAX+1)][coeftable.NMAX]);
 
   double fac1,fac2;
+  double norm = 1.0;
 
   fac1 = 0.25/M_PI;
   
@@ -604,19 +620,40 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, in
 
   for (t=0;t<coeftable.NUMT;t++) {
 
+    // do the monopole
     for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = fac1*coeftable.coefs[t][0][n];
 
+    // if monopole norm, set up the norm
+    if (monopolenorm) {
+      norm = 0.0;
+
+      // two choices of norms: the total monopole, or the lowest-order function only.
+      
+      // get the norm (the sum of the amplitude in all of the monopole terms, which hold the mass)
+      //for (n=0;n<numn;n++) norm += fac1*coeftable.coefs[t][0][n];
+      
+      // get the simple norm (the power in the lowest-order function only)
+      norm = fac1*coeftable.coefs[t][0][0];
+      // now we are ready to norm the monopole
+      for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = self_grav_coefs[t][0][n]/norm;			     
+    }
+
+    // do the higher orders
     for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
       for (m=0, moffset=0; m<=l; m++) {
         fac1 = (2.0*l+1.0)/(4.0*M_PI);
         if (m==0) {
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac1*coeftable.coefs[t][loffset+moffset][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = (fac1/norm)*coeftable.coefs[t][loffset+moffset][n];
+	  moffset++;
         } else {
 	  fac2 = 2.0 * fac1 * factrl[l][m];
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac2*coeftable.coefs[t][loffset+moffset][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = (fac2/norm)*coeftable.coefs[t][loffset+moffset][n];
+	  moffset += 2;
         }
-      }
-    }
-  }
+      }  
+    } // higher-order l loop
+
+    
+  } // time loop
 
 }
