@@ -57,11 +57,15 @@ int main () {
     cout << self_grav_coefs[i][0][1] << endl;
 
 
-  LMC->get_selfgravity_coefficients(self_grav_coefs, true);
+  LMC->get_selfgravity_coefficients(self_grav_coefs, false, true);
   for (int i=0;i<LMC->NUMT;i++)
-    cout << self_grav_coefs[i][6][2] << endl;
+    cout << self_grav_coefs[i][0][0] << endl;
 
-  for (int i=0;i<1;i++) {
+  double tphys;
+  double reference_time = 2.82;
+  for (int i=0;i<10;i++) {
+    virial_to_physical_time(LMC->T[i], tphys);
+    cout << LMC->T[i] << "-->" << tphys-reference_time << endl;
     for (int j=0;j<(LMC->LMAX+1)*(LMC->LMAX+1);j++) cout << self_grav_coefs[i][j][0] << " ";
     cout << endl;
   }

@@ -69,6 +69,7 @@ public:
   int LMAX; // maximum azimuthal order in expansion
   int NMAX; // maximum radial order in expansion
   int NUMT; // number of timesteps in the coefficients
+  vector<double> T; // the array of timesteps from the coefficients
   // can use these for checking that different files match!
 
   // get potential function weights
@@ -126,7 +127,7 @@ public:
 			       array_type2& coefs_at_time, int ntrunc=-1, int ltrunc=0);
 
   // return self-gravitating coefficients (i.e. apply spherical harmonic norm)
-  void get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm=false);
+  void get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm=false, bool power=false);
   
 };
 
@@ -157,6 +158,10 @@ void SphExpansion::initialise(string sph_cache_name,
   LMAX = coeftable.LMAX;
   NMAX = coeftable.NMAX;
   NUMT = coeftable.NUMT;
+
+  // retrieve the internal time stamps (can this assignment fail?)
+  T.resize(NUMT);
+  T    = coeftable.t;
 
   // if no orient file, assume zeros? 
   read_orient (orient_file, SphExpansion::orient);
@@ -587,22 +592,27 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
 
 
-void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm)
+void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm, bool power)
 {
   
   // function to produce coefficients that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
   // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
   // this will set up another copy of the coefficients, so be warned: this could be large
 
+  // inputs
+  // self_grav_coefs: the array that will be filled with self-gravity coefficients
+  // monopolenorm   : if true, will return the normed coefficients (normalised by the lowest-order coefficient)
+  // power          : if true, will return the squared sum of the coefficients, which is the gravitational potential energy (see note below)
+  //  ^^^ currently disabled
+
   // The theory:
   // -The biorthogonality condition is the integral of the density and and the potential over 3d space.
   // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficients in the expansion.
   // -Physically, that is 2 times the gravitational potential energy.
 
-  // Note that this function _does not_ return the squared sum, so if you want to compute energy, compare the squares of different terms.
-
   // todo: 
   // consider options for single lorder,morder return
+  // add power computation
 
   int numl = coeftable.LMAX;
   int numn = coeftable.NMAX;
@@ -612,6 +622,7 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
 
   double fac1,fac2;
   double norm = 1.0;
+  double norm2 = 1.0;
 
   fac1 = 0.25/M_PI;
   
@@ -654,6 +665,20 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
       }  
     } // higher-order l loop
 
+    /*
+    if (power) {
+      // loop back through whole table to create the squared terms, and the total monopole norm
+      norm2 = 0.0;
+      // compute the total monopole norm: better than the simple lowest-order norm?
+      for (n=0;n<numn;n++) norm2 += (fac1*coeftable.coefs[t][0][n]*norm)*(fac1*coeftable.coefs[t][0][n]*norm);
+      
+      for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = (self_grav_coefs[t][0][n]*self_grav_coefs[t][0][n]*norm*norm)/norm2;
+
+      for (l=1;l<(numl+1)*(numl+1);l++) {
+	for (n=0;n<numn;n++) self_grav_coefs[t][l][n] = (self_grav_coefs[t][l][n]*self_grav_coefs[t][l][n]*norm*norm)/norm2;
+      }
+    }
+    */
     
   } // time loop
 
