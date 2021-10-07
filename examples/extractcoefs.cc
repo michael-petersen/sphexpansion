@@ -59,9 +59,15 @@ int main () {
 
   LMC->get_selfgravity_coefficients(self_grav_coefs, true);
   for (int i=0;i<LMC->NUMT;i++)
-    cout << self_grav_coefs[i][1][2] << endl;
-  cout << LMC->NUMT << endl;
+    cout << self_grav_coefs[i][6][2] << endl;
 
+  for (int i=0;i<1;i++) {
+    for (int j=0;j<(LMC->LMAX+1)*(LMC->LMAX+1);j++) cout << self_grav_coefs[i][j][0] << " ";
+    cout << endl;
+  }
+
+  cout << LMC->NUMT << endl;
+  
   /*
   // example: keep 4 radial terms for l>1 (but keep all monopole terms)
   array_type2 trunc_coefs;

@@ -647,7 +647,8 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
 	  moffset++;
         } else {
 	  fac2 = 2.0 * fac1 * factrl[l][m];
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = (fac2/norm)*coeftable.coefs[t][loffset+moffset][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset  ][n] = (fac2/norm)*coeftable.coefs[t][loffset+moffset  ][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset+1][n] = (fac2/norm)*coeftable.coefs[t][loffset+moffset+1][n];
 	  moffset += 2;
         }
       }  
