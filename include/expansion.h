@@ -595,7 +595,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm, bool power)
 {
   
-  // function to produce coefficients that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
+  // function to produce coefficient amplitudes that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
   // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
   // this will set up another copy of the coefficients, so be warned: this could be large
 
@@ -603,11 +603,10 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
   // self_grav_coefs: the array that will be filled with self-gravity coefficients
   // monopolenorm   : if true, will return the normed coefficients (normalised by the lowest-order coefficient)
   // power          : if true, will return the squared sum of the coefficients, which is the gravitational potential energy (see note below)
-  //  ^^^ currently disabled
 
   // The theory:
   // -The biorthogonality condition is the integral of the density and and the potential over 3d space.
-  // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficients in the expansion.
+  // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficient amplitudes in the expansion.
   // -Physically, that is 2 times the gravitational potential energy.
 
   // todo: 
@@ -621,8 +620,7 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
   self_grav_coefs.resize(boost::extents[coeftable.NUMT][(coeftable.LMAX+1)*(coeftable.LMAX+1)][coeftable.NMAX]);
 
   double fac1,fac2;
-  double norm = 1.0;
-  double norm2 = 1.0;
+  double norm;
 
   fac1 = 0.25/M_PI;
   
@@ -631,54 +629,54 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
 
   for (t=0;t<coeftable.NUMT;t++) {
 
+
     // do the monopole
     for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = fac1*coeftable.coefs[t][0][n];
-
-    // if monopole norm, set up the norm
-    if (monopolenorm) {
-      norm = 0.0;
-
-      // two choices of norms: the total monopole, or the lowest-order function only.
-      
-      // get the norm (the sum of the amplitude in all of the monopole terms, which hold the mass)
-      //for (n=0;n<numn;n++) norm += fac1*coeftable.coefs[t][0][n];
-      
-      // get the simple norm (the power in the lowest-order function only)
-      norm = fac1*coeftable.coefs[t][0][0];
-      // now we are ready to norm the monopole
-      for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = self_grav_coefs[t][0][n]/norm;			     
-    }
 
     // do the higher orders
     for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
       for (m=0, moffset=0; m<=l; m++) {
         fac1 = (2.0*l+1.0)/(4.0*M_PI);
         if (m==0) {
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = (fac1/norm)*coeftable.coefs[t][loffset+moffset][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac1*coeftable.coefs[t][loffset+moffset][n];
 	  moffset++;
         } else {
 	  fac2 = 2.0 * fac1 * factrl[l][m];
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset  ][n] = (fac2/norm)*coeftable.coefs[t][loffset+moffset  ][n];
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset+1][n] = (fac2/norm)*coeftable.coefs[t][loffset+moffset+1][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset  ][n] = fac2*coeftable.coefs[t][loffset+moffset  ][n];
+          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset+1][n] = fac2*coeftable.coefs[t][loffset+moffset+1][n];
 	  moffset += 2;
         }
       }  
     } // higher-order l loop
 
-    /*
+    // loop back through to compute the power, if desired
     if (power) {
-      // loop back through whole table to create the squared terms, and the total monopole norm
-      norm2 = 0.0;
-      // compute the total monopole norm: better than the simple lowest-order norm?
-      for (n=0;n<numn;n++) norm2 += (fac1*coeftable.coefs[t][0][n]*norm)*(fac1*coeftable.coefs[t][0][n]*norm);
-      
-      for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = (self_grav_coefs[t][0][n]*self_grav_coefs[t][0][n]*norm*norm)/norm2;
-
-      for (l=1;l<(numl+1)*(numl+1);l++) {
-	for (n=0;n<numn;n++) self_grav_coefs[t][l][n] = (self_grav_coefs[t][l][n]*self_grav_coefs[t][l][n]*norm*norm)/norm2;
+      for (l=0;l<(numl+1)*(numl+1);l++) {
+	for (n=0;n<numn;n++) self_grav_coefs[t][l][n] = self_grav_coefs[t][l][n]*self_grav_coefs[t][l][n];
       }
-    }
-    */
+      
+    } // power
+
+    if (monopolenorm) {
+      // reset the norm
+      norm = 0.0;
+      
+      // compute the monopole norm from the total monopole
+      // if returning power, this is the sum over all radial orders
+      // if returning amplitude, this is just the lowest-order radial term
+      if (power) {
+	for (n=0;n<numn;n++) norm += self_grav_coefs[t][0][n];
+      } else {
+        norm = self_grav_coefs[t][0][0];
+      }
+	
+      for (l=0;l<(numl+1)*(numl+1);l++) {	
+	for (n=0;n<numn;n++) self_grav_coefs[t][l][n] /= norm;
+      }
+      
+    } // monopolenorm
+    
+
     
   } // time loop
 
