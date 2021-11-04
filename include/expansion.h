@@ -13,6 +13,11 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 #undef STANDALONE
 #define STANDALONE 0
 
+// flags for deep debugging
+#define DEEPDEBUGCOEFS 0
+#define DEEPDEBUGTIME 0
+
+
 // MSP headers
 // converters from r to xi (for mapping tables)
 #include "scaling.h"
@@ -28,7 +33,7 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 
 // the cachefile stuff, also brings in the modelfile stuff
 #include "sphcache.h"
-
+ 
 // the coefficient stuff
 #include "sphcoefs.h"
 
@@ -105,6 +110,13 @@ public:
 				     double& potp,
 				     bool monopole=false, bool dipole=false, bool quadrupole=false,
 				     int ltrunc=1000);
+
+  // version that is only density return
+  void determine_fields_at_point_sph(array_type2& coefs,
+				     double r, double theta, double phi, 
+				     double& dens0, double& dens, 
+				     bool monopole=false, bool dipole=false, bool quadrupole=false,
+				     int ltrunc=1000);
   
   // cartesian forces wrapper function
   void return_forces(array_type2& coefs,
@@ -113,7 +125,7 @@ public:
 		     bool monopole=false, bool dipole=false, bool quadrupole=false,
 		     int ltrunc=1000);
 
-  // cartesian forces wrapper function
+  // cartesian density wrapper function
   void return_density(array_type2& coefs,
 		      double x, double y, double z,
 		      double& d,
@@ -364,7 +376,7 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
   pott = potp = 0.0;
 
   get_dens_coefs(0, 0, cachetable.NMAX, coefs, dend, &d);
-  dens = fac1*d;
+  dens  = fac1*d;
   dens0 = fac1*d;
 
 
@@ -441,6 +453,106 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
   
 }
 
+
+
+void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
+ double r, double theta, double phi, 
+ double& dens0, double& dens, 
+ bool monopole, bool dipole, bool quadrupole,
+ int ltrunc)
+{
+  /*
+  // version that is ONLY density
+  
+  // no potl0/dens0 definition?
+
+  see the equivalent exp call in SphericalBasis.cc
+
+  */
+
+
+  int numl = cachetable.LMAX;
+  
+  int l,loffset,moffset,m;
+  double rs,fac1,fac2,fac3,fac4,costh,dp;
+  double p,pc,dpc,ps,dps,d,dc,ds;
+
+  // block here, some problem with a zero in theta here. TBD.
+  if (theta<1.e-6) theta = 1.e-6;
+  costh = cos(theta);
+
+  fac1 = 0.25/M_PI;
+
+  // is this ever evaluating the l=0,n>0 terms??
+  array_type2 potd,dpot,dend;
+  get_dpotl_density(r, cachetable, potd, dpot, dend);
+  
+  // compute the monopole values
+  get_dens_coefs(0, 0, cachetable.NMAX, coefs, dend, &d);
+  dens  = fac1*d;
+  dens0 = fac1*d;
+
+  // l loop
+  if (monopole) return;
+
+   array_type2 factrl;
+  factorial(numl, factrl);
+
+  array_type2 legs, dlegs;
+  dlegendre_R(numl, costh, legs, dlegs);
+
+  vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
+  sinecosine_R(numl, phi, cosm, sinm);
+    
+  for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
+
+    // advance loops if dipole or quadrupole flags are flown
+    if (dipole && quadrupole && l>2) {
+      continue;
+    } else {
+      if ( dipole && !quadrupole && l!=1) continue;
+      if (!dipole &&  quadrupole && l!=2) continue;
+    }
+    
+    // flag for selecting higher order terms
+    if (l>ltrunc) continue;
+    
+    // m loop
+    for (m=0, moffset=0; m<=l; m++) {
+      fac1 = (2.0*l+1.0)/(4.0*M_PI);
+      if (m==0) {
+	fac2 = fac1*legs[l][m];
+
+	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
+	dens += fac2*d;
+	
+	moffset++;
+      }
+      else {
+	fac2 = 2.0 * fac1 * factrl[l][m];
+	fac3 = fac2 *  legs[l][m];
+
+	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
+	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
+	dens += fac3*(dc*cosm[m] + ds*sinm[m]);
+
+	moffset +=2;
+      }
+    }
+  }
+
+  // zero out pott/potp if below resolution limit for forces
+  // (e.g. centre crossing problems)
+  if (r<cachetable.RMIN) {
+    dens = cachetable.d0[0]; // set to the smallest value of density. check if this is a good idea
+  }
+
+  
+}
+
+
+
+
 void SphExpansion::return_forces(array_type2& coefs, double x, double y, double z,
 				 double& fx, double& fy, double& fz,
 				 bool monopole, bool dipole, bool quadrupole,
@@ -498,8 +610,9 @@ void SphExpansion::return_density(array_type2& coefs,
   determine_fields_at_point_sph(coefs,
 				rtmp,thetatmp,phitmp,
 				tdens0,d,
-			        tpotl0,tpotl,
-				fr,ft,fp,monopole,dipole,quadrupole,ltrunc);
+			        //tpotl0,tpotl,
+				//fr,ft,fp,
+				monopole,dipole,quadrupole,ltrunc);
 
 #if DEEPDEBUGCOEFS
   cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
@@ -528,10 +641,20 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
   coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);  
   
-  // coeftable.t is assumed to be evenly spaced
-  double dt = coeftable.t[1] - coeftable.t[0];
 
-  int indx = (int)( (desired_time-coeftable.t[0])/dt);
+
+  // starting at the first indx, stop when we get to the matching time
+  int indx = 0;
+  while (coeftable.t[indx]<=desired_time) {
+    indx ++;
+  }
+
+  // reset by one
+  indx --;
+  //int indx = (int)( (desired_time-coeftable.t[0])/dt);
+
+  // check the spacing on coeftable.t (can be nonuniform)
+  double dt = coeftable.t[indx+1] - coeftable.t[indx];
 
   // guard against wanton extrapolation: should this stop the model?
   //if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
@@ -539,8 +662,12 @@ void SphExpansion::select_coefficient_time(double desired_time,
   // guard against going past the end of the simulation
   if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
-#if DEEPDEBUGCOEFS
-  cout << indx << endl;
+#if DEEPDEBUGTIME
+  cout << "indx=" << indx
+       << " MinT=" << coeftable.t[0]
+       << " MaxT=" << coeftable.t[coeftable.NUMT-1]
+       << " desired_time=" << desired_time
+       << endl;
 #endif
   
   if (indx<0) {
@@ -560,11 +687,11 @@ void SphExpansion::select_coefficient_time(double desired_time,
     double x1 = (coeftable.t[indx+1] - desired_time)/dt;
     double x2 = (desired_time - coeftable.t[indx])/dt;
 
-#if DEEPDEBUGCOEFS
+#if DEEPDEBUGTIME
     cout << "dt=" << setw(16) << dt << "  t[indx+1]="  << setw(16) << coeftable.t[indx+1]
 	                            << "  t[indx]="  << setw(16) << coeftable.t[indx]
                                     << "  desiredT="  << setw(16) << desired_time << endl;
-    cout << "x1/x2=" << setw(16) << x1 << setw(14) << x2 << endl;
+    cout << "x1=" << setw(16) << x1 << " x2=" << setw(14) << x2 << endl;
 #endif
 
     for (int l=0; l<numl; l++){

@@ -13,3 +13,5 @@ tests/comparison*
 rotcurve.dSYM/Contents/Info.plist
 .legacy*
 examples/obj/*
+examples/density_map.cc
+examples/deprecated/*

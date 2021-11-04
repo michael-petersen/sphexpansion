@@ -17,8 +17,6 @@ notes
 #define SPHCOEFS_H
 
 
-#define DEEPDEBUGCOEFS 0
-
 #include "basis.h"
 
 using namespace std;
