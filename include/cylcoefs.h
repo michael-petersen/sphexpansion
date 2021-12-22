@@ -14,6 +14,10 @@ todo:
 #ifndef CYLCOEFS_H
 #define CYLCOEFS_H
 
+// debug flags
+#define FORMAT 1
+//#define ORDERS 0
+
 #include "yaml-cpp/yaml.h"	// YAML support
 
 
@@ -37,84 +41,91 @@ struct CylCoefs
 
 };
 
-
-void select_coefficient_time(double desired_time,
-			     CylCoefs coeftable,
-			     array_type2& coscoefs_at_time,
-			     array_type2& sincoefs_at_time) {
-  /*
-    linear interpolation to get the coefficient matrix at a specific time
-
-   time units must be virial time units to match the input coefficient table
-   */
-
-  // coeftable.t is assumed to be evenly spaced
-  double dt = coeftable.t[1] - coeftable.t[0];
-
-  int indx = (int)( (desired_time-coeftable.t[0])/dt);
-
-  // guard against wanton extrapolation: should this stop the model?
-  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
-  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
-
-  if (indx<0) indx = 0;
-  if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
-
-  double x1 = (coeftable.t[indx+1] - desired_time)/dt;
-  double x2 = (desired_time - coeftable.t[indx])/dt;
-
-  coscoefs_at_time.resize(boost::extents[coeftable.MMAX+1][coeftable.NORDER]);
-  sincoefs_at_time.resize(boost::extents[coeftable.MMAX+1][coeftable.NORDER]);
-
-  for (int m=0; m<=coeftable.MMAX; m++){
-    for (int n=0; n<coeftable.NORDER; n++) {
-      coscoefs_at_time[m][n] = (x1*coeftable.coscoefs[indx][m][n] + x2*coeftable.coscoefs[indx+1][m][n]);
-
-      if (m) sincoefs_at_time[m][n] = (x1*coeftable.sincoefs[indx][m][n] + x2*coeftable.sincoefs[indx+1][m][n]);
-    }
-  }
-  
-}
-
-
 void read_coef_file (string& coef_file, CylCoefs& coeftable) {
 
   ifstream in(coef_file.c_str());
+
+  double tnow;
+  bool   newformat = false;
 
   // read a template version first, then reread with NUMT specified
 
   // Attempt to read magic number
   //
   unsigned int tmagic;
+  unsigned ssize;
   in.read(reinterpret_cast<char*>(&tmagic), sizeof(unsigned int));
 
-  cout << setw(14) << tmagic << endl;
+  //cout << setw(14) << tmagic << endl;
 
-  if (tmagic == 202004385) {
+  if (tmagic == 202004387) {
+    
+    newformat = true;
 
-    cout << "NEW FORMAT" << endl;
+    // YAML size
+    //
+    in.read(reinterpret_cast<char*>(&ssize), sizeof(unsigned int));
+
+    
+    // Make and read char buffer
+    //
+    auto buf = std::make_unique<char[]>(ssize+1);
+    in.read(buf.get(), ssize);
+    buf[ssize] = 0;		// Null terminate
+      
+    YAML::Node node = YAML::Load(buf.get());
+
+    // Get parameters
+    //
+    coeftable.MMAX    = node["mmax"].as<int>();
+    coeftable.NORDER  = node["nmax"].as<int>();
+    tnow              = node["time"].as<double>();
+
+  } else {
+
+    
+    // rewind to the beginning of the file
+    //
+    in.clear();
+    in.seekg(0);
+    
+    // first thing in is NUMT,LMAX,NORDER
+    in.read((char *)&tnow, sizeof(double));
+    in.read((char *)&coeftable.MMAX, sizeof(int));
+    in.read((char *)&coeftable.NORDER, sizeof(int));
+
   }
-
-  double tnow;
-  // first thing in is NUMT,LMAX,NORDER
-  in.read((char *)&tnow, sizeof(double));
-  in.read((char *)&coeftable.MMAX, sizeof(int));
-  in.read((char *)&coeftable.NORDER, sizeof(int));
-
-  int end,tmp;
+  
+  int end,tmp,nowpos,bufsize;
   in.seekg (0, ios::end);
   end = in.tellg();
 
-  // compute the number of full timesteps: extra 8s are for tnow,MMAX,NORDER ahead of every coefficient set
-  coeftable.NUMT = end/(((coeftable.MMAX+coeftable.MMAX+1)*coeftable.NORDER)*sizeof(double)  + 8 + 8);
+  if (newformat) {
+    // guess the number of full timesteps, assuming ssize is always
+    // the same (it isn't)
+    coeftable.NUMT = end/(((coeftable.MMAX+coeftable.MMAX+1)*coeftable.NORDER)*sizeof(double)  + 2*sizeof(unsigned int) + ssize*sizeof(char));
+    bufsize = (((coeftable.MMAX+coeftable.MMAX+1)*coeftable.NORDER)*sizeof(double)  + 2*sizeof(unsigned int) + ssize*sizeof(char));
+  } else {
+    // compute the number of full timesteps: extra terms are for tnow,MMAX,NORDER ahead of every coefficient set
+    coeftable.NUMT = end/(((coeftable.MMAX+coeftable.MMAX+1)*coeftable.NORDER)*sizeof(double)  + sizeof(double) + sizeof(int) + sizeof(int));
+    bufsize = (((coeftable.MMAX+coeftable.MMAX+1)*coeftable.NORDER)*sizeof(double)  + sizeof(double) + sizeof(int) + sizeof(int));
+  }
 
   //cout << setw(14) << (coeftable.MMAX*coeftable.NORDER) << setw(14) << sizeof(double) << setw(14) << end << endl;
   //cout << coeftable.NUMT << endl;
 
-  cout << "cylcoefs.read_coef_file: reading NUMT, LMAX, NORDER from file . . . " << endl;
-  cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.MMAX <<
-    setw(18) << coeftable.NORDER << endl;
-
+  cout << "cylcoefs.read_coef_file: reading NUMT, LMAX, NORDER from file . . . ";
+#ifdef FORMAT
+  if (newformat) {
+    cout << "NEW FORMAT" << endl;
+  } else {
+    cout << "OLD FORMAT" << endl;
+  }
+#endif
+#ifdef ORDERS
+  cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.MMAX << setw(18) << coeftable.NORDER << endl;
+#endif
+  
   // reset to the beginning
   in.seekg (0, ios::beg);
 
@@ -126,10 +137,41 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
   
   // now cycle through each time
   for (int tt=0;tt<coeftable.NUMT;tt++) {
+
+    // check that we aren't too near the end of the file...
+    nowpos = in.tellg();
+    //cout << setw(14) << nowpos << setw(14) << end << setw(14) << bufsize << endl;
+    if (nowpos + bufsize > end) continue;
+      
+
+    if (newformat) {
+
+      // this would be nice to break out as a separate definition...
+      in.read(reinterpret_cast<char*>(&tmagic), sizeof(unsigned int));
+      in.read(reinterpret_cast<char*>(&ssize), sizeof(unsigned int));
+
+      //cout << ssize << endl;
+      
+      // Make and read char buffer
+      //
+      auto buf = std::make_unique<char[]>(ssize+1);
+      in.read(buf.get(), ssize);
+      buf[ssize] = 0;		// Null terminate
+      
+      YAML::Node node = YAML::Load(buf.get());
+
+      // Get parameters
+      //
+      //cout << node["time"].as<double>() << endl;
+      coeftable.t[tt]   = node["time"].as<double>();
+
+    } else {
   
-    in.read((char *)&coeftable.t[tt], sizeof(double));
-    in.read((char *)&tmp, sizeof(int));
-    in.read((char *)&tmp, sizeof(int));
+      in.read((char *)&coeftable.t[tt], sizeof(double));
+      in.read((char *)&tmp, sizeof(int));
+      in.read((char *)&tmp, sizeof(int));
+
+    }
 
     // debug outcoef file
     //cout << "tnow=" << coeftable.t[tt] << " norder=" << tmp << endl;

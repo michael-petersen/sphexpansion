@@ -7,11 +7,21 @@ clean version, MSP 5 May 2020
 MSP 21 Dec 2021 update yaml headers
 
 
+Note that cachetable reading is slow. 
+We might be able to find a better way using memmaps, which would also
+make querying the tables faster?
+
+Check on mapping values: are these okay?
+
  */
+#ifndef CYLCACHE_H
+#define CYLCACHE_H
 
-// include the mapping definitions
-//#include "scaling.h"
+#define FORMAT 1
+//#define ORDERS 0
 
+
+// should we have some way to block this out just in case?
 #include "yaml-cpp/yaml.h"	// YAML support
 
 using namespace std;
@@ -93,11 +103,13 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
   unsigned int tmagic;
   in.read(reinterpret_cast<char*>(&tmagic), sizeof(unsigned int));
 
-  cout << setw(14) << tmagic << endl;
+  //cout << setw(14) << tmagic << endl;
 
   if (tmagic == 202004385) {
 
+#ifdef FORMAT
     cout << "NEW FORMAT" << endl;
+#endif
 
     unsigned ssize;
     in.read(reinterpret_cast<char*>(&ssize), sizeof(unsigned int));
@@ -129,8 +141,8 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
       cachetable.DENS    = node["dens"  ].as<bool>();
       cachetable.RMIN    = node["rmin"  ].as<double>();
       cachetable.RMAX    = node["rmax"  ].as<double>();
-      cachetable.ASCALE    = node["ascl"  ].as<double>();
-      cachetable.HSCALE    = node["hscl"  ].as<double>();
+      cachetable.ASCALE  = node["ascl"  ].as<double>();
+      cachetable.HSCALE  = node["hscl"  ].as<double>();
       cachetable.CYLMASS = node["cmass" ].as<double>();
       cachetable.TNOW    = node["time"  ].as<double>();
 
@@ -147,8 +159,15 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 
   } else {
 
+#ifdef FORMAT
     cout << "OLD FORMAT" << endl;
+#endif
     int tmp;
+
+    // rewind to the beginning of the file
+    //
+    in.clear();
+    in.seekg(0);
 
     // read the parameters from the cachefile
     in.read((char *)&cachetable.MMAX,   sizeof(int));
@@ -167,9 +186,9 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 
   }
 
-    
+#ifdef ORDERS   
   cout << setw(14) << cachetable.MMAX << setw(14) << cachetable.NORDER << endl;
-
+#endif
  
   // resize the arrays
   cachetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
@@ -525,3 +544,8 @@ void get_dpotl(double r, SphCache& cachetable, array_type2& potd, array_type2& d
 }
 
 */
+
+
+#endif
+
+

@@ -5,6 +5,7 @@ MSP  5 May 2020 first commit
 MSP 29 Sep 2020 test first model
 MSP 13 Oct 2020 add monopole capability
 MSP  4 Feb 2021 add dipole and quadrupole capability
+MSP 22 Dec 2021 fix spacing queries in select_coefficient_time
 
 this should be able to go much faster. obviously I'm passing too much
 of something around, would like to track down what exactly is going on.
@@ -252,17 +253,36 @@ void CylExpansion::select_coefficient_time(double desired_time,
    */
 
   // coeftable.t is assumed to be evenly spaced
-  double dt = coeftable.t[1] - coeftable.t[0];
+  //double dt = coeftable.t[1] - coeftable.t[0];
 
-  int indx = (int)( (desired_time-coeftable.t[0])/dt);
+  //int indx = (int)( (desired_time-coeftable.t[0])/dt);
+
+
+  
+  // starting at the first indx, stop when we get to the matching time
+  int indx = 0;
+  while (coeftable.t[indx]<=desired_time) {
+    indx ++;
+  }
+
+  // reset by one
+  indx --;
+
 
   // guard against wanton extrapolation: should this stop the model?
-  if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
+  // indx<0 is not possible in this construction
+  // if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
   if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
 
   if (indx<0) indx = 0;
   if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
 
+  // check the spacing on coeftable.t (can be nonuniform)
+  double dt = coeftable.t[indx+1] - coeftable.t[indx];
+
+  //cout << setw(14) << desired_time << setw(14) << coeftable.t[0] << setw(14) << coeftable.t[indx] << setw(14) << dt << endl;
+  
+  
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
 

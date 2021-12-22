@@ -16,6 +16,7 @@ install_name_tool -change @rpath/libyaml-cpp.0.7.dylib /opt/local/lib/libyaml-cp
 
 MSP 28 Apr 2020 initial commit
 MSP 13 Oct 2020 new model validation
+MSP 22 Dec 2021 add tests for new yaml formats
 
 */
 
@@ -473,42 +474,57 @@ void three_component_leapfrog(SphExpansion* MW,
 
 int main () {
 
+  bool test1 = true;
+
+  
   // MW
   cout << "Initialising MW ... " << endl;
-  //string sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw.run7mld";
-  //string model_file_mw      = "/Volumes/External1/Disk076/ErkalMW.model";
-  //string coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef.nofac.mw.run7mld";
-  //string orient_file_mw     = "/Volumes/External1/Disk076/mw.orient.run7mld.smth";
-  string sph_cache_name_mw  = "/Volumes/External1/Disk080/SLGridSph.cache.mw.system1_3";
-  string model_file_mw      = "/Volumes/External1/Disk080/SLGridSph.NFW77";
-  string coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.mw.system1_3";
-  string orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system1_3.smth";
+  string sph_cache_name_mw,model_file_mw,coef_file_mw,orient_file_mw;
+  if (test1) {
+    sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw.run7mld";
+    model_file_mw      = "/Volumes/External1/Disk076/ErkalMW.model";
+    coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef.nofac.mw.run7mld";
+    orient_file_mw     = "/Volumes/External1/Disk076/mw.orient.run7mld.smth";
+  } else {
+    sph_cache_name_mw  = "/Volumes/External1/Disk080/SLGridSph.cache.mw.system1_3";
+    model_file_mw      = "/Volumes/External1/Disk080/SLGridSph.NFW77";
+    coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.mw.system1_3";
+    orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system1_3.smth";
+  }
   
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  //string sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc.run7mld";
-  //string model_file_lmc     = "/Volumes/External1/Disk076/ErkalLMC.model";
-  //string coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef.nofac.lmc.run7mld";
-  //string orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient.run7mld.smth";
-  string sph_cache_name_lmc = "/Volumes/External1/Disk080/SLGridSph.cache.lmc.system1_3";
-  string model_file_lmc     = "/Volumes/External1/Disk080/SLGridSph.NFW77L";
-  string coef_file_lmc      = "/Volumes/External1/Disk080/simpleoutcoef.nofac.lmc.system1_3";
-  string orient_file_lmc    = "/Volumes/External1/Disk080/lmc.orient.system1_3.smth";
+  string sph_cache_name_lmc,model_file_lmc,coef_file_lmc,orient_file_lmc;
+  if (test1) {
+    sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc.run7mld";
+    model_file_lmc     = "/Volumes/External1/Disk076/ErkalLMC.model";
+    coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef.nofac.lmc.run7mld";
+    orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient.run7mld.smth";
+  } else {
+    sph_cache_name_lmc = "/Volumes/External1/Disk080/SLGridSph.cache.lmc.system1_3";
+    model_file_lmc     = "/Volumes/External1/Disk080/SLGridSph.NFW77L";
+    coef_file_lmc      = "/Volumes/External1/Disk080/simpleoutcoef.nofac.lmc.system1_3";
+    orient_file_lmc    = "/Volumes/External1/Disk080/lmc.orient.system1_3.smth";
+  }
   
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
   // MW 
   cout << "Initialising MW disc ... " << endl;
-  //string cyl_cache_name_mw = "/Volumes/External1/Disk076/.disc.cache.run7mld";
-  //string cyl_coef_name_mw = "/Volumes/External1/Disk076/outcoef.disc.run7mld";
-  //string cyl_orient_name_mw = "/Volumes/External1/Disk076/disc.orient.run7mld.smth";
-  string cyl_cache_name_mw = "/Volumes/External1/Disk080/.disc.cache.system1_3";
-  string cyl_coef_name_mw = "/Volumes/External1/Disk080/outcoef.disc.system1_3";
-  string cyl_orient_name_mw = "/Volumes/External1/Disk080/disc.orient.system1_3.smth";
+  string cyl_cache_name_mw,cyl_coef_name_mw,cyl_orient_name_mw;
+  if (test1) {
+    cyl_cache_name_mw = "/Volumes/External1/Disk076/.disc.cache.run7mld";
+    cyl_coef_name_mw = "/Volumes/External1/Disk076/outcoef.disc.run7mld";
+    cyl_orient_name_mw = "/Volumes/External1/Disk076/disc.orient.run7mld.smth";
+  } else {
+    cyl_cache_name_mw = "/Volumes/External1/Disk080/.disc.cache.system1_3";
+    cyl_coef_name_mw = "/Volumes/External1/Disk080/outcoef.disc.system1_3";
+    cyl_orient_name_mw = "/Volumes/External1/Disk080/disc.orient.system1_3.smth";
+  }
   
   CylExpansion* MWD;
   MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
