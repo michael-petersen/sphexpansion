@@ -4,11 +4,15 @@ sphcache.h
 functions to handle the preparations for the cachefile(s)
 
 clean version, MSP 5 May 2020
+MSP 21 Dec 2021 update yaml headers
+
 
  */
 
 // include the mapping definitions
 //#include "scaling.h"
+
+#include "yaml-cpp/yaml.h"	// YAML support
 
 using namespace std;
 
@@ -29,6 +33,8 @@ struct CylCache
   int NORDER;          // number of radial terms
   bool DENS;            // density flag
   bool CMAP;            // mapping flag
+  bool CMAPR;            // mapping flag R
+  bool CMAPZ;            // mapping flag Z
   double RMIN;         // the minimum expansion radius
   double RMAX;         // the maximum expansion radius
   double ASCALE;       // the scaling value for scale length
@@ -82,24 +88,87 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
   cerr << "cylcache.read_cyl_cache: trying to read cached table. . . ";
 
 
-  int tmp;
+  // Attempt to read magic number
+  //
+  unsigned int tmagic;
+  in.read(reinterpret_cast<char*>(&tmagic), sizeof(unsigned int));
 
-  // read the parameters from the cachefile
-  in.read((char *)&cachetable.MMAX,   sizeof(int));
-  in.read((char *)&cachetable.NUMX,   sizeof(int));
-  in.read((char *)&cachetable.NUMY,   sizeof(int));
-  in.read((char *)&cachetable.NMAX,   sizeof(int));	
-  in.read((char *)&cachetable.NORDER, sizeof(int));
-  in.read((char *)&tmp,               sizeof(int)); if (tmp) cachetable.DENS=true;
-  in.read((char *)&tmp,               sizeof(int)); if (tmp) cachetable.CMAP=true;
-  in.read((char *)&cachetable.RMIN,   sizeof(double));
-  in.read((char *)&cachetable.RMAX,   sizeof(double));
-  in.read((char *)&cachetable.ASCALE, sizeof(double));
-  in.read((char *)&cachetable.HSCALE, sizeof(double));
-  in.read((char *)&cachetable.CYLMASS,sizeof(double));
-  in.read((char *)&cachetable.TNOW,   sizeof(double));
+  cout << setw(14) << tmagic << endl;
 
-  //cout << setw(14) << cachetable.MMAX << setw(14) << cachetable.NORDER << endl;
+  if (tmagic == 202004385) {
+
+    cout << "NEW FORMAT" << endl;
+
+    unsigned ssize;
+    in.read(reinterpret_cast<char*>(&ssize), sizeof(unsigned int));
+
+    // Make and read char buffer
+    //
+    auto buf = std::make_unique<char[]>(ssize+1);
+    in.read(buf.get(), ssize);
+    buf[ssize] = 0;		// Null terminate
+
+    YAML::Node node;
+      
+    try {
+      node = YAML::Load(buf.get());
+    } catch (YAML::Exception& error) {
+      std::cerr << "YAML: error parsing <" << buf.get() << "> "
+		    << "in " << __FILE__ << ":" << __LINE__ << std::endl
+		    << "YAML error: " << error.what() << std::endl;
+	throw error;
+    }
+
+      // Get parameters
+      //
+      cachetable.MMAX    = node["mmax"  ].as<int>();
+      cachetable.NUMX    = node["numx"  ].as<int>();
+      cachetable.NUMY    = node["numy"  ].as<int>();
+      cachetable.NMAX    = node["nmax"  ].as<int>();
+      cachetable.NORDER  = node["norder"].as<int>();
+      cachetable.DENS    = node["dens"  ].as<bool>();
+      cachetable.RMIN    = node["rmin"  ].as<double>();
+      cachetable.RMAX    = node["rmax"  ].as<double>();
+      cachetable.ASCALE    = node["ascl"  ].as<double>();
+      cachetable.HSCALE    = node["hscl"  ].as<double>();
+      cachetable.CYLMASS = node["cmass" ].as<double>();
+      cachetable.TNOW    = node["time"  ].as<double>();
+
+      if (node["cmap"]) 	// Backwards compatibility
+	cachetable.CMAPR   = node["cmap" ].as<int>();
+      else
+	cachetable.CMAPR   = node["cmapr"].as<int>();
+
+      if (node["cmapz"])	// Backwards compatibility
+	cachetable.CMAPZ = node["cmapz"].as<int>();
+      else
+	cachetable.CMAPZ = 1;//CMAPZ;
+
+
+  } else {
+
+    cout << "OLD FORMAT" << endl;
+    int tmp;
+
+    // read the parameters from the cachefile
+    in.read((char *)&cachetable.MMAX,   sizeof(int));
+    in.read((char *)&cachetable.NUMX,   sizeof(int));
+    in.read((char *)&cachetable.NUMY,   sizeof(int));
+    in.read((char *)&cachetable.NMAX,   sizeof(int));	
+    in.read((char *)&cachetable.NORDER, sizeof(int));
+    in.read((char *)&tmp,               sizeof(int)); if (tmp) cachetable.DENS=true;
+    in.read((char *)&tmp,               sizeof(int)); if (tmp) cachetable.CMAP=true;
+    in.read((char *)&cachetable.RMIN,   sizeof(double));
+    in.read((char *)&cachetable.RMAX,   sizeof(double));
+    in.read((char *)&cachetable.ASCALE, sizeof(double));
+    in.read((char *)&cachetable.HSCALE, sizeof(double));
+    in.read((char *)&cachetable.CYLMASS,sizeof(double));
+    in.read((char *)&cachetable.TNOW,   sizeof(double));
+
+  }
+
+    
+  cout << setw(14) << cachetable.MMAX << setw(14) << cachetable.NORDER << endl;
 
  
   // resize the arrays

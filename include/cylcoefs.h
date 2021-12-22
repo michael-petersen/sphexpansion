@@ -14,6 +14,9 @@ todo:
 #ifndef CYLCOEFS_H
 #define CYLCOEFS_H
 
+#include "yaml-cpp/yaml.h"	// YAML support
+
+
 
 using namespace std;
 
@@ -79,6 +82,18 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
   ifstream in(coef_file.c_str());
 
   // read a template version first, then reread with NUMT specified
+
+  // Attempt to read magic number
+  //
+  unsigned int tmagic;
+  in.read(reinterpret_cast<char*>(&tmagic), sizeof(unsigned int));
+
+  cout << setw(14) << tmagic << endl;
+
+  if (tmagic == 202004385) {
+
+    cout << "NEW FORMAT" << endl;
+  }
 
   double tnow;
   // first thing in is NUMT,LMAX,NORDER
