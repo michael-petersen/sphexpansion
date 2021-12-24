@@ -1,5 +1,5 @@
 /*
-sphorient.h
+orient.h
 
 functions to read in the orientation files
 
@@ -7,13 +7,15 @@ MSP 22 Apr 2020 clean version
 MSP 25 Apr 2020 add linear interpolation for speed
 MSP  1 Sep 2020 add spline velocity, warnings
 MSP  1 Sep 2020 add new pre-simulation treatment with `backwards' flag
+MSP 24 Dec 2021 enable inertial centres if no orient file is passed
+MSP 24 Dec 2021 change spline calls to preprocessor flag
 
 wishlist:
 -handle bad files gracefully
--initialise with zeros if a file is not passed (or maybe this belongs
-in expansion itself?)
 
  */
+#ifndef ORIENT_H
+#define ORIENT_H
 
 #include <iostream>
 #include <fstream>
@@ -25,20 +27,26 @@ using namespace std;
 // do not use splines unless you are sure it is what you want. the
 // spline fits will change the centres in such a way that they are NOT
 // guaranteed to match the initial simulation.
+#if SPLINEORIENT
 #include "spline.h"
-bool splineorient = false;
+#endif
+
 
 // if true, enable extrapolation before the EXP simulation started
 // NOTE
 // do NOT use this method unless you know what is going to happen.
-bool backwards = true;
-bool backwardsaccel = true;
+bool backwards = false;
+bool backwardsaccel = false;
 
 
 bool havevelocity = true; // true if the orient file also has velocities.
 
 struct SphOrient
 {
+
+  bool inertial=true;   // stick with inertial centre (default true)?
+  bool eventime=true;   // check spacing of orient timing (assume equal)
+  
   int NUMT;             // the number of timesteps
   vector<double> time;  // the time vector, len NUMT
   vector<double> xcen;  // the xcen vector, len NUMT
@@ -50,14 +58,16 @@ struct SphOrient
   vector<double> vcen;  // the vcen (y-velocity) vector, len NUMT
   vector<double> wcen;  // the wcen (z-velocity) vector, len NUMT
 
-  tk::spline xspline; // spline representation of xcenter
-  tk::spline yspline; // spline representation of ycenter
-  tk::spline zspline; // spline representation of zcenter
+#if SPLINEORIENT
+  tk::spline xspline;   // spline representation of xcenter
+  tk::spline yspline;   // spline representation of ycenter
+  tk::spline zspline;   // spline representation of zcenter
 
-  tk::spline vxspline; // spline representation of vxcenter
-  tk::spline vyspline; // spline representation of vycenter
-  tk::spline vzspline; // spline representation of vzcenter
-
+  tk::spline vxspline;  // spline representation of vxcenter
+  tk::spline vyspline;  // spline representation of vycenter
+  tk::spline vzspline;  // spline representation of vzcenter
+#endif
+  
   // initial velocity fits
   vector<double> zerotimevelocities;
   vector<double> zerotimeintercepts;
@@ -144,6 +154,7 @@ void interpolate_velocity_centre(double desired_time,
 
 }
 
+#if SPLINEORIENT
 void spline_centre(double desired_time,
 		   SphOrient& orient,
 		   vector<double>& centre)
@@ -162,16 +173,28 @@ void spline_vel_centre(double desired_time,
   velcentre[1] = orient.vyspline(desired_time);
   velcentre[2] = orient.vzspline(desired_time);  
 }
+#endif
 
 void return_centre(double desired_time,
 		   SphOrient& orient,
 		   vector<double>& centre)
 {
 
-  if (splineorient) {
-    spline_centre(desired_time, orient, centre);
+  if (orient.inertial) {
+
+    // set velocity centre to zero if no orient file
+    centre[0] = 0.;
+    centre[1] = 0.;
+    centre[2] = 0.;
+
   } else {
-    interpolate_centre(desired_time, orient, centre);
+
+#if SPLINEORIENT
+      spline_centre(desired_time, orient, centre);
+#else
+      interpolate_centre(desired_time, orient, centre);
+#endif
+      
   }
 	
 }
@@ -181,10 +204,19 @@ void return_vel_centre(double desired_time,
 		       vector<double>& velcentre)
 {
 
-  if (splineorient) {
-    spline_vel_centre(desired_time, orient, velcentre);
+  if (orient.inertial) {
+
+    // set velocity centre to zero if no orient file
+    velcentre[0] = 0.;
+    velcentre[1] = 0.;
+    velcentre[2] = 0.;
+
   } else {
-    interpolate_velocity_centre(desired_time, orient, velcentre);
+#if SPLINEORIENT
+      spline_vel_centre(desired_time, orient, velcentre);
+#else
+      interpolate_velocity_centre(desired_time, orient, velcentre);
+#endif
   }
 	
 }
@@ -233,8 +265,9 @@ void find_initial_velocity(SphOrient& orient,
 
   if( std::fabs(denominator) < 1e-7 ) {
     // Fail: it seems a vertical line
-    cout << "sphorient.find_initial_velocity: can't extrapolate, given these times.";
+    cerr << "orient::find_initial_velocity: can't extrapolate, given these times.";
     // what should the failure look like?
+    exit(-1);
   }
 
   // compute slopes and intercepts
@@ -251,15 +284,23 @@ void find_initial_velocity(SphOrient& orient,
 }
 
 
-
 void read_orient (string orient_file, SphOrient& orient) {
+
+  // this would be great to modify to take raw exp orient files as well
+
+  if (orient_file=="") {
+    cout << "orient::read_orient: no orient file detected . . . proceeding with inertial centre." << endl;
+    return;
+  }
 
   ifstream infile;
   infile.open(orient_file, ios::in);
   if (!infile) {
-        cout << "sphorient::read_orient: Unable to open file";
+        cout << "orient::read_orient: unable to open specified file. exiting.";
         exit(1); // terminate with error
   }
+
+  orient.inertial = false;
   
   string line;
   
@@ -304,29 +345,40 @@ void read_orient (string orient_file, SphOrient& orient) {
 
   infile.close();
 
-  if (splineorient) {
-    // construct spline interpolations if necessary
+  // check if time spacing is consistent
+  double dt = orient.time[1] - orient.time[0];
+  for (int i=2;i<orient.NUMT;i++) {
+    if (abs(orient.time[i] - orient.time[i-1] - dt) > dt/10) {
+      //cout << setw(14) << i << setw(14) << orient.time[i] << setw(14) << abs(orient.time[i] - orient.time[i-1] - dt) << setw(14) << dt << endl;
+      orient.eventime = false;
+    }
+  }
 
+  // for some future verbose flag, perhaps
+  //if (orient.eventime) cout << "orient.read_orient: found even time spacing" << endl;
+
+#if SPLINEORIENT
+    
+    // construct spline interpolations if necessary
     orient.xspline.set_points(orient.time,orient.xcen);
     orient.yspline.set_points(orient.time,orient.ycen);
     orient.zspline.set_points(orient.time,orient.zcen);
 
-  if (havevelocity) {
+    if (havevelocity) {
 
-    // only construct the velocity spline interpolations if REALLY necessary
-    orient.vxspline.set_points(orient.time,orient.ucen);
-    orient.vyspline.set_points(orient.time,orient.vcen);
-    orient.vzspline.set_points(orient.time,orient.wcen);
-  }
-  
-  }
+      // only construct the velocity spline interpolations if REALLY necessary
+      orient.vxspline.set_points(orient.time,orient.ucen);
+      orient.vyspline.set_points(orient.time,orient.vcen);
+      orient.vzspline.set_points(orient.time,orient.wcen);
+    }
+#endif
 
   if (havevelocity) {
     orient.zerotimevelocities.resize(3);
 
     if (backwards) {
       // enable extrapolation to before the simulation started
-      // (but see warning above)
+      // (but see warning at top of file)
 
       if (backwardsaccel) {
         orient.zerotimeintercepts.resize(3);
@@ -342,7 +394,8 @@ void read_orient (string orient_file, SphOrient& orient) {
       orient.zerotimevelocities[1] = orient.vcen[0];
       orient.zerotimevelocities[2] = orient.wcen[0];
     }
-  }
+  } // end havevelocity
   
 }
 
+#endif

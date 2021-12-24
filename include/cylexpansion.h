@@ -26,7 +26,7 @@ of something around, would like to track down what exactly is going on.
 #include "translate.h"
 
 // the orientation stuff for centering the expansions
-#include "sphorient.h"
+#include "orient.h"
 #endif
 
 

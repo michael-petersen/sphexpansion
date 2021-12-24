@@ -38,7 +38,7 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 #include "sphcoefs.h"
 
 // the orientation stuff for centering the expansions
-#include "sphorient.h"
+#include "orient.h"
 
 using namespace std;
 
@@ -64,7 +64,7 @@ public:
   SphExpansion(string sph_cache_name,
 	       string model_file,
 	       string coef_file,
-	       string orient_file);
+	       string orient_file="");
 
   // expose the important expansion data
   SphCache cachetable; // does this actually have to be exposed?
@@ -154,7 +154,7 @@ SphExpansion::SphExpansion(string sph_cache_name,
 void SphExpansion::initialise(string sph_cache_name,
 			      string model_file,
 			      string coef_file,
-			      string orient_file)
+			      string orient_file="")
 {
   // pull in the parts for the expansion
   try {

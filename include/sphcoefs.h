@@ -7,6 +7,7 @@ MSP 22 Apr 2020 clean version
 MSP 23 Apr 2020 add coefficient interpolation 
 MSP 15 Sep 2020 improve debug, fix pre-simulation interpolation
 MSP 14 May 2021 added self-gravity normalisation coefficients
+MSP 24 Dec 2021 change some debug outputs and spline calls to preprocessor flags
 
 
 notes
@@ -21,20 +22,19 @@ notes
 
 using namespace std;
 
-// set up for spline, specify if needed
-#include "spline.h"
-bool splinecoefs = false;
 
-bool debugcoefs = false;
 
 
 // create 2- and 3-d array types
 typedef boost::multi_array<double, 3> array_type3;
 typedef boost::multi_array<double, 2> array_type2;
 
+#if SPLINECOEFS
 // create a spline array for the coefficients
+// set up for spline, specify if needed
+#include "spline.h"
 typedef boost::multi_array<tk::spline, 2> spline_array;
-
+#endif
 
 struct SphCoefs
 {
@@ -46,12 +46,14 @@ struct SphCoefs
 
   array_type3 coefs;   // the coefficient table, sized NUMT,(LMAX+1)*(LMAX+1),NMAX
 
+#if SPLINECOEFS
   spline_array coefsplines; // spline version of the coefficients, sized (LMAX+1)*(LMAX+1),NMAX
+#endif
 
 };
 
 
-
+#if SPLINECOEFS
 void spline_coefficient_time(double desired_time, SphCoefs coeftable, array_type2& coefs_at_time) {
   /*
     interpolate to get the coefficient matrix at a specific time
@@ -103,7 +105,7 @@ void make_coef_splines( SphCoefs& coeftable) {
   }
 
 }
-
+#endif
 
 
 void read_coef_file_raw(string& coef_file, SphCoefs& coeftable) {
@@ -133,7 +135,7 @@ void read_coef_file_raw(string& coef_file, SphCoefs& coeftable) {
   // compute the number of full timesteps: extra 8s are for tnow,MMAX,NORDER ahead of every coefficient set
   coeftable.NUMT = end/((numl*coeftable.NMAX)*sizeof(double)  + 8 + 16 + 64);
 
-  cout << "sphcoefs.read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
+  cout << "sphcoefs::read_coef_file_raw: reading NUMT, LMAX, NMAX from file . . . " << endl;
   cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.LMAX <<
     setw(18) << coeftable.NMAX << endl;
 
@@ -157,10 +159,10 @@ void read_coef_file_raw(string& coef_file, SphCoefs& coeftable) {
     }
   }
 
-  if (splinecoefs) {
-  cout << "setting up coefficient interpolation . . . ";
+#if SPLINECOEFS
+  cout << "sphcoefs::read_coef_file_raw: setting up coefficient interpolation . . . ";
   make_coef_splines(coeftable);
-  }
+#endif
 
   cout << "success!!" << endl;
 
@@ -185,13 +187,13 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
   in.read((char *)&coeftable.LMAX, sizeof(int));
   in.read((char *)&coeftable.NMAX, sizeof(int));
 
-  cout << "sphcoefs.read_coef_file: reading coefficients from file . . . ";
+  cout << "sphcoefs::read_coef_file: reading coefficients from file . . . ";
 
-  if (debugcoefs) {
-  cout << endl << "sphcoefs.read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
+#if DEBUGCOEFS
+  cout << endl << "sphcoefs::read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
   cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.LMAX <<
     setw(18) << coeftable.NMAX << endl;
-  }
+#endif
 
   // resize the coefs array appropriately
   int numl = (coeftable.LMAX+1) * (coeftable.LMAX+1);
@@ -210,11 +212,11 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
     }
   }
 
-  if (splinecoefs) {
-  cout << "setting up coefficient interpolation . . . ";
+#if SPLINECOEFS
+  cout << "sphcoefs::read_coef_file: setting up coefficient interpolation . . . ";
   make_coef_splines(coeftable);
-  }
-
+#endif
+  
   cout << "success!!" << endl;
 
 }
