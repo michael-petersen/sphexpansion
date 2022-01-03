@@ -4,6 +4,7 @@ rotation matrices and helper rotation functions
 MSP 30 Apr 2020 first version
 MSP 14 May 2021 added header guard
 
+what code does this mimic? we need to write down the convention somewhere...
 
  */
 #ifndef ROTATE_H
@@ -12,7 +13,9 @@ MSP 14 May 2021 added header guard
 #include <eigen3/Eigen/Dense>
 
 using namespace Eigen;
-using namespace std;
+
+//using namespace std;
+using std::cout, std::cerr, std::endl;
 
 
 

@@ -39,7 +39,8 @@ of something around, would like to track down what exactly is going on.
 
 
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw;
 
 // create 2- and 3-d array types from boost
 typedef boost::multi_array<double, 4> array_type4;

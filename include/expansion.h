@@ -13,12 +13,13 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 #undef STANDALONE
 #define STANDALONE 0
 
-// flags for deep debugging
-#define DEEPDEBUGCOEFS 0
-#define DEEPDEBUGTIME 0
 
+#include <Eigen/Dense>
 
 // MSP headers
+// important preprocessor flags
+#include "flags.h"
+
 // converters from r to xi (for mapping tables)
 #include "scaling.h"
 
@@ -40,7 +41,8 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 // the orientation stuff for centering the expansions
 #include "orient.h"
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw;
 
 // create 2- and 3-d array types from boost
 typedef boost::multi_array<double, 3> array_type3;
@@ -140,6 +142,7 @@ public:
 
   // return self-gravitating coefficients (i.e. apply spherical harmonic norm)
   void get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm=false, bool power=false);
+  //void get_selfgravity_coefficients_eigen(Eigen::MatrixXd& self_grav_coefs, bool monopolenorm=false, bool power=false);
   
 };
 
@@ -577,7 +580,7 @@ void SphExpansion::return_forces(array_type2& coefs, double x, double y, double 
 				fr,ft,fp,monopole,dipole,quadrupole,ltrunc);
 
   // DEEP debug
-  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
+  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n'; 
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -615,7 +618,7 @@ void SphExpansion::return_density(array_type2& coefs,
 				monopole,dipole,quadrupole,ltrunc);
 
 #if DEEPDEBUGCOEFS
-  cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
+  cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n'; 
 #endif
 
 }
@@ -660,14 +663,14 @@ void SphExpansion::select_coefficient_time(double desired_time,
   //if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
 
   // guard against going past the end of the simulation
-  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
+  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << "\n";
 
 #if DEEPDEBUGTIME
   cout << "indx=" << indx
        << " MinT=" << coeftable.t[0]
        << " MaxT=" << coeftable.t[coeftable.NUMT-1]
        << " desired_time=" << desired_time
-       << endl;
+       << "\n";
 #endif
   
   if (indx<0) {
@@ -690,8 +693,8 @@ void SphExpansion::select_coefficient_time(double desired_time,
 #if DEEPDEBUGTIME
     cout << "dt=" << setw(16) << dt << "  t[indx+1]="  << setw(16) << coeftable.t[indx+1]
 	                            << "  t[indx]="  << setw(16) << coeftable.t[indx]
-                                    << "  desiredT="  << setw(16) << desired_time << endl;
-    cout << "x1=" << setw(16) << x1 << " x2=" << setw(14) << x2 << endl;
+                                    << "  desiredT="  << setw(16) << desired_time << "\n";
+    cout << "x1=" << setw(16) << x1 << " x2=" << setw(14) << x2 << "\n";
 #endif
 
     for (int l=0; l<numl; l++){
@@ -808,3 +811,98 @@ void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bo
   } // time loop
 
 }
+
+
+
+/*
+void SphExpansion::get_selfgravity_coefficients_eigen(Eigen::MatrixXd& self_grav_coefs, bool monopolenorm, bool power)
+{
+  
+  // function to produce coefficient amplitudes that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
+  // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
+  // this will set up another copy of the coefficients, so be warned: this could be large
+
+  // inputs
+  // self_grav_coefs: the array that will be filled with self-gravity coefficients
+  // monopolenorm   : if true, will return the normed coefficients (normalised by the lowest-order coefficient)
+  // power          : if true, will return the squared sum of the coefficients, which is the gravitational potential energy (see note below)
+
+  // The theory:
+  // -The biorthogonality condition is the integral of the density and and the potential over 3d space.
+  // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficient amplitudes in the expansion.
+  // -Physically, that is 2 times the gravitational potential energy.
+
+  // todo: 
+  // consider options for single lorder,morder return
+  // add power computation
+
+  int numl = coeftable.LMAX;
+  int numn = coeftable.NMAX;
+  int l,loffset,moffset,m,n,t;
+
+  self_grav_coefs.resize(coeftable.NUMT,(coeftable.LMAX+1)*(coeftable.LMAX+1),coeftable.NMAX);
+
+  double fac1,fac2;
+  double norm;
+
+  fac1 = 0.25/M_PI;
+  
+  Eigen::MatrixXd factrl;
+  factorial_eigen(numl, factrl);
+
+  for (t=0;t<coeftable.NUMT;t++) {
+
+
+    // do the monopole
+    for (n=0;n<numn;n++) self_grav_coefs(t,0,n) = fac1*coeftable.coefs[t][0][n];
+
+    // do the higher orders
+    for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
+      for (m=0, moffset=0; m<=l; m++) {
+        fac1 = (2.0*l+1.0)/(4.0*M_PI);
+        if (m==0) {
+          for (n=0;n<numn;n++) self_grav_coefs(t,loffset+moffset,n) = fac1*coeftable.coefs[t][loffset+moffset][n];
+	  moffset++;
+        } else {
+	  fac2 = 2.0 * fac1 * factrl(l,m);
+          for (n=0;n<numn;n++) self_grav_coefs(t,loffset+moffset  ,n) = fac2*coeftable.coefs[t][loffset+moffset  ][n];
+          for (n=0;n<numn;n++) self_grav_coefs(t,loffset+moffset+1,n) = fac2*coeftable.coefs[t][loffset+moffset+1][n];
+	  moffset += 2;
+        }
+      }  
+    } // higher-order l loop
+
+    // loop back through to compute the power, if desired
+    if (power) {
+      for (l=0;l<(numl+1)*(numl+1);l++) {
+	for (n=0;n<numn;n++) self_grav_coefs(t,l,n) = self_grav_coefs(t,l,n)*self_grav_coefs(t,l,n);
+      }
+      
+    } // power
+
+    if (monopolenorm) {
+      // reset the norm
+      norm = 0.0;
+      
+      // compute the monopole norm from the total monopole
+      // if returning power, this is the sum over all radial orders
+      // if returning amplitude, this is just the lowest-order radial term
+      if (power) {
+	for (n=0;n<numn;n++) norm += self_grav_coefs(t,0,n);
+      } else {
+        norm = self_grav_coefs(t,0,0);
+      }
+	
+      for (l=0;l<(numl+1)*(numl+1);l++) {	
+	for (n=0;n<numn;n++) self_grav_coefs(t,l,n) /= norm;
+      }
+      
+    } // monopolenorm
+    
+
+    
+  } // time loop
+
+}
+*/
+

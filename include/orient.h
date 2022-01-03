@@ -12,6 +12,7 @@ MSP 24 Dec 2021 change spline calls to preprocessor flag
 
 wishlist:
 -handle bad files gracefully
+-handle axis tipping orient files
 
  */
 #ifndef ORIENT_H
@@ -20,7 +21,9 @@ wishlist:
 #include <iostream>
 #include <fstream>
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw;
+
 
 // decide on splines
 // NOTE
@@ -74,17 +77,47 @@ struct SphOrient
   
 };
 
+void find_time_index(double desired_time, SphOrient orient,
+		     int& indx, double& dt)
+{
+  // starting at the first indx, stop when we get to the matching time
+  indx = 0;
+  while (orient.time[indx]<=desired_time) {
+    indx ++;
+  }
+
+  // reset by one
+  indx --;
+
+  // guard against wanton extrapolation: should this stop the model?
+  if (indx>orient.NUMT-2) cerr << "orient::find_time_index: time after to simulation end selected. setting to latest step." << endl;
+
+  if (indx<0) indx = 0;
+  if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
+
+  // check the spacing on orient.time (can be nonuniform)
+  dt = orient.time[indx+1] - orient.time[indx];
+}
 
 
 void interpolate_centre(double desired_time,
 			SphOrient& orient,
 			vector<double>& centre)
 {
-  // find the nearest time
-  // the orient array MUST be evenly spaced, check exp output
-  double dt = orient.time[1] - orient.time[0];
 
-  int indx = (int)( (desired_time-orient.time[0])/dt);
+  // find the matching time
+  int indx;
+  double dt;
+
+  if (orient.eventime) {
+    // the orient array MUST be evenly spaced, check exp output
+    dt   = orient.time[1] - orient.time[0];
+    indx = (int)( (desired_time-orient.time[0])/dt);
+  } else {
+    find_time_index(desired_time, orient, indx, dt);
+  }
+
+  
   if (havevelocity && indx<0) {
     // interpolate the centre backwards in time before the simulation starts
     // selects the earliest time
@@ -118,13 +151,18 @@ void interpolate_velocity_centre(double desired_time,
 			         SphOrient& orient,
 			         vector<double>& velcentre)
 {
-  // find the nearest time
-  // the orient array MUST be evenly spaced, check exp output
+  // find the matching time
+  int indx;
+  double dt;
 
+  if (orient.eventime) {
+    // the orient array MUST be evenly spaced, check exp output
+    dt   = orient.time[1] - orient.time[0];
+    indx = (int)( (desired_time-orient.time[0])/dt);
+  } else {
+    find_time_index(desired_time, orient, indx, dt);
+  }
   
-  double dt = orient.time[1] - orient.time[0];
-
-  int indx = (int)( (desired_time-orient.time[0])/dt);
   if (indx<0) {
     // if the desired_time is earlier than the simulation beginning
     // return the approximation for the first velocity

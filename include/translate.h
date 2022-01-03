@@ -16,7 +16,8 @@ MSP 14 May 2021 added header guard
 #ifndef TRANSLATE_H
 #define TRANSLATE_H
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw;
 
 // set these parameters to tune the simulation virial units to the MW
 double mw_virial_radius        = 282.;                                  // virial radius of the MW, kpc/Rvir

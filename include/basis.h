@@ -6,10 +6,14 @@ Basic basis elements. See Basis.cc/.H for original implementation.
 MSP 22 Apr 2020 clean version
 MSP 14 May 2021 added header guard
 
+wishlist: 
+-update to featherstone & holmes algorithm
+
  */
 #ifndef BASIS_H
 #define BASIS_H
 
+#include <Eigen/Dense>
 
 #include "boost/multi_array.hpp"
 
@@ -18,7 +22,6 @@ typedef boost::multi_array<double, 2> array_type2;
 // Machine constant for Legendre (note constexpr is not good in clang)
 double MINEPS = 1.e-20;
 
-//using namespace std;
 
 void legendre_R(int lmax, double x, array_type2& p)
 {
@@ -146,6 +149,22 @@ void factorial (int lmax, array_type2& factorial) {
 
 }
 
+
+void factorial_eigen (int lmax, Eigen::MatrixXd& factorial) {
+
+  if (lmax>1) {
+
+    factorial.resize(lmax+1,lmax+1);
+
+    for (int l=0; l<=lmax; l++) {
+      for (int m=0; m<=l; m++) 
+        factorial(l,m) = factrl(l-m)/factrl(l+m);
+    }
+  } else {
+
+  }
+
+}
 
 #endif
 // https://www.acodersjourney.com/top-10-c-header-file-mistakes-and-how-to-fix-them/

@@ -12,7 +12,8 @@ Plan:
 #ifndef ACCUMULATE_H
 #define ACCUMULATE_H
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw;
 
 // create 2- and 3-d array types
 typedef boost::multi_array<double, 3> array_type3;

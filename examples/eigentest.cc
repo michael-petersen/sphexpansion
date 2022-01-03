@@ -100,6 +100,9 @@ int main () {
 
   int numW=100;
 
+  Eigen::MatrixXd self_grav_coefs;
+  //MW->get_selfgravity_coefficients_eigen(self_grav_coefs);
+  
   Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(numW, numW);
 
   ret.resize(40,40);

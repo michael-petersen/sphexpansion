@@ -20,7 +20,12 @@ notes
 
 #include "basis.h"
 
-using namespace std;
+#include <Eigen/Dense>
+
+
+
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
 
 
@@ -246,8 +251,9 @@ void get_selfgravity_coefficients(SphCoefs coeftable,
 
   fac1 = 0.25/M_PI;
   
-  array_type2 factrl;
-  factorial(numl, factrl);
+  //array_type2 factrl;
+  Eigen::MatrixXd factrl;
+  factorial_eigen(numl, factrl);
 
   for (t=0;t<coeftable.NUMT;t++) {
 
@@ -259,7 +265,8 @@ void get_selfgravity_coefficients(SphCoefs coeftable,
         if (m==0) {
           for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac1*coeftable.coefs[t][loffset+moffset][n];
         } else {
-	  fac2 = 2.0 * fac1 * factrl[l][m];
+	  //fac2 = 2.0 * fac1 * factrl[l][m];
+	  fac2 = 2.0 * fac1 * factrl(l,m);
           for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac2*coeftable.coefs[t][loffset+moffset][n];
         }
       }
