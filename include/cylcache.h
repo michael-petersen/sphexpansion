@@ -24,7 +24,8 @@ Check on mapping values: are these okay?
 // should we have some way to block this out just in case?
 #include "yaml-cpp/yaml.h"	// YAML support
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw;
 
 // create 2-,3- and 4-d array types
 typedef boost::multi_array<double, 4> array_type4;

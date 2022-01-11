@@ -6,10 +6,16 @@ Basic basis elements. See Basis.cc/.H for original implementation.
 MSP 22 Apr 2020 clean version
 MSP 14 May 2021 added header guard
 
+wishlist:
+-update to featherstone & holmes algorithm
+
  */
 #ifndef BASIS_H
 #define BASIS_H
 
+#if HAVEEIGEN
+#include <Eigen/Dense>
+#endif
 
 #include "boost/multi_array.hpp"
 
@@ -18,7 +24,6 @@ typedef boost::multi_array<double, 2> array_type2;
 // Machine constant for Legendre (note constexpr is not good in clang)
 double MINEPS = 1.e-20;
 
-//using namespace std;
 
 void legendre_R(int lmax, double x, array_type2& p)
 {
@@ -56,7 +61,7 @@ void legendre_R(int lmax, double x, array_type2& p)
   for(l=0; l<=lmax; l++)
     for (m=0; m<=l; m++)
       if (std::isnan(p[l][m]))
-	std::cerr << "legendre_R: p[" << l << "][" << m << "] lmax=" 
+	std::cerr << "legendre_R: p[" << l << "][" << m << "] lmax="
 	     << lmax << "\n";
 
 }
@@ -137,7 +142,7 @@ void factorial (int lmax, array_type2& factorial) {
     factorial.resize(boost::extents[lmax+1][lmax+1]);
 
     for (int l=0; l<=lmax; l++) {
-      for (int m=0; m<=l; m++) 
+      for (int m=0; m<=l; m++)
         factorial[l][m] = factrl(l-m)/factrl(l+m);
     }
   } else {
@@ -146,6 +151,23 @@ void factorial (int lmax, array_type2& factorial) {
 
 }
 
+#if HAVEEIGEN
+void factorial_eigen (int lmax, Eigen::MatrixXd& factorial) {
+
+  if (lmax>1) {
+
+    factorial.resize(lmax+1,lmax+1);
+
+    for (int l=0; l<=lmax; l++) {
+      for (int m=0; m<=l; m++)
+        factorial(l,m) = factrl(l-m)/factrl(l+m);
+    }
+  } else {
+
+  }
+
+}
+#endif // HAVEEIGEN
 
 #endif
 // https://www.acodersjourney.com/top-10-c-header-file-mistakes-and-how-to-fix-them/

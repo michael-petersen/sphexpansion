@@ -3,14 +3,22 @@ sphmodel.h
 
 functions to read in the spherical model files
 
-clean version, MSP 22 April 2020
+MSP 22 Apr 2020 clean version
+MSP  3 Jan 2022 make spline flag
+
+
+- still needs a linear interpolation fallback
 
  */
+#ifndef SPHMODEL_H
+#define SPHMODEL_H
 
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
-using namespace std;
-
+#if SPLINEMODEL
 #include "spline.h"
+#endif
 
 struct SphModel
 {
@@ -20,9 +28,11 @@ struct SphModel
   vector<double> m;  // the enclosed mass array, len NUMR
   vector<double> p;  // the potential array, len NUMR
 
+#if SPLINEMODEL
   tk::spline pspline; // spline representation of potential
   tk::spline dspline; // spline representation of density
   tk::spline mspline; // spline representation of mass
+#endif
 };
 
 
@@ -70,15 +80,17 @@ void read_model (string& model_file, SphModel& modeltable) {
 
   infile.close();
 
+#if SPLINEMODEL
   // construct spline interpolations
   modeltable.pspline.set_points(modeltable.r,modeltable.p);
   modeltable.dspline.set_points(modeltable.r,modeltable.d);
   modeltable.mspline.set_points(modeltable.r,modeltable.m);
-
+#endif
+  
 }
 
 
-
+#if SPLINEMODEL
 // evaluation calls
 double get_pot (SphModel& sphmodel, double r) {
   return sphmodel.pspline(r);
@@ -91,4 +103,7 @@ double get_mass (SphModel& sphmodel, double r) {
 double get_density (SphModel& sphmodel, double r) {
   return sphmodel.dspline(r);
 }
+#endif
 
+
+#endif

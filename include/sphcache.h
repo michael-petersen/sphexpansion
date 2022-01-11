@@ -9,11 +9,14 @@ MSP 27 Sep 2020 add USE_TABLE preprocessor directive
 MSP  7 Oct 2020 fix density normalisation (decide on final location of -4pi from Poisson)
 
  */
+#ifndef SPHCACHE_H
+#define SPHCACHE_H
 
 // include the modelfile stuff
 #include "sphmodel.h"
 
-using namespace std;
+//using namespace std;
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
 // create 2- and 3-d array types
 typedef boost::multi_array<double, 3> array_type3;
@@ -286,3 +289,5 @@ void get_dpotl_density(double r, SphCache& cachetable, array_type2& potd, array_
   get_force(r, cachetable, dpot);
   get_density(r, cachetable, dend);
 }
+
+#endif

@@ -3,8 +3,8 @@ tests for the initial MW and LMC
 - density under deforming conditions
 - made to track down a bug.
 
-compile string: 
-clang++ -I/opt/local/include -L/opt/local/lib -I../include/ density_map.cc -o obj/density_map
+compile string:
+clang++ --std=c++17 -I/opt/local/include -L/opt/local/lib -I../include/ density_map.cc -o obj/density_map
 
 MSP 13 Oct 2020 first written.
 MSP  4 Nov 2021 rewritten for new expansion.h
@@ -60,7 +60,7 @@ void make_surface(SphExpansion* S1,
   cout << setw(14) <<  mwxvp << setw(14) <<  mwyvp << setw(14) <<  mwzvp << endl;
   cout << setw(14) << lmcxvp << setw(14) << lmcyvp << setw(14) << lmczvp << endl;
 
-  
+
   ofstream densityfile;
   densityfile.open(outfile);
 
@@ -83,7 +83,7 @@ void make_surface(SphExpansion* S1,
 
   cout << setw(14) << xin << setw(14) << yin  << setw(14) << zin << endl;
 
-  
+
   // demo to make a rotation curve
   for (int xx=0; xx<nsamples; xx++) {
 
@@ -101,27 +101,27 @@ void make_surface(SphExpansion* S1,
           spherical_to_cartesian(rin,pin,tin,
 			         xin,yin,zin);
 
-      
+
           S1->return_density(coefs1,
 			     xin, yin, zin,
 		             mwd, monopole, dipole, quadrupole, ltrunc);
-      
+
           S2->return_density(coefs2,
 			     xin-lmcxvp, yin-lmcyvp, zin-lmczvp,
 		             lmcd, monopole, dipole, quadrupole, ltrunc);
-    
+
           virial_to_physical_density( mwd,  mwphysdens);
           virial_to_physical_density(lmcd, lmcphysdens);
-    
+
           densityfile  << setw(14) << rin        << setw(14) << pin << setw(14) << tin <<
                           setw(14) << mwphysdens << setw(14) << lmcphysdens << endl;
 
       } // end of z/theta loop
     } // end of y/phi loop
   } // end of x/r loop
-  
+
   densityfile.close();
-  
+
 }
 
 
@@ -156,7 +156,7 @@ void make_density(SphExpansion* S1,
   cout << setw(14) <<  mwxvp << setw(14) <<  mwyvp << setw(14) <<  mwzvp << endl;
   cout << setw(14) << lmcxvp << setw(14) << lmcyvp << setw(14) << lmczvp << endl;
 
-  
+
   ofstream densityfile;
   densityfile.open(outfile);
 
@@ -176,30 +176,30 @@ void make_density(SphExpansion* S1,
 
       yin = yy*dx + xmin;
 
-      
+
       S1->return_density(coefs1,
 			 //0.-mwxvp, yin-mwyvp, zin-mwzvp,
 			 0., yin, zin,
 		         mwd, monopole, dipole, quadrupole, ltrunc);
-      
+
       S2->return_density(coefs2,
 			 0.-lmcxvp, yin-lmcyvp, zin-lmczvp,
 			 //0.-mwxvp, yin-mwyvp, zin-mwzvp,
 		         lmcd, monopole, dipole, quadrupole, ltrunc);
-    
+
       virial_to_physical_density( mwd,  mwphysdens);
       virial_to_physical_density(lmcd, lmcphysdens);
-    
+
       densityfile  << setw(14) << yin        << setw(14) << zin <<
                       setw(14) << mwphysdens << setw(14) << lmcphysdens << endl;
 
     }
   }
-  
+
   densityfile.close();
-  
+
 }
-			 
+
 
 void make_density_3d(SphExpansion* S1,
 		     array_type2 coefs1,
@@ -233,7 +233,7 @@ void make_density_3d(SphExpansion* S1,
   cout << setw(14) <<  mwxvp << setw(14) <<  mwyvp << setw(14) <<  mwzvp << endl;
   cout << setw(14) << lmcxvp << setw(14) << lmcyvp << setw(14) << lmczvp << endl;
 
-  
+
   ofstream densityfile;
   densityfile.open(outfile);
 
@@ -256,20 +256,20 @@ void make_density_3d(SphExpansion* S1,
 
 	zin = zz*dx + xmin;
 
-      
+
 	S1->return_density(coefs1,
 			   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
 			   xin, yin, zin,
 			   mwd, monopole, dipole, quadrupole, ltrunc);
-      
+
 	S2->return_density(coefs2,
 			   xin-lmcxvp, yin-lmcyvp, zin-lmczvp,
 			   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
 			   lmcd, monopole, dipole, quadrupole, ltrunc);
-    
+
 	virial_to_physical_density( mwd,  mwphysdens);
 	virial_to_physical_density(lmcd, lmcphysdens);
-    
+
 	densityfile  << setw(14) << xin
 		     << setw(14) << yin
 		     << setw(14) << zin
@@ -281,16 +281,16 @@ void make_density_3d(SphExpansion* S1,
     } // yloop
 
   }// xloop
-  
+
   densityfile.close();
-  
+
 } // function loop
 
 
 
 int main () {
 
-  
+
   // MW
   cout << "Initialising MW ... " << endl;
   /*
@@ -305,7 +305,7 @@ int main () {
   string coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.mw.system2_3";
   string orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system2_3.smth";
 
-  
+
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
@@ -325,12 +325,12 @@ int main () {
   //string coef_file_lmc       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.lmc.system1_3";
   string coef_file_lmc       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.lmc.system2_3";
   string orient_file_lmc     = "/Volumes/External1/Disk080/lmc.orient.system2_3.smth";
-  
+
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
-  
 
-  /* 
+
+  /*
   // MW
   cout << "Initialising MW ... " << endl;
   string sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw.run9mld";
@@ -358,7 +358,7 @@ int main () {
   array_type2 mwcoefs,lmccoefs;
   MW->select_coefficient_time(reftime, mwcoefs);
   LMC->select_coefficient_time(reftime, lmccoefs);
-  
+
   string dfile="/Users/mpetersen/Desktop/MW_LMC_density.txt";
   //make_density(MW,mwcoefs,LMC,lmccoefs,reftime,-50,50.,100,dfile);
 
@@ -367,5 +367,5 @@ int main () {
 
   string dfilesurf="/Users/mpetersen/Desktop/MW_LMC_density_3d_4.txt";
   make_surface(MW,mwcoefs,LMC,lmccoefs,reftime,0.,100.,35,dfilesurf);
-  
+
 }

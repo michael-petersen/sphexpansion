@@ -10,6 +10,7 @@ clang++ --std=c++17 -lyaml-cpp -I/opt/local/include -L/opt/local/lib -I../includ
 otool -L obj/fullintegrate
 install_name_tool -change @rpath/libyaml-cpp.0.7.dylib /opt/local/lib/libyaml-cpp.dylib obj/fullintegrate 
 
+clang++ --std=c++17 -lyaml-cpp -I/opt/local/include -L/opt/local/lib -I../include/ -I/opt/local/include/eigen3 fullintegrate.cc -o obj/fullintegrate
 
 -O3 doesn't add much.
 -g -O0 really slows down.
@@ -28,6 +29,8 @@ MSP 22 Dec 2021 add tests for new yaml formats
 #include <fstream>
 #include <math.h>
 #include <stdio.h>
+
+#include <Eigen/Eigen>
 
 // boost includes
 #include "boost/multi_array.hpp"
@@ -475,20 +478,21 @@ void three_component_leapfrog(SphExpansion* MW,
 int main () {
 
   bool test1 = true;
-
+  string runtag = "run9mlde";//"run7mld";
+  string facname = "nfac";
   
   // MW
   cout << "Initialising MW ... " << endl;
   string sph_cache_name_mw,model_file_mw,coef_file_mw,orient_file_mw;
   if (test1) {
-    sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw.run7mld";
+    sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw."+runtag;
     model_file_mw      = "/Volumes/External1/Disk076/ErkalMW.model";
-    coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef.nofac.mw.run7mld";
-    orient_file_mw     = "/Volumes/External1/Disk076/mw.orient.run7mld.smth";
+    coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef."+facname+".mw."+runtag;
+    orient_file_mw     = "/Volumes/External1/Disk076/mw.orient."+runtag+".smth";
   } else {
     sph_cache_name_mw  = "/Volumes/External1/Disk080/SLGridSph.cache.mw.system1_3";
     model_file_mw      = "/Volumes/External1/Disk080/SLGridSph.NFW77";
-    coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.mw.system1_3";
+    coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.mw.system1_3";
     orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system1_3.smth";
   }
   
@@ -499,14 +503,14 @@ int main () {
   cout << "Initialising LMC ... " << endl;
   string sph_cache_name_lmc,model_file_lmc,coef_file_lmc,orient_file_lmc;
   if (test1) {
-    sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc.run7mld";
+    sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc."+runtag;
     model_file_lmc     = "/Volumes/External1/Disk076/ErkalLMC.model";
-    coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef.nofac.lmc.run7mld";
-    orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient.run7mld.smth";
+    coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef."+facname+".lmc."+runtag;
+    orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient."+runtag+".smth";
   } else {
     sph_cache_name_lmc = "/Volumes/External1/Disk080/SLGridSph.cache.lmc.system1_3";
     model_file_lmc     = "/Volumes/External1/Disk080/SLGridSph.NFW77L";
-    coef_file_lmc      = "/Volumes/External1/Disk080/simpleoutcoef.nofac.lmc.system1_3";
+    coef_file_lmc      = "/Volumes/External1/Disk080/simpleoutcoef.nfac.lmc.system1_3";
     orient_file_lmc    = "/Volumes/External1/Disk080/lmc.orient.system1_3.smth";
   }
   
@@ -517,9 +521,9 @@ int main () {
   cout << "Initialising MW disc ... " << endl;
   string cyl_cache_name_mw,cyl_coef_name_mw,cyl_orient_name_mw;
   if (test1) {
-    cyl_cache_name_mw = "/Volumes/External1/Disk076/.disc.cache.run7mld";
-    cyl_coef_name_mw = "/Volumes/External1/Disk076/outcoef.disc.run7mld";
-    cyl_orient_name_mw = "/Volumes/External1/Disk076/disc.orient.run7mld.smth";
+    cyl_cache_name_mw = "/Volumes/External1/Disk076/.disc.cache."+runtag;
+    cyl_coef_name_mw = "/Volumes/External1/Disk076/outcoef.disc."+runtag;
+    cyl_orient_name_mw = "/Volumes/External1/Disk076/disc.orient."+runtag+".smth";
   } else {
     cyl_cache_name_mw = "/Volumes/External1/Disk080/.disc.cache.system1_3";
     cyl_coef_name_mw = "/Volumes/External1/Disk080/outcoef.disc.system1_3";
