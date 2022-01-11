@@ -2,10 +2,11 @@
 example code:
 extract self-gravitating coefficients
 
-compile string: 
-clang++ -I/opt/local/include -L/opt/local/lib -I../include/ extractcoefs.cc -o obj/extractcoefs
+compile string:
+clang++ --std=c++17 -lyaml-cpp -I/opt/local/include -L/opt/local/lib -I../include/ extractcoefs.cc -o obj/extractcoefs
 
 MSP 25 May 2021 basic implementation
+MSP 22 Jan 2022 fix example compilation string
 
 */
 
@@ -69,7 +70,7 @@ int main () {
   }
 
   cout << LMC->NUMT << endl;
-  
+
   /*
   // example: keep 4 radial terms for l>1 (but keep all monopole terms)
   array_type2 trunc_coefs;

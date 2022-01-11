@@ -3,12 +3,13 @@ tests for the initial MW and LMC
 - generate a rotation curve
 - integrate a circular orbit
 
-compile string: 
-clang++ -I/opt/local/include -L/opt/local/lib -I../include/ rotcurve.cc -o obj/rotcurve
+compile string:
+clang++ --std=c++17 -I/opt/local/include -L/opt/local/lib -I../include/ rotcurve.cc -o obj/rotcurve
 
 MSP 24 Apr 2020 first version
 MSP 29 Sep 2020 use as a test for density
 MSP 28 Sep 2021 fix for modern compatibility
+MSP 11 Jan 2022 convert to c++17 standard
 
 */
 
@@ -41,7 +42,7 @@ void make_rotation_curve(SphExpansion* S,
    */
 
   if (monopole) cout << "Only using monopole for rotation curve." << endl;
-  
+
   ofstream mwrotation;
   mwrotation.open(outfile);
 
@@ -67,23 +68,23 @@ void make_rotation_curve(SphExpansion* S,
 		  xin, 0., 0.,
 		     d, monopole);
 
-    
+
     virial_to_physical_density(d, physdens);
-    
+
     mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) <<
                   setw(14) << fx << setw(14) << fy << setw(14) << fz <<
                   setw(14) << d << setw(14) << physdens << endl;
 
   }
-  
+
   mwrotation.close();
-  
+
 }
-			 
+
 
 
 int main () {
-  
+
   // MW
   cout << "Initialising MW ... " << endl;
   string sph_cache_name_mw  =     "data/run068s22h/SLGridSph.cache.mw.run068s22h";
@@ -118,7 +119,7 @@ int main () {
   return_centre(0.0, LMC->orient, centre);
   cout << "C.O.M. x=" << centre[0] << " y=" <<
     centre[1] << " z=" << centre[2] << endl;
-  
+
   return_vel_centre(-1.0, LMC->orient, velcentre);
   cout << "C.O.M. velocity vx=" << velcentre[0] << " vy=" <<
     velcentre[1] << " vz=" << velcentre[2] << endl;
@@ -130,13 +131,13 @@ int main () {
   return_vel_centre(-2.0, LMC->orient, velcentre);
   cout << "C.O.M. velocity vx=" << velcentre[0] << " vy=" <<
     velcentre[1] << " vz=" << velcentre[2] << endl;
-  
+
   return_centre(-2.0, LMC->orient, centre);
   cout << "C.O.M. x=" << centre[0] << " y=" <<
     centre[1] << " z=" << centre[2] << endl;
-    
 
-  
+
+
   string rotationfile="tests/MWrotation.txt";
 
   make_rotation_curve(MW,
@@ -146,7 +147,7 @@ int main () {
 		      50,
 		      rotationfile, true);
 
-  
+
   rotationfile="tests/LMCrotation.txt";
 
   make_rotation_curve(LMC,
@@ -155,7 +156,7 @@ int main () {
 		      120.,
 		      50,
 		      rotationfile, true);
-  
+
   /*
     // skip test integration for now.
   vector<double> xinit(3);
@@ -173,7 +174,7 @@ int main () {
   array_type2 orbit;
 
   double dtintegrate = 0.01; // this is fine for circular orbits, needs to be ~0.003 for centre-crossing
-  
+
   leapfrog(MW, mwcoefs,
 	      xinit, vinit,
 	      2000,
@@ -196,5 +197,5 @@ int main () {
   orbitfile="tests/circularorbitLMC.txt";
   print_orbit(orbit,orbitfile);
   */
-  
+
 }

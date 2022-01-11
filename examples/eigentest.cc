@@ -1,7 +1,7 @@
 /*
 tests for the initial MW using eigen
 
-compile string: 
+compile string:
 clang++ --std=c++17 -I/opt/local/include -L/opt/local/lib -I../include/ -I/opt/local/include/eigen3 eigentest.cc -o obj/eigentest
 
 MSP 22 Dec 2021 first version
@@ -14,17 +14,17 @@ MSP 22 Dec 2021 first version
 #include <math.h>
 #include <stdio.h>
 
+// override eigen flag for this test
+#undef HAVEEIGEN
+#define HAVEEIGEN 1
+
 // eigen includes
 #include <Eigen/Dense>
-
-// boost includes
-#include "boost/multi_array.hpp"
 
 // expansion includes
 #include "expansion.h"
 
-// integration include
-#include "leapfrog.h"
+
 
 void make_rotation_curve(SphExpansion* S,
 			 array_type2 coefs,
@@ -40,7 +40,7 @@ void make_rotation_curve(SphExpansion* S,
    */
 
   if (monopole) cout << "Only using monopole for rotation curve." << endl;
-  
+
   ofstream mwrotation;
   mwrotation.open(outfile);
 
@@ -66,23 +66,23 @@ void make_rotation_curve(SphExpansion* S,
 		  xin, 0., 0.,
 		     d, monopole);
 
-    
+
     virial_to_physical_density(d, physdens);
-    
+
     mwrotation << setw(14) << xin << setw(14) << sqrt(xin*-fx) <<
                   setw(14) << fx << setw(14) << fy << setw(14) << fz <<
                   setw(14) << d << setw(14) << physdens << endl;
 
   }
-  
+
   mwrotation.close();
-  
+
 }
-			 
+
 
 
 int main () {
-  
+
   // MW
   cout << "Initialising MW ... " << endl;
   string sph_cache_name_mw  =     "../data/run068s22h/SLGridSph.cache.mw.run068s22h";
@@ -102,12 +102,15 @@ int main () {
 
   Eigen::MatrixXd self_grav_coefs;
   //MW->get_selfgravity_coefficients_eigen(self_grav_coefs);
-  
+
   Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(numW, numW);
 
   ret.resize(40,40);
-  
-  
+
+	Eigen::MatrixXd factrl;
+  factorial_eigen(6, factrl);
+
+
   string rotationfile="tests/MWrotation.txt";
 
   make_rotation_curve(MW,
@@ -117,5 +120,5 @@ int main () {
 		      50,
 		      rotationfile, true);
 
-  
+
 }
