@@ -11,8 +11,9 @@ this should be able to go much faster. obviously I'm passing too much
 of something around, would like to track down what exactly is going on.
 
 */
+#ifndef CYLEXPANSION_H
+#define CYLEXPANSION_H
 
-#if STANDALONE
 // converters from r to xi (for mapping tables)
 #include "scaling.h"
 
@@ -27,8 +28,6 @@ of something around, would like to track down what exactly is going on.
 
 // the orientation stuff for centering the expansions
 #include "orient.h"
-#endif
-
 
 // the cachefile stuff, also brings in the modelfile stuff
 #include "cylcache.h"
@@ -58,8 +57,8 @@ private:
   void initialise(string cyl_cache_name,
 		  string coef_file,
 		  string orient_file);
-  
-  
+
+
 public:
   // the constructor
   CylExpansion(string cyl_cache_name,
@@ -79,8 +78,8 @@ public:
   //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
   void determine_fields_at_point_cyl(array_type2& coscoefs,
 				     array_type2& sincoefs,
-				     double r, double phi, double z, 
-				     double& potl0, double& potl, 
+				     double r, double phi, double z,
+				     double& potl0, double& potl,
 				     double& potr, double& potp,
 				     double& potz,
 				     bool monopole=false, bool dipole=false, bool quadrupole=false);
@@ -125,18 +124,18 @@ void CylExpansion::initialise(string cyl_cache_name,
 
 void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 						 array_type2& sincoefs,
-						 double r, double phi, double z, 
-						 double& potl0, double& potl, 
+						 double r, double phi, double z,
+						 double& potl0, double& potl,
 						 double& fr, double& fp, double& fz,
 						 bool monopole, bool dipole, bool quadrupole)
 {
   /*
   // skipping density for now --> decide later if interesting.
-  
+
   see the equivalent exp call in SphericalBasis.cc
 
   */
-  
+
   int m,n;
 
   double ccos,ssin,fac;
@@ -159,11 +158,11 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
     if (dipole && quadrupole) {
       if (m>2) continue;
     } else {
-      
+
       if (dipole     && m!=0 && m!=1) {
         continue;
       }
-    
+
       if (quadrupole && m!=0 && m!=2) {
         continue;
       }
@@ -177,7 +176,7 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
       fac = coscoefs[m][n] * ccos;
 
       if (m==0 && n==0) potl0 += fac * forcetable.potC[m][n];
-      
+
       potl += fac * forcetable.potC[m][n];
       fr   += fac * forcetable.rforceC[m][n];
       fz   += fac * forcetable.zforceC[m][n];
@@ -187,7 +186,7 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
       fp += fac * m * forcetable.potC[m][n];
 
       if (m) { // sine terms
-	
+
 	fac = sincoefs[m][n] * ssin;
 
 	potl += fac * forcetable.potS[m][n];
@@ -198,12 +197,12 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 	fac = -sincoefs[m][n] * ccos;
 
 	fp  += fac * m * forcetable.potS[m][n];
-	
+
       } // end sine loop
     } // end NORDER loop
   } // end MMAX loop
 
-  
+
 }
 
 void CylExpansion::return_forces(array_type2 coscoefs,
@@ -223,16 +222,16 @@ void CylExpansion::return_forces(array_type2 coscoefs,
   double rtmp,phitmp;
   double potl0,potl,fr,ft,fp;
   double fxtmp,fytmp,fztmp;
-  
+
   cartesian_to_cylindrical(xvir, yvir, rtmp, phitmp);
-  
+
   determine_fields_at_point_cyl(coscoefs, sincoefs,
 				rtmp,phitmp,z,
 				potl0,potl,
 				fr,fp,fz,monopole,dipole,quadrupole);
 
   // DEEP debug
-  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl; 
+  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl;
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
 				  fr, fp,
@@ -259,7 +258,7 @@ void CylExpansion::select_coefficient_time(double desired_time,
   //int indx = (int)( (desired_time-coeftable.t[0])/dt);
 
 
-  
+
   // starting at the first indx, stop when we get to the matching time
   int indx = 0;
   while (coeftable.t[indx]<=desired_time) {
@@ -282,8 +281,8 @@ void CylExpansion::select_coefficient_time(double desired_time,
   double dt = coeftable.t[indx+1] - coeftable.t[indx];
 
   //cout << setw(14) << desired_time << setw(14) << coeftable.t[0] << setw(14) << coeftable.t[indx] << setw(14) << dt << endl;
-  
-  
+
+
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
 
@@ -297,16 +296,16 @@ void CylExpansion::select_coefficient_time(double desired_time,
       if (m) sincoefs_at_time[m][n] = (x1*coeftable.sincoefs[indx][m][n] + x2*coeftable.sincoefs[indx+1][m][n]);
     }
   }
-  
+
 }
 
 
-  
+
 void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
 {
 
   // return 2d tables required to compute the forces
-  
+
   forcetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
   forcetable.potS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
 
@@ -332,7 +331,7 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
   if (iy < 0) {
     iy = 0;
   }
-  
+
   if (ix >= cachetable.NUMX) {
     ix = cachetable.NUMX-1;
   }
@@ -351,58 +350,58 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
   double c11 = delx1*dely1;
 
   for (int mm=0; mm<=cachetable.MMAX; mm++) {
-    
+
     for (int n=0; n<cachetable.NORDER; n++) {
 
-      forcetable.potC[mm][n] = 
+      forcetable.potC[mm][n] =
 	(
 	 cachetable.potC[mm][n][ix  ][iy  ] * c00 +
 	 cachetable.potC[mm][n][ix+1][iy  ] * c10 +
 	 cachetable.potC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.potC[mm][n][ix+1][iy+1] * c11 
+	 cachetable.potC[mm][n][ix+1][iy+1] * c11
 	 );
 
-      forcetable.rforceC[mm][n] = 
+      forcetable.rforceC[mm][n] =
 	(
 	 cachetable.rforceC[mm][n][ix  ][iy  ] * c00 +
 	 cachetable.rforceC[mm][n][ix+1][iy  ] * c10 +
 	 cachetable.rforceC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.rforceC[mm][n][ix+1][iy+1] * c11 
+	 cachetable.rforceC[mm][n][ix+1][iy+1] * c11
 	 );
 
-      forcetable.zforceC[mm][n] = 
+      forcetable.zforceC[mm][n] =
 	(
 	 cachetable.zforceC[mm][n][ix  ][iy  ] * c00 +
 	 cachetable.zforceC[mm][n][ix+1][iy  ] * c10 +
 	 cachetable.zforceC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.zforceC[mm][n][ix+1][iy+1] * c11 
+	 cachetable.zforceC[mm][n][ix+1][iy+1] * c11
 	 );
 
       // get sine values for m>0
       if (mm) {
 
-	forcetable.potS[mm][n] = 
+	forcetable.potS[mm][n] =
 	  (
 	   cachetable.potS[mm][n][ix  ][iy  ] * c00 +
 	   cachetable.potS[mm][n][ix+1][iy  ] * c10 +
 	   cachetable.potS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.potS[mm][n][ix+1][iy+1] * c11 
+	   cachetable.potS[mm][n][ix+1][iy+1] * c11
 	   );
 
-        forcetable.rforceS[mm][n] = 
+        forcetable.rforceS[mm][n] =
 	  (
 	   cachetable.rforceS[mm][n][ix  ][iy  ] * c00 +
 	   cachetable.rforceS[mm][n][ix+1][iy  ] * c10 +
 	   cachetable.rforceS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.rforceS[mm][n][ix+1][iy+1] * c11 
+	   cachetable.rforceS[mm][n][ix+1][iy+1] * c11
 	   );
 
-        forcetable.zforceS[mm][n] = 
+        forcetable.zforceS[mm][n] =
 	  (
 	   cachetable.zforceS[mm][n][ix  ][iy  ] * c00 +
 	   cachetable.zforceS[mm][n][ix+1][iy  ] * c10 +
 	   cachetable.zforceS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.zforceS[mm][n][ix+1][iy+1] * c11 
+	   cachetable.zforceS[mm][n][ix+1][iy+1] * c11
 	   );
       }
 
@@ -411,3 +410,4 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
 
 }
 
+#endif

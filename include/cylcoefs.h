@@ -14,12 +14,9 @@ todo:
 #ifndef CYLCOEFS_H
 #define CYLCOEFS_H
 
-// debug flags
-#define FORMAT 1
-//#define ORDERS 0
-
+#if HAVEYAML
 #include "yaml-cpp/yaml.h"	// YAML support
-
+#endif
 
 
 using namespace std;
@@ -33,8 +30,8 @@ struct CylCoefs
   int MMAX;            // the number of azimuthal harmonics
   int NORDER;            // the number of radial terms
   int NUMT;            // the number of timesteps
-  
-  vector<double> t;    // the time, len NUMT  
+
+  vector<double> t;    // the time, len NUMT
 
   array_type3 coscoefs;   // the cosine coefficient table, sized NUMT,MMAX+1,NORDER
   array_type3 sincoefs;   // the   sine coefficient table, sized NUMT,MMAX+1,NORDER
@@ -59,20 +56,22 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
   //cout << setw(14) << tmagic << endl;
 
   if (tmagic == 202004387) {
-    
+
     newformat = true;
 
     // YAML size
     //
     in.read(reinterpret_cast<char*>(&ssize), sizeof(unsigned int));
 
-    
+
     // Make and read char buffer
     //
     auto buf = std::make_unique<char[]>(ssize+1);
     in.read(buf.get(), ssize);
     buf[ssize] = 0;		// Null terminate
-      
+
+
+#if HAVEYAML
     YAML::Node node = YAML::Load(buf.get());
 
     // Get parameters
@@ -81,21 +80,75 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     coeftable.NORDER  = node["nmax"].as<int>();
     tnow              = node["time"].as<double>();
 
+#else // compile without libyaml
+
+    std::string yamlblob = buf.get();
+
+    // loop through string parsing
+    // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
+    // but NOT the top vote getter!
+    std::string delim = "\n";
+    std::string entry;
+    auto start = 0U;
+    auto end = yamlblob.find(delim);
+    std::string token2,token3;
+    while (end != std::string::npos)
+    {
+        // retreive the entry
+        entry = yamlblob.substr(start, end - start);
+
+        // split the entry up to the ':'
+        token2 = entry.substr(0, entry.find(":"));
+
+        // split the entry after the ':'
+        token3 = entry.substr(entry.find(":")+2,entry.length()-entry.find(":")-2);
+        //std::cout<<token2<<"--"<<token3<<endl;
+
+        if (token2.compare("mmax") == 0)   coeftable.MMAX    = std::stoi(token3);
+        if (token2.compare("nmax") == 0)   coeftable.NORDER  = std::stoi(token3);
+        if (token2.compare("time") == 0)   tnow              = std::stod(token3);
+
+        // advance counters
+        start = end + delim.length();
+        end = yamlblob.find(delim, start);
+    }
+
+    // last one is always 'nmax' which we NEED
+
+    // retreive the entry
+    entry = yamlblob.substr(start, end - start);
+
+    // split the entry up to the ':'
+    token2 = entry.substr(0, entry.find(":"));
+
+    // split the entry after the ':'
+    token3 = entry.substr(entry.find(":")+2,entry.length()-entry.find(":")-2);
+    //std::cout<<token2<<"--"<<token3<<endl;
+
+    if (token2.compare("mmax") == 0)   coeftable.MMAX    = std::stoi(token3);
+    if (token2.compare("nmax") == 0)   coeftable.NORDER  = std::stoi(token3);
+
+    //std::cout << coeftable.MMAX  << " " << coeftable.NORDER  << std::endl;
+
+
+#endif
+
+
   } else {
 
-    
+
     // rewind to the beginning of the file
     //
     in.clear();
     in.seekg(0);
-    
+
     // first thing in is NUMT,LMAX,NORDER
     in.read((char *)&tnow, sizeof(double));
     in.read((char *)&coeftable.MMAX, sizeof(int));
     in.read((char *)&coeftable.NORDER, sizeof(int));
 
   }
-  
+
   int end,tmp,nowpos,bufsize;
   in.seekg (0, ios::end);
   end = in.tellg();
@@ -115,17 +168,18 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
   //cout << coeftable.NUMT << endl;
 
   cout << "cylcoefs.read_coef_file: reading NUMT, LMAX, NORDER from file . . . ";
-#ifdef FORMAT
+#if FORMAT
   if (newformat) {
     cout << "NEW FORMAT" << endl;
   } else {
     cout << "OLD FORMAT" << endl;
   }
 #endif
-#ifdef ORDERS
+
+#if ORDERS
   cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.MMAX << setw(18) << coeftable.NORDER << endl;
 #endif
-  
+
   // reset to the beginning
   in.seekg (0, ios::beg);
 
@@ -134,7 +188,7 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
   coeftable.coscoefs.resize(boost::extents[coeftable.NUMT][coeftable.MMAX+1][coeftable.NORDER]);
   coeftable.sincoefs.resize(boost::extents[coeftable.NUMT][coeftable.MMAX+1][coeftable.NORDER]);
   coeftable.t.resize(coeftable.NUMT);
-  
+
   // now cycle through each time
   for (int tt=0;tt<coeftable.NUMT;tt++) {
 
@@ -142,7 +196,7 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     nowpos = in.tellg();
     //cout << setw(14) << nowpos << setw(14) << end << setw(14) << bufsize << endl;
     if (nowpos + bufsize > end) continue;
-      
+
 
     if (newformat) {
 
@@ -151,13 +205,14 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
       in.read(reinterpret_cast<char*>(&ssize), sizeof(unsigned int));
 
       //cout << ssize << endl;
-      
+
       // Make and read char buffer
       //
       auto buf = std::make_unique<char[]>(ssize+1);
       in.read(buf.get(), ssize);
       buf[ssize] = 0;		// Null terminate
-      
+
+#if HAVEYAML
       YAML::Node node = YAML::Load(buf.get());
 
       // Get parameters
@@ -165,8 +220,44 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
       //cout << node["time"].as<double>() << endl;
       coeftable.t[tt]   = node["time"].as<double>();
 
+#else // compile without libyaml
+
+      std::string yamlblob = buf.get();
+
+      // loop through string parsing
+      // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
+      // but NOT the top vote getter!
+      std::string delim = "\n";
+      std::string entry;
+      auto start = 0U;
+      auto end = yamlblob.find(delim);
+      std::string token2,token3;
+      while (end != std::string::npos)
+      {
+          // retreive the entry
+          entry = yamlblob.substr(start, end - start);
+
+          // split the entry up to the ':'
+          token2 = entry.substr(0, entry.find(":"));
+
+          // split the entry after the ':'
+          token3 = entry.substr(entry.find(":")+2,entry.length()-entry.find(":")-2);
+          //std::cout<<token2<<"--"<<token3<<endl;
+
+          if (token2.compare("time") == 0)   coeftable.t[tt]   = std::stod(token3);
+
+          // advance counters
+          start = end + delim.length();
+          end = yamlblob.find(delim, start);
+      }
+
+      // last one is always 'nmax' which we can ignore here
+      //std::cout<<coeftable.t[tt]<<endl;
+
+#endif
+
     } else {
-  
+
       in.read((char *)&coeftable.t[tt], sizeof(double));
       in.read((char *)&tmp, sizeof(int));
       in.read((char *)&tmp, sizeof(int));
@@ -177,7 +268,7 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     //cout << "tnow=" << coeftable.t[tt] << " norder=" << tmp << endl;
 
     for (int m=0; m<=coeftable.MMAX; m++) {
-      
+
       for (int ir=0; ir<coeftable.NORDER; ir++) {
         in.read((char *)&coeftable.coscoefs[tt][m][ir], sizeof(double));
       }
@@ -187,7 +278,7 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
           in.read((char *)&coeftable.coscoefs[tt][m][ir], sizeof(double));
         }
       }
-      
+
     } // MMAX loop
   } // NUMT loop
 
