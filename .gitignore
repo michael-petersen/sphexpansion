@@ -15,3 +15,5 @@ rotcurve.dSYM/Contents/Info.plist
 examples/obj/*
 examples/deprecated/*
 examples/rotatetest.cc
+tests/*
+tests

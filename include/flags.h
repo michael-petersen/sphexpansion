@@ -23,7 +23,7 @@ todo: decide if more flags should be overrideable without source code edits?
 // additional diagnostic output in coefficient files (sphcoefs, cylcoefs)
 #define DEBUGCOEFS 0
 
-// flags for deep debugging (expansion)
+// flags for deep debugging (expansion.h)
 #define DEEPDEBUGCOEFS 0
 #define DEEPDEBUGTIME 0
 
@@ -31,5 +31,15 @@ todo: decide if more flags should be overrideable without source code edits?
 #ifndef HAVEEIGEN
 #define HAVEEIGEN 0
 #endif
+
+// diagnostics for debugging cylexpansion.h
+#define FORMAT 0
+#define ORDERS 0
+
+// yaml compilation
+#ifndef HAVEYAML
+#define HAVEYAML 0
+#endif
+
 
 #endif
