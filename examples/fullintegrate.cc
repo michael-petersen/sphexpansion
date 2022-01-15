@@ -43,13 +43,31 @@ MSP 22 Dec 2021 add tests for new yaml formats
 // the cylindrical expansion headers
 #include "cylexpansion.h"
 
-// for print_orbit only, other integration pieces are below
-#include "leapfrog.h"
-
-
 // the best time is T=2.224: the present day. uniquely set per simulation.
 double reference_time = 0;//2.224; 1.97012;
 
+
+void print_orbit(array_type2 orbit,
+		 string orbitfile)
+{
+  ofstream outorbit;
+  outorbit.open(orbitfile);
+
+  outorbit << "# t [Gyr]; x [kpc]; y [kpc]; z [kpc]; vx [km/s] ; vy [km/s] ; vz [km/s] ; f_x [km/s/s] ; f_y [km/s/s] ; f_z [km/s/s];" << endl;
+
+  for (int i=0; i<orbit.shape()[1]; i++) {
+
+    outorbit << setw(14) << orbit[9][i];
+
+    for (int j=0; j<9; j++) {
+      outorbit << setw(14) << orbit[j][i];
+    }
+    outorbit << endl;
+  }
+
+  outorbit.close();
+
+}
 
 
 

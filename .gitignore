@@ -1,19 +1,15 @@
-accumulate
-fullintegrate
-discpotential
-expansion
-rotcurve
-data
-trajectory
-density
-speed
-data/*
 .DS_Store
-tests/comparison*
-rotcurve.dSYM/Contents/Info.plist
+
+# deprecated code
+data/*
+tests/*
 .legacy*
+
+# non-public examples
 examples/obj/*
 examples/deprecated/*
 examples/rotatetest.cc
-tests/*
-tests
+
+# not-fully-implemented features
+include/accumulate.h
+include/leapfrog.h
