@@ -12,14 +12,14 @@ MSP 14 Jan 2022 set yaml flag
 // flags for external libraries
 
 // eigen compilation
-//#ifndef HAVEEIGEN
-//#define HAVEEIGEN 0
-//#endif
+#ifndef HAVEEIGEN
+#define HAVEEIGEN 0
+#endif
 
 // yaml compilation
-//#ifndef HAVEYAML
-//#define HAVEYAML 1
-//#endif
+#ifndef HAVEYAML
+#define HAVEYAML 1
+#endif
 
 // flags for options in different headers
 
