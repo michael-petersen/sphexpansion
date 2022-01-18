@@ -3,6 +3,7 @@
 # deprecated code
 data/*
 tests/*
+build/*
 .legacy*
 
 # non-public examples

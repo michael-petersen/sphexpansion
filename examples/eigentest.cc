@@ -15,8 +15,8 @@ MSP 22 Dec 2021 first version
 #include <stdio.h>
 
 // override eigen flag for this test
-#undef HAVEEIGEN
-#define HAVEEIGEN 1
+//#undef HAVEEIGEN
+//#define HAVEEIGEN 1
 
 // eigen includes
 #include <Eigen/Dense>

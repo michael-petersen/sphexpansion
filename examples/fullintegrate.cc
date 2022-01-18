@@ -497,7 +497,7 @@ void three_component_leapfrog(SphExpansion* MW,
 
 int main () {
 
-  bool test1 = false;
+  bool test1 = true;
   string runtag = "run9mlde";//"run7mld";
   string facname = "nfac";
 

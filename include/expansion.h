@@ -10,8 +10,8 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 */
 
 // turn off the inclusion of boilerplate stuff for CylExpansion
-#undef STANDALONE
-#define STANDALONE 0
+//#undef STANDALONE
+//#define STANDALONE 0
 
 #if HAVEEIGEN
 #include <Eigen/Dense>
@@ -676,6 +676,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
   if (indx<0) {
 
+    // set the coefficients to be the first coefficients from the simulation
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {

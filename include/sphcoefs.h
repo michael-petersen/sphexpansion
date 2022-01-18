@@ -18,7 +18,7 @@ notes
 #define SPHCOEFS_H
 
 
-#include "basis.h"
+//#include "basis.h"
 
 #if HAVEEIGEN
 #include <Eigen/Dense>
@@ -27,8 +27,6 @@ notes
 
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
-
-
 
 
 // create 2- and 3-d array types
@@ -193,12 +191,11 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
   in.read((char *)&coeftable.LMAX, sizeof(int));
   in.read((char *)&coeftable.NMAX, sizeof(int));
 
-  cout << "sphcoefs::read_coef_file: reading coefficients from file . . . ";
+  std::cout << "sphcoefs::read_coef_file: reading coefficients from file . . . ";
 
 #if DEBUGCOEFS
-  cout << endl << "sphcoefs::read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << endl;
-  cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.LMAX <<
-    setw(18) << coeftable.NMAX << endl;
+  std::cout << "\n" << "sphcoefs::read_coef_file: reading NUMT, LMAX, NMAX from file . . . " << "\n";
+  std::cout << setw(18) << coeftable.NUMT << setw(18) << coeftable.LMAX << setw(18) << coeftable.NMAX << "\n";
 #endif
 
   // resize the coefs array appropriately
@@ -223,7 +220,7 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
   make_coef_splines(coeftable);
 #endif
 
-  cout << "success!!" << endl;
+  cout << "success!!" << "\n";
 
 }
 
