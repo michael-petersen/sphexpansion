@@ -13,7 +13,7 @@ MSP 14 Jan 2022 set yaml flag
 
 // eigen compilation
 #ifndef HAVEEIGEN
-#define HAVEEIGEN 0
+#define HAVEEIGEN 1
 #endif
 
 // yaml compilation

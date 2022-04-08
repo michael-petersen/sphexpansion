@@ -95,7 +95,7 @@ void interpolate_centre(double desired_time,
   }
 
 
-  if (havevelocity && indx<0) {
+  if (indx<0) {
     // interpolate the centre backwards in time before the simulation starts
     // selects the earliest time
     float dtime = (desired_time-orient.time[0]);
@@ -104,16 +104,6 @@ void interpolate_centre(double desired_time,
       centre[1] = orient.ycen[0] + dtime*orient.zerotimevelocities[1];
       centre[2] = orient.zcen[0] + dtime*orient.zerotimevelocities[2];
 
-  } else {
-    // standard mode
-    if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
-
-    double x1 = (orient.time[indx+1] - desired_time)/dt;
-    double x2 = (desired_time - orient.time[indx])/dt;
-
-    centre[0] = (x1*orient.xcen[indx] + x2*orient.xcen[indx+1]);
-    centre[1] = (x1*orient.ycen[indx] + x2*orient.ycen[indx+1]);
-    centre[2] = (x1*orient.zcen[indx] + x2*orient.zcen[indx+1]);
   }
 
 }
@@ -162,7 +152,6 @@ void return_centre(double desired_time,
 		   vector<double>& centre)
 {
       interpolate_centre(desired_time, orient, centre);
-  }
 }
 
 void return_vel_centre(double desired_time,
@@ -170,7 +159,6 @@ void return_vel_centre(double desired_time,
 		       vector<double>& velcentre)
 {
       interpolate_velocity_centre(desired_time, orient, velcentre);
-  }
 }
 
 void find_initial_velocity(SphOrient& orient,
@@ -255,13 +243,10 @@ void read_orient (string orient_file, SphOrient& orient) {
     	orient.xcen.resize(orient.NUMT);
     	orient.ycen.resize(orient.NUMT);
     	orient.zcen.resize(orient.NUMT);
-    	if (havevelocity) {
-    	  orient.ucen.resize(orient.NUMT);
-    	  orient.vcen.resize(orient.NUMT);
-    	  orient.wcen.resize(orient.NUMT);
-    	}
+  	  orient.ucen.resize(orient.NUMT);
+  	  orient.vcen.resize(orient.NUMT);
+      orient.wcen.resize(orient.NUMT);
     } else {
-    	if (havevelocity) {
         ss >>
         orient.time[linenum-1] >>
         orient.xcen[linenum-1] >>
@@ -270,13 +255,6 @@ void read_orient (string orient_file, SphOrient& orient) {
         orient.ucen[linenum-1] >>
         orient.vcen[linenum-1] >>
     	  orient.wcen[linenum-1];
-    	} else {
-        ss >>
-        orient.time[linenum-1] >>
-        orient.xcen[linenum-1] >>
-        orient.ycen[linenum-1] >>
-    	  orient.zcen[linenum-1];
-	    }
 
     }
   linenum ++;
@@ -302,18 +280,10 @@ void read_orient (string orient_file, SphOrient& orient) {
 
     orient.zerotimevelocities.resize(3);
 
-    if (backwards) {
-      // enable extrapolation to before the simulation started
-      // (but see warning at top of file)
-
-        find_initial_velocity(orient);
-
-    } else {
-      // set the initial velocities to be the t=0 velocities
-      orient.zerotimevelocities[0] = orient.ucen[0];
-      orient.zerotimevelocities[1] = orient.vcen[0];
-      orient.zerotimevelocities[2] = orient.wcen[0];
-    }
+    // set the initial velocities to be the t=0 velocities
+    orient.zerotimevelocities[0] = orient.ucen[0];
+    orient.zerotimevelocities[1] = orient.vcen[0];
+    orient.zerotimevelocities[2] = orient.wcen[0];
 
 }
 

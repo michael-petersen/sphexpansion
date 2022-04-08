@@ -27,10 +27,6 @@ typedef boost::multi_array<vector<dbl_vector>, 2> efarray;
 
 bool debug = false;
 
-// use tabulated values for density rather than spline
-#define USE_TABLE 1
-
-
 
 // create the spherical cachefile array
 struct SphCache
@@ -58,13 +54,13 @@ struct SphCache
 
   // make the whole table available, whatever
   SphModel modeltable;
-  
+
 };
 
 void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
 
   ifstream in(sph_cache_name.c_str());
-  
+
   if (!in) {
     throw "sphcache::read_sph_cache: Unable to open file!\n";
   }
@@ -75,7 +71,7 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
   in.read((char *)&cachetable.LMAX, sizeof(int));
   in.read((char *)&cachetable.NMAX, sizeof(int));
   in.read((char *)&cachetable.NUMR, sizeof(int));
-  in.read((char *)&cachetable.CMAP, sizeof(int));	
+  in.read((char *)&cachetable.CMAP, sizeof(int));
   in.read((char *)&cachetable.RMIN, sizeof(double));
   in.read((char *)&cachetable.RMAX, sizeof(double));
   in.read((char *)&cachetable.SCL,  sizeof(double));
@@ -85,7 +81,7 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
   }
 
   // debug
-  if (debug) 
+  if (debug)
   cout << setw(10) << cachetable.LMAX
        << setw(10) << cachetable.NMAX
        << setw(10) << cachetable.NUMR
@@ -98,7 +94,7 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
   // resize the arrays
   cachetable.eftable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX][cachetable.NUMR]);
   cachetable.evtable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
-  
+
   cachetable.eftable2.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
 
   int dummy;
@@ -127,7 +123,7 @@ void init_table(SphModel& sphmodel, SphCache& cachetable)
   // duplicate the whole sphmodel for access:
   cachetable.modeltable = sphmodel;
   // is this too painful for the memory footprint?
-  
+
   // add the relevant vectors to the cachetable from the sphmodel
   cachetable.xi.resize(cachetable.NUMR);
   cachetable.r.resize(cachetable.NUMR);
@@ -166,7 +162,7 @@ void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-    
+
   if (cachetable.CMAP==1) {
         if (xi<-1.0) xi=-1.0;
         if (xi>=1.0) xi=1.0-1.0e-08;
@@ -182,13 +178,9 @@ void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
 
-      #ifdef USETABLE      
       pottable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1])/
 	sqrt(cachetable.evtable[l][n]) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
-      #else
-      pottable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1])/
-	sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.pspline(r);
-      #endif
+
     }
   }
 }
@@ -197,14 +189,14 @@ void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
 void get_force(double& r, SphCache& cachetable, array_type2& forcetable) {
 
   // see the equivalent call, get_force in SLGridMP2.cc
-  
+
   // must have already run init_table
 
   forcetable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-    
+
   if (cachetable.CMAP==1) {
         if (xi<-1.0) xi=-1.0;
         if (xi>=1.0) xi=1.0-1.0e-08;
@@ -215,7 +207,7 @@ void get_force(double& r, SphCache& cachetable, array_type2& forcetable) {
   if (indx>cachetable.NUMR-2) indx = cachetable.NUMR - 2;
 
   double p = (xi - cachetable.xi[indx])/cachetable.dxi;
-  
+
 				// Use three point formula
 
 				// Point -1: indx-1
@@ -238,12 +230,12 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
 {
 
   // see equivalent call in SLGridMP2.cc
-  
+
   densitytable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-    
+
   if (cachetable.CMAP==1) {
         if (xi<-1.0) xi=-1.0;
         if (xi>=1.0) xi=1.0-1.0e-08;
@@ -263,13 +255,9 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
     for (int n=0; n<cachetable.NMAX; n++) {
 
       // negative for normalisation
-      #ifdef USETABLE
       densitytable[l][n] = -(x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
         sqrt(cachetable.evtable[l][n]) * (x1*cachetable.d0[indx] + x2*cachetable.d0[indx+1]);
-      #else
-      densitytable[l][n] = -(x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
-        sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.dspline(r);
-      #endif
+
     }
   }
 }
