@@ -21,13 +21,15 @@ MSP 22 Dec 2021 first version
 // eigen includes
 #include <Eigen/Dense>
 
+using Eigen::MatrixXd;
+
 // expansion includes
 #include "expansion.h"
 
 
 
 void make_rotation_curve(SphExpansion* S,
-			 array_type2 coefs,
+			 MatrixXd coefs,
 			 double xmin,
 			 double xmax,
 			 int nsamples,
@@ -95,7 +97,7 @@ int main () {
 
 
   bool onlymonopole = false;
-  array_type2 mwcoefs;
+  MatrixXd mwcoefs;
   MW->select_coefficient_time(0.0, mwcoefs);
 
   int numW=100;
