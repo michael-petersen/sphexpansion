@@ -14,6 +14,7 @@ MSP 24 Dec 2021 change some debug outputs and spline calls to preprocessor flags
 #ifndef SPHCOEFS_H
 #define SPHCOEFS_H
 
+#include <Eigen/StdVector>
 #include <Eigen/Dense>
 
 
@@ -32,7 +33,7 @@ struct SphCoefs
 
   vector<double> t;    // the time, len NUMT
 
-  MatrixXd coefs;   // the coefficient table, sized NUMT,(LMAX+1)*(LMAX+1),NMAX
+  std::vector<MatrixXd> coefs;   // the coefficient table, sized NUMT,(LMAX+1)*(LMAX+1),NMAX
 
 };
 
@@ -62,17 +63,22 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
 
   // resize the coefs array appropriately
   int numl = (coeftable.LMAX+1) * (coeftable.LMAX+1);
-  coeftable.coefs.resize(coeftable.NUMT,numl,coeftable.NMAX);
+
+  // resize the vector for time
+  coeftable.coefs.resize(coeftable.NUMT);
   coeftable.t.resize(coeftable.NUMT);
 
   // now cycle through each time
   for (int tt=0;tt<coeftable.NUMT;tt++) {
 
+    // resize the matrix
+    coeftable.coefs[tt].resize(numl,coeftable.NMAX);
+
     in.read((char *)&coeftable.t[tt], sizeof(double));
 
     for (int l=0; l<numl; l++) {
       for (int ir=0; ir<coeftable.NMAX; ir++) {
-        //in.read((char *)&coeftable.coefs(tt,l,ir), sizeof(double));
+        in.read((char *)&coeftable.coefs[tt](l,ir), sizeof(double));
       }
     }
   }

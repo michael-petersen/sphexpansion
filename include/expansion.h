@@ -676,7 +676,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
-        coefs_at_time(l,n) = 0.0;//coeftable.coefs(0,l,n);
+        coefs_at_time(l,n) = coeftable.coefs[0](l,n);
       }
     }
 
@@ -697,7 +697,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
-        coefs_at_time(l,n) = 0.0;//coeftable.coefs(indx,l,n);//(x1 * coeftable.coefs(indx,l,n) + x2 * coeftable.coefs(indx+1,l,n));
+        coefs_at_time(l,n) = (x1 * coeftable.coefs[indx](l,n) + x2 * coeftable.coefs[indx+1](l,n));
       }
     }
   }
