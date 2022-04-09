@@ -12,3 +12,5 @@
 3. Hard code loading up disc
 4. Remove examples (replace!)
 5. Strip comments
+6. Add -fopenmp support, if available
+7. Overload several transformation functions with eigen operations

@@ -37,6 +37,10 @@ MSP 14 Jan 2022 set yaml flag
 #define DEEPDEBUGTIME 1
 #endif
 
+#ifndef DEBUGCACHE
+#define DEBUGCACHE 1
+#endif
+
 // diagnostics for debugging cylexpansion.h
 #ifndef FORMAT
 #define FORMAT 1

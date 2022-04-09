@@ -6,6 +6,7 @@ MSP  7 Oct 2020 fix density normalisation
 MSP  4 Feb 2021 add dipole and quadrupole capability
 MSP 25 May 2021 add ltrunc option; add self-gravitating coefficient calculation
 MSP 28 Sep 2021 adjust radial order (nmax) truncation
+MSP  9 Apr 2022 converted to Eigen
 
 */
 
@@ -44,9 +45,6 @@ using Eigen::MatrixXd;
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw;
 
-// create 2- and 3-d array types from boost
-typedef boost::multi_array<double, 3> array_type3;
-typedef boost::multi_array<double, 2> array_type2;
 
 class SphExpansion
 {
@@ -80,10 +78,10 @@ public:
   // can use these for checking that different files match!
 
   // get potential function weights
-  void get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
+  void get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& potd, MatrixXd& dpot, double *p, double *dp);
 
   // get density function weights
-  void get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, array_type2& dend, double *dd);
+  void get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& dend, double *dd);
 
 
   // the base spherical class
@@ -185,7 +183,7 @@ void SphExpansion::initialise(string sph_cache_name,
 
 
 
-void SphExpansion::get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp)
+void SphExpansion::get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& potd, MatrixXd& dpot, double *p, double *dp)
 {
   /*
     int l    : the harmonic order
@@ -198,15 +196,15 @@ void SphExpansion::get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, arr
   pp = dpp = 0.0;
 
   for (i=0; i<nmax; i++) {
-    pp  += potd[l][i] * coefs(indx,i);
-    dpp += dpot[l][i] * coefs(indx,i);
+    pp  += potd(l,i) * coefs(indx,i);
+    dpp += dpot(l,i) * coefs(indx,i);
   }
 
   *p = -pp;
   *dp = -dpp;
 }
 
-void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, array_type2& dend, double *dd)
+void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& dend, double *dd)
 {
   /*
     int l    : the harmonic order
@@ -219,7 +217,7 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, ar
   daccum = 0.0;
 
   for (i=0; i<nmax; i++)
-    daccum  += dend[l][i] * coefs(indx,i);
+    daccum  += dend(l,i) * coefs(indx,i);
 
   *dd = daccum;
 }
@@ -256,7 +254,7 @@ void SphExpansion::determine_fields_at_point_sph
 
   fac1 = 0.25/M_PI;
 
-  array_type2 potd,dpot;
+  MatrixXd potd,dpot;
   get_dpotl(r, cachetable, potd, dpot);
 
   // is this ever evaluating the l=0,n>0 terms??
@@ -270,10 +268,10 @@ void SphExpansion::determine_fields_at_point_sph
   // l loop
   if (monopole) return;
 
-  array_type2 factrl;
+  MatrixXd factrl;
   factorial(numl, factrl);
 
-  array_type2 legs, dlegs;
+  MatrixXd legs, dlegs;
   dlegendre_R(numl, costh, legs, dlegs);
 
   vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
@@ -296,18 +294,18 @@ void SphExpansion::determine_fields_at_point_sph
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	      fac2 = fac1*legs[l][m];
+	      fac2 = fac1*legs(l,m);
 
 	      get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
 	      potl += fac2*p;
 	      potr += fac2*dp;
-	      pott += fac1*dlegs[l][m]*p;
+	      pott += fac1*dlegs(l,m)*p;
 	      moffset++;
       }
       else {
-	      fac2 = 2.0 * fac1 * factrl[l][m];
-	      fac3 = fac2 *  legs[l][m];
-	      fac4 = fac2 * dlegs[l][m];
+	      fac2 = 2.0 * fac1 * factrl(l,m);
+	      fac3 = fac2 *  legs(l,m);
+	      fac4 = fac2 * dlegs(l,m);
 
 	      get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
 	      get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
@@ -364,7 +362,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   //fac0 = 4.*M_PI;
   fac1 = 0.25/M_PI;
 
-  array_type2 potd,dpot,dend;
+  MatrixXd potd,dpot,dend;
   get_dpotl_density(r, cachetable, potd, dpot, dend);
 
   // is this ever evaluating the l=0,n>0 terms??
@@ -383,10 +381,10 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   // l loop
   if (monopole) return;
 
-   array_type2 factrl;
+   MatrixXd factrl;
   factorial(numl, factrl);
 
-  array_type2 legs, dlegs;
+  MatrixXd legs, dlegs;
   dlegendre_R(numl, costh, legs, dlegs);
 
   vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
@@ -409,7 +407,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	fac2 = fac1*legs[l][m];
+	fac2 = fac1*legs(l,m);
 
 	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
 	dens += fac2*d;
@@ -417,13 +415,13 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
 	potl += fac2*p;
 	potr += fac2*dp;
-	pott += fac1*dlegs[l][m]*p;
+	pott += fac1*dlegs(l,m)*p;
 	moffset++;
       }
       else {
-	fac2 = 2.0 * fac1 * factrl[l][m];
-	fac3 = fac2 *  legs[l][m];
-	fac4 = fac2 * dlegs[l][m];
+	fac2 = 2.0 * fac1 * factrl(l,m);
+	fac3 = fac2 *  legs(l,m);
+	fac4 = fac2 * dlegs(l,m);
 
 	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
 	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
@@ -484,7 +482,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   fac1 = 0.25/M_PI;
 
   // is this ever evaluating the l=0,n>0 terms??
-  array_type2 potd,dpot,dend;
+  MatrixXd potd,dpot,dend;
   get_dpotl_density(r, cachetable, potd, dpot, dend);
 
   // compute the monopole values
@@ -495,10 +493,10 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   // l loop
   if (monopole) return;
 
-   array_type2 factrl;
+   MatrixXd factrl;
   factorial(numl, factrl);
 
-  array_type2 legs, dlegs;
+  MatrixXd legs, dlegs;
   dlegendre_R(numl, costh, legs, dlegs);
 
   vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
@@ -521,22 +519,23 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	fac2 = fac1*legs[l][m];
+	      fac2 = fac1*legs(l,m);
 
-	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
-	dens += fac2*d;
+	      get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
+	      dens += fac2*d;
 
-	moffset++;
+	      moffset++;
       }
-      else {
-	fac2 = 2.0 * fac1 * factrl[l][m];
-	fac3 = fac2 *  legs[l][m];
+      else
+      {
+	      fac2 = 2.0 * fac1 * factrl(l,m);
+	      fac3 = fac2 *  legs(l,m);
 
-	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
-	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
-	dens += fac3*(dc*cosm[m] + ds*sinm[m]);
+	      get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
+	      get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
+	      dens += fac3*(dc*cosm[m] + ds*sinm[m]);
 
-	moffset +=2;
+	      moffset +=2;
       }
     }
   }

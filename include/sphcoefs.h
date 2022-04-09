@@ -8,6 +8,7 @@ MSP 23 Apr 2020 add coefficient interpolation
 MSP 15 Sep 2020 improve debug, fix pre-simulation interpolation
 MSP 14 May 2021 added self-gravity normalisation coefficients
 MSP 24 Dec 2021 change some debug outputs and spline calls to preprocessor flags
+MSP  9 Apr 2022 converted to Eigen
 
 
  */

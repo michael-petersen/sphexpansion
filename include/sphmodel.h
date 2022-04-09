@@ -5,6 +5,7 @@ functions to read in the spherical model files
 
 MSP 22 Apr 2020 clean version
 MSP  3 Jan 2022 make spline flag
+MSP  8 Apr 2022 add linear interpolation option
 
 
 - still needs a linear interpolation fallback
