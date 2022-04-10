@@ -41,10 +41,11 @@ of something around, would like to track down what exactly is going on.
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw;
 
-// create 2- and 3-d array types from boost
-typedef boost::multi_array<double, 4> array_type4;
-typedef boost::multi_array<double, 3> array_type3;
-typedef boost::multi_array<double, 2> array_type2;
+// Eigen MatrixXd, std::vector <MatrixXd>
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
+
 
 class CylExpansion
 {
@@ -76,8 +77,8 @@ public:
   //
   // notes: if monopole is true, dipole and quadrupole are forced to be false.
   //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
-  void determine_fields_at_point_cyl(array_type2& coscoefs,
-				     array_type2& sincoefs,
+  void determine_fields_at_point_cyl(MatrixXd& coscoefs,
+				     MatrixXd& sincoefs,
 				     double r, double phi, double z,
 				     double& potl0, double& potl,
 				     double& potr, double& potp,
@@ -85,15 +86,15 @@ public:
 				     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   // cartesian forces wrapper function
-  void return_forces(array_type2 coscoefs,
-		     array_type2 sincoefs,
+  void return_forces(MatrixXd coscoefs,
+		     MatrixXd sincoefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
 		     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   void select_coefficient_time(double desired_time,
-			     array_type2& coscoefs_at_time,
-			       array_type2& sincoefs_at_time);
+			     MatrixXd& coscoefs_at_time,
+			       MatrixXd& sincoefs_at_time);
 
   void get_table_forces(double r, double z, CylForce& forcetable);
 
@@ -122,8 +123,8 @@ void CylExpansion::initialise(string cyl_cache_name,
 
 
 
-void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
-						 array_type2& sincoefs,
+void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
+						 MatrixXd& sincoefs,
 						 double r, double phi, double z,
 						 double& potl0, double& potl,
 						 double& fr, double& fp, double& fz,
@@ -173,30 +174,30 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 
     for (n=0; n<cachetable.NORDER; n++) {
 
-      fac = coscoefs[m][n] * ccos;
+      fac = coscoefs(m,n) * ccos;
 
-      if (m==0 && n==0) potl0 += fac * forcetable.potC[m][n];
+      if (m==0 && n==0) potl0 += fac * forcetable.potC(m,n);
 
-      potl += fac * forcetable.potC[m][n];
-      fr   += fac * forcetable.rforceC[m][n];
-      fz   += fac * forcetable.zforceC[m][n];
+      potl += fac * forcetable.potC(m,n);
+      fr   += fac * forcetable.rforceC(m,n);
+      fz   += fac * forcetable.zforceC(m,n);
 
-      fac = coscoefs[m][n] * ssin;
+      fac = coscoefs(m,n) * ssin;
 
-      fp += fac * m * forcetable.potC[m][n];
+      fp += fac * m * forcetable.potC(m,n);
 
       if (m) { // sine terms
 
-	fac = sincoefs[m][n] * ssin;
+      	fac = sincoefs(m,n) * ssin;
 
-	potl += fac * forcetable.potS[m][n];
+      	potl += fac * forcetable.potS(m,n);
 
-	fr  += fac * forcetable.rforceS[m][n];
-	fz  += fac * forcetable.zforceS[m][n];
+      	fr  += fac * forcetable.rforceS(m,n);
+      	fz  += fac * forcetable.zforceS(m,n);
 
-	fac = -sincoefs[m][n] * ccos;
+      	fac = -sincoefs(m,n) * ccos;
 
-	fp  += fac * m * forcetable.potS[m][n];
+      	fp  += fac * m * forcetable.potS(m,n);
 
       } // end sine loop
     } // end NORDER loop
@@ -205,8 +206,8 @@ void CylExpansion::determine_fields_at_point_cyl(array_type2& coscoefs,
 
 }
 
-void CylExpansion::return_forces(array_type2 coscoefs,
-		   array_type2 sincoefs,
+void CylExpansion::return_forces(MatrixXd coscoefs,
+		   MatrixXd sincoefs,
 		   double x, double y, double z,
 		   double& fx, double& fy, double& fz,
 		   bool monopole, bool dipole, bool quadrupole)
@@ -244,8 +245,8 @@ void CylExpansion::return_forces(array_type2 coscoefs,
 
 
 void CylExpansion::select_coefficient_time(double desired_time,
-			     array_type2& coscoefs_at_time,
-			     array_type2& sincoefs_at_time) {
+			     MatrixXd& coscoefs_at_time,
+			     MatrixXd& sincoefs_at_time) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
@@ -280,20 +281,22 @@ void CylExpansion::select_coefficient_time(double desired_time,
   // check the spacing on coeftable.t (can be nonuniform)
   double dt = coeftable.t[indx+1] - coeftable.t[indx];
 
+  // set up a debug flag for these
   //cout << setw(14) << desired_time << setw(14) << coeftable.t[0] << setw(14) << coeftable.t[indx] << setw(14) << dt << endl;
 
 
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
 
-  coscoefs_at_time.resize(boost::extents[coeftable.MMAX+1][coeftable.NORDER]);
-  sincoefs_at_time.resize(boost::extents[coeftable.MMAX+1][coeftable.NORDER]);
+  // does this resizing hurt us? we should only ever actually have to do it once.
+  coscoefs_at_time.resize(coeftable.MMAX+1,coeftable.NORDER);
+  sincoefs_at_time.resize(coeftable.MMAX+1,coeftable.NORDER);
 
   for (int m=0; m<=coeftable.MMAX; m++){
     for (int n=0; n<coeftable.NORDER; n++) {
-      coscoefs_at_time[m][n] = (x1*coeftable.coscoefs[indx][m][n] + x2*coeftable.coscoefs[indx+1][m][n]);
+      coscoefs_at_time(m,n) = (x1*coeftable.coscoefs[indx](m,n) + x2*coeftable.coscoefs[indx+1](m,n));
 
-      if (m) sincoefs_at_time[m][n] = (x1*coeftable.sincoefs[indx][m][n] + x2*coeftable.sincoefs[indx+1][m][n]);
+      if (m) sincoefs_at_time(m,n) = (x1*coeftable.sincoefs[indx](m,n) + x2*coeftable.sincoefs[indx+1](m,n));
     }
   }
 
@@ -306,14 +309,14 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
 
   // return 2d tables required to compute the forces
 
-  forcetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  forcetable.potS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.potC.resize(coeftable.MMAX+1,coeftable.NORDER);
+  forcetable.potS.resize(coeftable.MMAX+1,coeftable.NORDER);
 
-  forcetable.rforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  forcetable.rforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.rforceC.resize(coeftable.MMAX+1,coeftable.NORDER);
+  forcetable.rforceS.resize(coeftable.MMAX+1,coeftable.NORDER);
 
-  forcetable.zforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  forcetable.zforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.zforceC.resize(coeftable.MMAX+1,coeftable.NORDER);
+  forcetable.zforceS.resize(coeftable.MMAX+1,coeftable.NORDER);
 
 
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
@@ -353,56 +356,56 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
 
     for (int n=0; n<cachetable.NORDER; n++) {
 
-      forcetable.potC[mm][n] =
-	(
-	 cachetable.potC[mm][n][ix  ][iy  ] * c00 +
-	 cachetable.potC[mm][n][ix+1][iy  ] * c10 +
-	 cachetable.potC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.potC[mm][n][ix+1][iy+1] * c11
-	 );
+      forcetable.potC(mm,n) =
+      	(
+      	 cachetable.potC[mm][n](ix  ,iy  ) * c00 +
+      	 cachetable.potC[mm][n](ix+1,iy  ) * c10 +
+      	 cachetable.potC[mm][n](ix  ,iy+1) * c01 +
+      	 cachetable.potC[mm][n](ix+1,iy+1) * c11
+      	 );
 
-      forcetable.rforceC[mm][n] =
-	(
-	 cachetable.rforceC[mm][n][ix  ][iy  ] * c00 +
-	 cachetable.rforceC[mm][n][ix+1][iy  ] * c10 +
-	 cachetable.rforceC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.rforceC[mm][n][ix+1][iy+1] * c11
-	 );
+      forcetable.rforceC(mm,n) =
+      	(
+      	 cachetable.rforceC[mm][n](ix  ,iy  ) * c00 +
+      	 cachetable.rforceC[mm][n](ix+1,iy  ) * c10 +
+      	 cachetable.rforceC[mm][n](ix  ,iy+1) * c01 +
+      	 cachetable.rforceC[mm][n](ix+1,iy+1) * c11
+      	 );
 
-      forcetable.zforceC[mm][n] =
-	(
-	 cachetable.zforceC[mm][n][ix  ][iy  ] * c00 +
-	 cachetable.zforceC[mm][n][ix+1][iy  ] * c10 +
-	 cachetable.zforceC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.zforceC[mm][n][ix+1][iy+1] * c11
-	 );
+      forcetable.zforceC(mm,n) =
+      	(
+      	 cachetable.zforceC[mm][n](ix  ,iy  ) * c00 +
+      	 cachetable.zforceC[mm][n](ix+1,iy  ) * c10 +
+      	 cachetable.zforceC[mm][n](ix  ,iy+1) * c01 +
+      	 cachetable.zforceC[mm][n](ix+1,iy+1) * c11
+      	 );
 
       // get sine values for m>0
       if (mm) {
 
-	forcetable.potS[mm][n] =
-	  (
-	   cachetable.potS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.potS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.potS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.potS[mm][n][ix+1][iy+1] * c11
-	   );
+      	forcetable.potS(mm,n) =
+      	  (
+      	   cachetable.potS[mm][n](ix  ,iy  ) * c00 +
+      	   cachetable.potS[mm][n](ix+1,iy  ) * c10 +
+      	   cachetable.potS[mm][n](ix  ,iy+1) * c01 +
+      	   cachetable.potS[mm][n](ix+1,iy+1) * c11
+      	   );
 
-        forcetable.rforceS[mm][n] =
-	  (
-	   cachetable.rforceS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.rforceS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.rforceS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.rforceS[mm][n][ix+1][iy+1] * c11
-	   );
+        forcetable.rforceS(mm,n) =
+      	  (
+      	   cachetable.rforceS[mm][n](ix  ,iy  ) * c00 +
+      	   cachetable.rforceS[mm][n](ix+1,iy  ) * c10 +
+      	   cachetable.rforceS[mm][n](ix  ,iy+1) * c01 +
+      	   cachetable.rforceS[mm][n](ix+1,iy+1) * c11
+      	   );
 
-        forcetable.zforceS[mm][n] =
-	  (
-	   cachetable.zforceS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.zforceS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.zforceS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.zforceS[mm][n][ix+1][iy+1] * c11
-	   );
+        forcetable.zforceS(mm,n) =
+      	  (
+      	   cachetable.zforceS[mm][n](ix  ,iy  ) * c00 +
+      	   cachetable.zforceS[mm][n](ix+1,iy  ) * c10 +
+      	   cachetable.zforceS[mm][n](ix  ,iy+1) * c01 +
+      	   cachetable.zforceS[mm][n](ix+1,iy+1) * c11
+      	   );
       }
 
     } // end NORDER loop

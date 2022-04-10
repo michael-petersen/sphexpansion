@@ -24,7 +24,8 @@ MSP 22 Dec 2021 first version
 using Eigen::MatrixXd;
 
 // expansion includes
-#include "expansion.h"
+#include "sphexpansion.h"
+#include "cylexpansion.h"
 
 
 

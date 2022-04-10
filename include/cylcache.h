@@ -23,13 +23,14 @@ Check on mapping values: are these okay?
 #include "yaml-cpp/yaml.h"	// YAML support
 #endif
 
-//using namespace std;
-using std::cout, std::cerr, std::endl, std::setw;
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
-// create 2-,3- and 4-d array types
-typedef boost::multi_array<double, 4> array_type4;
-typedef boost::multi_array<double, 3> array_type3;
-typedef boost::multi_array<double, 2> array_type2;
+// Eigen MatrixXd, std::vector <MatrixXd>
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
+
+typedef std::vector< std::vector< MatrixXd > > array_type4;
 
 
 // create the cylindrical cachefile array
@@ -78,14 +79,14 @@ struct CylCache
 struct CylForce
 {
 
-  array_type2 potC;
-  array_type2 potS;
+  MatrixXd potC;
+  MatrixXd potS;
 
-  array_type2 rforceC;
-  array_type2 rforceS;
+  MatrixXd rforceC;
+  MatrixXd rforceS;
 
-  array_type2 zforceC;
-  array_type2 zforceS;
+  MatrixXd zforceC;
+  MatrixXd zforceS;
 
 };
 
@@ -248,44 +249,72 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 #endif
 
   // resize the arrays
-  cachetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
-  cachetable.potS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
+  cachetable.potC.resize(cachetable.MMAX+1);
+  cachetable.potS.resize(cachetable.MMAX+1);
 
-  cachetable.rforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
-  cachetable.rforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
+  cachetable.rforceC.resize(cachetable.MMAX+1);
+  cachetable.rforceS.resize(cachetable.MMAX+1);
 
-  cachetable.zforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
-  cachetable.zforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
+  cachetable.zforceC.resize(cachetable.MMAX+1);
+  cachetable.zforceS.resize(cachetable.MMAX+1);
 
   if (cachetable.DENS) {
-    cachetable.densC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
-    cachetable.densS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER][cachetable.NUMX+1][cachetable.NUMY+1]);
+    cachetable.densC.resize(cachetable.MMAX+1);
+    cachetable.densS.resize(cachetable.MMAX+1);
   }
 
 
   // read in cosine components
   for (int m=0; m<=cachetable.MMAX; m++) {
 
+    cachetable.potC[m].resize(cachetable.NORDER);
+    cachetable.potS[m].resize(cachetable.NORDER);
+
+    cachetable.rforceC[m].resize(cachetable.NORDER);
+    cachetable.rforceS[m].resize(cachetable.NORDER);
+
+    cachetable.zforceC[m].resize(cachetable.NORDER);
+    cachetable.zforceS[m].resize(cachetable.NORDER);
+
+    if (cachetable.DENS) {
+      cachetable.densC[m].resize(cachetable.NORDER);
+      cachetable.densS[m].resize(cachetable.NORDER);
+    }
+
     // read in eigenvector values
     for (int n=0; n<cachetable.NORDER; n++) {
 
-      for (int j=0; j<=cachetable.NUMX; j++) {
-	for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potC[m][n][j][k], sizeof(double));
+      cachetable.potC[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+      cachetable.potS[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+
+      cachetable.rforceC[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+      cachetable.rforceS[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+
+      cachetable.zforceC[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+      cachetable.zforceS[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+
+      if (cachetable.DENS) {
+        cachetable.densC[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
+        cachetable.densS[m][n].resize(cachetable.NUMX+1,cachetable.NUMY+1);
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceC[m][n][j][k], sizeof(double));
+	      for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potC[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceC[m][n][j][k], sizeof(double));
+	      for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceC[m][n](j,k), sizeof(double));
+      }
+
+      for (int j=0; j<=cachetable.NUMX; j++) {
+	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceC[m][n](j,k), sizeof(double));
       }
 
       if (cachetable.DENS) {
         for (int j=0; j<=cachetable.NUMX; j++) {
-	  for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densC[m][n][j][k], sizeof(double));
-	}
-      }
+	         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densC[m][n](j,k), sizeof(double));
+	      }
+      } // end if DENS
     } // end NORDER loop
   } // end MMAX loop
 
@@ -296,21 +325,21 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
     for (int n=0; n<cachetable.NORDER; n++) {
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potS[m][n][j][k], sizeof(double));
+	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potS[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceS[m][n][j][k], sizeof(double));
+	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceS[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceS[m][n][j][k], sizeof(double));
+	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceS[m][n](j,k), sizeof(double));
       }
 
       if (cachetable.DENS) {
         for (int j=0; j<=cachetable.NUMX; j++) {
-	  for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densS[m][n][j][k], sizeof(double));
-	}
+	         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densS[m][n](j,k), sizeof(double));
+	      }
       }
     } // end NORDER loop
   } // end MMAX loop
@@ -338,10 +367,10 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 
 
 
-void get_pot(double r, double z, CylCache cachetable, array_type2& Vc, array_type2& Vs)
+void get_pot(double r, double z, CylCache cachetable, MatrixXd& Vc, MatrixXd& Vs)
 {
-  Vc.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  Vs.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  Vc.resize(cachetable.MMAX+1,cachetable.NORDER);
+  Vs.resize(cachetable.MMAX+1,cachetable.NORDER);
 
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
   if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
@@ -380,25 +409,25 @@ void get_pot(double r, double z, CylCache cachetable, array_type2& Vc, array_typ
 
     for (int n=0; n<cachetable.NORDER; n++) {
 
-      Vc[mm][n] =
-	(
-	 cachetable.potC[mm][n][ix  ][iy  ] * c00 +
-	 cachetable.potC[mm][n][ix+1][iy  ] * c10 +
-	 cachetable.potC[mm][n][ix  ][iy+1] * c01 +
-	 cachetable.potC[mm][n][ix+1][iy+1] * c11
-	 );
+      Vc(mm,n) =
+      	(
+      	 cachetable.potC[mm][n](ix  ,iy  ) * c00 +
+      	 cachetable.potC[mm][n](ix+1,iy  ) * c10 +
+      	 cachetable.potC[mm][n](ix  ,iy+1) * c01 +
+      	 cachetable.potC[mm][n](ix+1,iy+1) * c11
+      	 );
 
       // get sine values for m>0
       if (mm) {
 
-	Vs[mm][n] =
-	  (
-	   cachetable.potS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.potS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.potS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.potS[mm][n][ix+1][iy+1] * c11
-	   );
-      }
+      	Vs(mm,n) =
+      	  (
+      	   cachetable.potS[mm][n](ix  ,iy  ) * c00 +
+      	   cachetable.potS[mm][n](ix+1,iy  ) * c10 +
+      	   cachetable.potS[mm][n](ix  ,iy+1) * c01 +
+      	   cachetable.potS[mm][n](ix+1,iy+1) * c11
+      	   );
+            }
 
     } // end NORDER loop
   } // end MMAX loop
@@ -412,14 +441,14 @@ void get_table_forces(double r, double z, CylCache cachetable, CylForce& forceta
 
   // return 2d tables required to compute the forces
 
-  forcetable.potC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  forcetable.potS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.potC.resize(cachetable.MMAX+1,cachetable.NORDER);
+  forcetable.potS.resize(cachetable.MMAX+1,cachetable.NORDER);
 
-  forcetable.rforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  forcetable.rforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.rforceC.resize(cachetable.MMAX+1,cachetable.NORDER);
+  forcetable.rforceS.resize(cachetable.MMAX+1,cachetable.NORDER);
 
-  forcetable.zforceC.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
-  forcetable.zforceS.resize(boost::extents[cachetable.MMAX+1][cachetable.NORDER]);
+  forcetable.zforceC.resize(cachetable.MMAX+1,cachetable.NORDER);
+  forcetable.zforceS.resize(cachetable.MMAX+1,cachetable.NORDER);
 
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
   if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
@@ -458,55 +487,55 @@ void get_table_forces(double r, double z, CylCache cachetable, CylForce& forceta
 
     for (int n=0; n<cachetable.NORDER; n++) {
 
-      forcetable.potC[mm][n] =
+      forcetable.potC(mm,n) =
 	      (
-	      cachetable.potC[mm][n][ix  ][iy  ] * c00 +
-	      cachetable.potC[mm][n][ix+1][iy  ] * c10 +
-	      cachetable.potC[mm][n][ix  ][iy+1] * c01 +
-	      cachetable.potC[mm][n][ix+1][iy+1] * c11
+        cachetable.potC[mm][n](ix  ,iy  ) * c00 +
+     	  cachetable.potC[mm][n](ix+1,iy  ) * c10 +
+     	  cachetable.potC[mm][n](ix  ,iy+1) * c01 +
+     	  cachetable.potC[mm][n](ix+1,iy+1) * c11
 	      );
 
-      forcetable.rforceC[mm][n] =
+      forcetable.rforceC(mm,n) =
 	      (
-	      cachetable.rforceC[mm][n][ix  ][iy  ] * c00 +
-	      cachetable.rforceC[mm][n][ix+1][iy  ] * c10 +
-	      cachetable.rforceC[mm][n][ix  ][iy+1] * c01 +
-	      cachetable.rforceC[mm][n][ix+1][iy+1] * c11
+	      cachetable.rforceC[mm][n](ix  ,iy  ) * c00 +
+	      cachetable.rforceC[mm][n](ix+1,iy  ) * c10 +
+	      cachetable.rforceC[mm][n](ix  ,iy+1) * c01 +
+	      cachetable.rforceC[mm][n](ix+1,iy+1) * c11
 	      );
 
-      forcetable.zforceC[mm][n] =
+      forcetable.zforceC(mm,n) =
 	      (
-	      cachetable.zforceC[mm][n][ix  ][iy  ] * c00 +
-	      cachetable.zforceC[mm][n][ix+1][iy  ] * c10 +
-	      cachetable.zforceC[mm][n][ix  ][iy+1] * c01 +
-	      cachetable.zforceC[mm][n][ix+1][iy+1] * c11
+	      cachetable.zforceC[mm][n](ix  ,iy  ) * c00 +
+	      cachetable.zforceC[mm][n](ix+1,iy  ) * c10 +
+	      cachetable.zforceC[mm][n](ix  ,iy+1) * c01 +
+	      cachetable.zforceC[mm][n](ix+1,iy+1) * c11
 	      );
 
       // get sine values for m>0
       if (mm) {
 
-	forcetable.potS[mm][n] =
+	forcetable.potS(mm,n) =
 	  (
-	   cachetable.potS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.potS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.potS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.potS[mm][n][ix+1][iy+1] * c11
+	   cachetable.potS[mm][n](ix  ,iy  ) * c00 +
+	   cachetable.potS[mm][n](ix+1,iy  ) * c10 +
+	   cachetable.potS[mm][n](ix  ,iy+1) * c01 +
+	   cachetable.potS[mm][n](ix+1,iy+1) * c11
 	   );
 
-        forcetable.rforceS[mm][n] =
+        forcetable.rforceS(mm,n) =
 	  (
-	   cachetable.rforceS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.rforceS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.rforceS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.rforceS[mm][n][ix+1][iy+1] * c11
+	   cachetable.rforceS[mm][n](ix  ,iy  ) * c00 +
+	   cachetable.rforceS[mm][n](ix+1,iy  ) * c10 +
+	   cachetable.rforceS[mm][n](ix  ,iy+1) * c01 +
+	   cachetable.rforceS[mm][n](ix+1,iy+1) * c11
 	   );
 
-        forcetable.zforceS[mm][n] =
+        forcetable.zforceS(mm,n) =
 	  (
-	   cachetable.zforceS[mm][n][ix  ][iy  ] * c00 +
-	   cachetable.zforceS[mm][n][ix+1][iy  ] * c10 +
-	   cachetable.zforceS[mm][n][ix  ][iy+1] * c01 +
-	   cachetable.zforceS[mm][n][ix+1][iy+1] * c11
+	   cachetable.zforceS[mm][n](ix  ,iy  ) * c00 +
+	   cachetable.zforceS[mm][n](ix+1,iy  ) * c10 +
+	   cachetable.zforceS[mm][n](ix  ,iy+1) * c01 +
+	   cachetable.zforceS[mm][n](ix+1,iy+1) * c11
 	   );
       }
 

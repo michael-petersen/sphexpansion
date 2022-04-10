@@ -18,7 +18,7 @@ MSP 14 Jan 2022 set yaml flag
 
 // yaml compilation
 #ifndef HAVEYAML
-#define HAVEYAML 1
+#define HAVEYAML 0
 #endif
 
 // flags for options in different headers

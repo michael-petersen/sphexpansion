@@ -10,9 +10,8 @@ MSP  9 Apr 2022 converted to Eigen
 
 */
 
-// turn off the inclusion of boilerplate stuff for CylExpansion
-//#undef STANDALONE
-//#define STANDALONE 0
+#ifndef SPHEXPANSION_H
+#define SPHEXPANSION_H
 
 #include <Eigen/Dense>
 using Eigen::MatrixXd;
@@ -552,10 +551,11 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 
 
 
-void SphExpansion::return_forces(MatrixXd& coefs, double x, double y, double z,
-				 double& fx, double& fy, double& fz,
-				 bool monopole, bool dipole, bool quadrupole,
-				 int ltrunc)
+void SphExpansion::return_forces(MatrixXd& coefs,
+                                 double x, double y, double z,
+				                         double& fx, double& fy, double& fz,
+				                         bool monopole, bool dipole, bool quadrupole,
+				                         int ltrunc)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -588,9 +588,10 @@ void SphExpansion::return_forces(MatrixXd& coefs, double x, double y, double z,
 
 
 void SphExpansion::return_density(MatrixXd& coefs,
-				  double x, double y, double z,
-				  double& d,
-				  bool monopole, bool dipole, bool quadrupole, int ltrunc)
+				                          double x, double y, double z,
+				                          double& d,
+				                          bool monopole, bool dipole, bool quadrupole,
+                                  int ltrunc)
 {
   /*
     return density
@@ -716,3 +717,5 @@ void SphExpansion::select_coefficient_time(double desired_time,
   }
 
 }
+
+#endif
