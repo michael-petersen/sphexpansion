@@ -18,12 +18,14 @@ todo:
 #include "yaml-cpp/yaml.h"	// YAML support
 #endif
 
+// standard namespace includes
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
-using namespace std;
+// Eigen MatrixXd, std::vector <MatrixXd>
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
 
-// create 2- and 3-d array types
-typedef boost::multi_array<double, 3> array_type3;
-typedef boost::multi_array<double, 2> array_type2;
 
 struct CylCoefs
 {
@@ -33,8 +35,8 @@ struct CylCoefs
 
   vector<double> t;    // the time, len NUMT
 
-  array_type3 coscoefs;   // the cosine coefficient table, sized NUMT,MMAX+1,NORDER
-  array_type3 sincoefs;   // the   sine coefficient table, sized NUMT,MMAX+1,NORDER
+  std::vector< MatrixXd > coscoefs;   // the cosine coefficient table, sized NUMT,MMAX+1,NORDER
+  std::vector< MatrixXd > sincoefs;   // the   sine coefficient table, sized NUMT,MMAX+1,NORDER
 
 };
 
@@ -185,8 +187,8 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
 
 
   // resize the coefs array appropriately
-  coeftable.coscoefs.resize(boost::extents[coeftable.NUMT][coeftable.MMAX+1][coeftable.NORDER]);
-  coeftable.sincoefs.resize(boost::extents[coeftable.NUMT][coeftable.MMAX+1][coeftable.NORDER]);
+  coeftable.coscoefs.resize(coeftable.NUMT);
+  coeftable.sincoefs.resize(coeftable.NUMT);
   coeftable.t.resize(coeftable.NUMT);
 
   // now cycle through each time
@@ -196,6 +198,9 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     nowpos = in.tellg();
     //cout << setw(14) << nowpos << setw(14) << end << setw(14) << bufsize << endl;
     if (nowpos + bufsize > end) continue;
+
+    coeftable.coscoefs[tt].resize(coeftable.MMAX+1,coeftable.NORDER);
+    coeftable.sincoefs[tt].resize(coeftable.MMAX+1,coeftable.NORDER);
 
 
     if (newformat) {
@@ -270,12 +275,12 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     for (int m=0; m<=coeftable.MMAX; m++) {
 
       for (int ir=0; ir<coeftable.NORDER; ir++) {
-        in.read((char *)&coeftable.coscoefs[tt][m][ir], sizeof(double));
+        in.read((char *)&coeftable.coscoefs[tt](m,ir), sizeof(double));
       }
 
       if (m) {
 	for (int ir=0; ir<coeftable.NORDER; ir++) {
-          in.read((char *)&coeftable.coscoefs[tt][m][ir], sizeof(double));
+          in.read((char *)&coeftable.coscoefs[tt](m,ir), sizeof(double));
         }
       }
 

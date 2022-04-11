@@ -6,16 +6,15 @@ MSP  7 Oct 2020 fix density normalisation
 MSP  4 Feb 2021 add dipole and quadrupole capability
 MSP 25 May 2021 add ltrunc option; add self-gravitating coefficient calculation
 MSP 28 Sep 2021 adjust radial order (nmax) truncation
+MSP  9 Apr 2022 converted to Eigen
 
 */
 
-// turn off the inclusion of boilerplate stuff for CylExpansion
-//#undef STANDALONE
-//#define STANDALONE 0
+#ifndef SPHEXPANSION_H
+#define SPHEXPANSION_H
 
-#if HAVEEIGEN
 #include <Eigen/Dense>
-#endif
+using Eigen::MatrixXd;
 
 // MSP headers
 // important preprocessor flags
@@ -45,9 +44,6 @@ MSP 28 Sep 2021 adjust radial order (nmax) truncation
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw;
 
-// create 2- and 3-d array types from boost
-typedef boost::multi_array<double, 3> array_type3;
-typedef boost::multi_array<double, 2> array_type2;
 
 class SphExpansion
 {
@@ -81,10 +77,10 @@ public:
   // can use these for checking that different files match!
 
   // get potential function weights
-  void get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp);
+  void get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& potd, MatrixXd& dpot, double *p, double *dp);
 
   // get density function weights
-  void get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *dd);
+  void get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& dend, double *dd);
 
 
   // the base spherical class
@@ -96,7 +92,7 @@ public:
   //
   // notes: if monopole is true, dipole and quadrupole are forced to be false.
   //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
-  void determine_fields_at_point_sph(array_type2& coefs,
+  void determine_fields_at_point_sph(MatrixXd& coefs,
 				     double r, double theta, double phi,
 				     double& potl0, double& potl,
 				     double& potr, double& pott,
@@ -105,7 +101,7 @@ public:
 				     int ltrunc=1000);
 
   // version with density return
-  void determine_fields_at_point_sph(array_type2& coefs,
+  void determine_fields_at_point_sph(MatrixXd& coefs,
 				     double r, double theta, double phi,
 				     double& dens0, double& dens,
 				     double& potl0, double& potl,
@@ -115,21 +111,21 @@ public:
 				     int ltrunc=1000);
 
   // version that is only density return
-  void determine_fields_at_point_sph(array_type2& coefs,
+  void determine_fields_at_point_sph(MatrixXd& coefs,
 				     double r, double theta, double phi,
 				     double& dens0, double& dens,
 				     bool monopole=false, bool dipole=false, bool quadrupole=false,
 				     int ltrunc=1000);
 
   // cartesian forces wrapper function
-  void return_forces(array_type2& coefs,
+  void return_forces(MatrixXd& coefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
 		     bool monopole=false, bool dipole=false, bool quadrupole=false,
 		     int ltrunc=1000);
 
   // cartesian density wrapper function
-  void return_density(array_type2& coefs,
+  void return_density(MatrixXd& coefs,
 		      double x, double y, double z,
 		      double& d,
 		      bool monopole=false, bool dipole=false, bool quadrupole=false,
@@ -139,11 +135,8 @@ public:
   //  this call may also be used as a coarse method to truncate coefficient series.
   //  however, it will not result in any speedup, as the coefficients are still evaluated (as zeros).
   void select_coefficient_time(double desired_time,
-			       array_type2& coefs_at_time, int ntrunc=-1, int ltrunc=0);
+			       MatrixXd& coefs_at_time, int ntrunc=-1, int ltrunc=0);
 
-  // return self-gravitating coefficients (i.e. apply spherical harmonic norm)
-  void get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm=false, bool power=false);
-  //void get_selfgravity_coefficients_eigen(Eigen::MatrixXd& self_grav_coefs, bool monopolenorm=false, bool power=false);
 
 };
 
@@ -156,9 +149,9 @@ SphExpansion::SphExpansion(string sph_cache_name,
 }
 
 void SphExpansion::initialise(string sph_cache_name,
-			      string model_file,
-			      string coef_file,
-			      string orient_file="")
+			                        string model_file,
+			                        string coef_file,
+			                        string orient_file="")
 {
   // pull in the parts for the expansion
   try {
@@ -189,7 +182,7 @@ void SphExpansion::initialise(string sph_cache_name,
 
 
 
-void SphExpansion::get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& potd, array_type2& dpot, double *p, double *dp)
+void SphExpansion::get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& potd, MatrixXd& dpot, double *p, double *dp)
 {
   /*
     int l    : the harmonic order
@@ -202,15 +195,15 @@ void SphExpansion::get_pot_coefs(int l, int indx, int nmax, array_type2& coefs, 
   pp = dpp = 0.0;
 
   for (i=0; i<nmax; i++) {
-    pp  += potd[l][i] * coefs[indx][i];
-    dpp += dpot[l][i] * coefs[indx][i];
+    pp  += potd(l,i) * coefs(indx,i);
+    dpp += dpot(l,i) * coefs(indx,i);
   }
 
   *p = -pp;
   *dp = -dpp;
 }
 
-void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs, array_type2& dend, double *dd)
+void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& dend, double *dd)
 {
   /*
     int l    : the harmonic order
@@ -223,14 +216,14 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, array_type2& coefs,
   daccum = 0.0;
 
   for (i=0; i<nmax; i++)
-    daccum  += dend[l][i] * coefs[indx][i];
+    daccum  += dend(l,i) * coefs(indx,i);
 
   *dd = daccum;
 }
 
 
 void SphExpansion::determine_fields_at_point_sph
-(array_type2& coefs,
+(MatrixXd& coefs,
  double r, double theta, double phi,
  double& potl0, double& potl,
  double& potr, double& pott, double& potp,
@@ -260,7 +253,7 @@ void SphExpansion::determine_fields_at_point_sph
 
   fac1 = 0.25/M_PI;
 
-  array_type2 potd,dpot;
+  MatrixXd potd,dpot;
   get_dpotl(r, cachetable, potd, dpot);
 
   // is this ever evaluating the l=0,n>0 terms??
@@ -274,10 +267,10 @@ void SphExpansion::determine_fields_at_point_sph
   // l loop
   if (monopole) return;
 
-  array_type2 factrl;
+  MatrixXd factrl;
   factorial(numl, factrl);
 
-  array_type2 legs, dlegs;
+  MatrixXd legs, dlegs;
   dlegendre_R(numl, costh, legs, dlegs);
 
   vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
@@ -300,28 +293,28 @@ void SphExpansion::determine_fields_at_point_sph
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	fac2 = fac1*legs[l][m];
+	      fac2 = fac1*legs(l,m);
 
-	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
-	potl += fac2*p;
-	potr += fac2*dp;
-	pott += fac1*dlegs[l][m]*p;
-	moffset++;
+	      get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
+	      potl += fac2*p;
+	      potr += fac2*dp;
+	      pott += fac1*dlegs(l,m)*p;
+	      moffset++;
       }
       else {
-	fac2 = 2.0 * fac1 * factrl[l][m];
-	fac3 = fac2 *  legs[l][m];
-	fac4 = fac2 * dlegs[l][m];
+	      fac2 = 2.0 * fac1 * factrl(l,m);
+	      fac3 = fac2 *  legs(l,m);
+	      fac4 = fac2 * dlegs(l,m);
 
-	get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
-	get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
+	      get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
+	      get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
 
-	potl += fac3*( pc*cosm[m] + ps*sinm[m]);
-	potr += fac3*(dpc*cosm[m] + dps*sinm[m]);
-	pott += fac4*( pc*cosm[m] +  ps*sinm[m]);
-	potp += fac3*(-pc*sinm[m] +  ps*cosm[m])*m;
+	      potl += fac3*( pc*cosm[m] + ps*sinm[m]);
+	      potr += fac3*(dpc*cosm[m] + dps*sinm[m]);
+	      pott += fac4*( pc*cosm[m] +  ps*sinm[m]);
+	      potp += fac3*(-pc*sinm[m] +  ps*cosm[m])*m;
 
-	moffset +=2;
+	      moffset +=2;
       }
     }
   }
@@ -337,7 +330,7 @@ void SphExpansion::determine_fields_at_point_sph
 }
 
 
-void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
+void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
  double r, double theta, double phi,
  double& dens0, double& dens,
  double& potl0, double& potl,
@@ -368,7 +361,7 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
   //fac0 = 4.*M_PI;
   fac1 = 0.25/M_PI;
 
-  array_type2 potd,dpot,dend;
+  MatrixXd potd,dpot,dend;
   get_dpotl_density(r, cachetable, potd, dpot, dend);
 
   // is this ever evaluating the l=0,n>0 terms??
@@ -387,10 +380,10 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
   // l loop
   if (monopole) return;
 
-   array_type2 factrl;
+   MatrixXd factrl;
   factorial(numl, factrl);
 
-  array_type2 legs, dlegs;
+  MatrixXd legs, dlegs;
   dlegendre_R(numl, costh, legs, dlegs);
 
   vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
@@ -413,7 +406,7 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	fac2 = fac1*legs[l][m];
+	fac2 = fac1*legs(l,m);
 
 	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
 	dens += fac2*d;
@@ -421,13 +414,13 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
 	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
 	potl += fac2*p;
 	potr += fac2*dp;
-	pott += fac1*dlegs[l][m]*p;
+	pott += fac1*dlegs(l,m)*p;
 	moffset++;
       }
       else {
-	fac2 = 2.0 * fac1 * factrl[l][m];
-	fac3 = fac2 *  legs[l][m];
-	fac4 = fac2 * dlegs[l][m];
+	fac2 = 2.0 * fac1 * factrl(l,m);
+	fac3 = fac2 *  legs(l,m);
+	fac4 = fac2 * dlegs(l,m);
 
 	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
 	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
@@ -459,7 +452,7 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
 
 
 
-void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
+void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
  double r, double theta, double phi,
  double& dens0, double& dens,
  bool monopole, bool dipole, bool quadrupole,
@@ -488,7 +481,7 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
   fac1 = 0.25/M_PI;
 
   // is this ever evaluating the l=0,n>0 terms??
-  array_type2 potd,dpot,dend;
+  MatrixXd potd,dpot,dend;
   get_dpotl_density(r, cachetable, potd, dpot, dend);
 
   // compute the monopole values
@@ -499,10 +492,10 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
   // l loop
   if (monopole) return;
 
-   array_type2 factrl;
+   MatrixXd factrl;
   factorial(numl, factrl);
 
-  array_type2 legs, dlegs;
+  MatrixXd legs, dlegs;
   dlegendre_R(numl, costh, legs, dlegs);
 
   vector<double> cosm(cachetable.NMAX),sinm(cachetable.NMAX);
@@ -525,22 +518,23 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	fac2 = fac1*legs[l][m];
+	      fac2 = fac1*legs(l,m);
 
-	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
-	dens += fac2*d;
+	      get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
+	      dens += fac2*d;
 
-	moffset++;
+	      moffset++;
       }
-      else {
-	fac2 = 2.0 * fac1 * factrl[l][m];
-	fac3 = fac2 *  legs[l][m];
+      else
+      {
+	      fac2 = 2.0 * fac1 * factrl(l,m);
+	      fac3 = fac2 *  legs(l,m);
 
-	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
-	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
-	dens += fac3*(dc*cosm[m] + ds*sinm[m]);
+	      get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
+	      get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
+	      dens += fac3*(dc*cosm[m] + ds*sinm[m]);
 
-	moffset +=2;
+	      moffset +=2;
       }
     }
   }
@@ -557,10 +551,11 @@ void SphExpansion::determine_fields_at_point_sph(array_type2& coefs,
 
 
 
-void SphExpansion::return_forces(array_type2& coefs, double x, double y, double z,
-				 double& fx, double& fy, double& fz,
-				 bool monopole, bool dipole, bool quadrupole,
-				 int ltrunc)
+void SphExpansion::return_forces(MatrixXd& coefs,
+                                 double x, double y, double z,
+				                         double& fx, double& fy, double& fz,
+				                         bool monopole, bool dipole, bool quadrupole,
+				                         int ltrunc)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -592,10 +587,11 @@ void SphExpansion::return_forces(array_type2& coefs, double x, double y, double 
 }
 
 
-void SphExpansion::return_density(array_type2& coefs,
-				  double x, double y, double z,
-				  double& d,
-				  bool monopole, bool dipole, bool quadrupole, int ltrunc)
+void SphExpansion::return_density(MatrixXd& coefs,
+				                          double x, double y, double z,
+				                          double& d,
+				                          bool monopole, bool dipole, bool quadrupole,
+                                  int ltrunc)
 {
   /*
     return density
@@ -625,7 +621,7 @@ void SphExpansion::return_density(array_type2& coefs,
 }
 
 void SphExpansion::select_coefficient_time(double desired_time,
-			     array_type2& coefs_at_time, int ntrunc, int ltrunc) {
+			     MatrixXd& coefs_at_time, int ntrunc, int ltrunc) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
@@ -643,7 +639,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
   numl = (coeftable.LMAX+1)*(coeftable.LMAX+1);
 
-  coefs_at_time.resize(boost::extents[numl][coeftable.NMAX]);
+  coefs_at_time.resize(numl,coeftable.NMAX);
 
 
 
@@ -680,7 +676,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
-        coefs_at_time[l][n] = coeftable.coefs[0][l][n];
+        coefs_at_time(l,n) = coeftable.coefs[0](l,n);
       }
     }
 
@@ -701,7 +697,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
-        coefs_at_time[l][n] = (x1*coeftable.coefs[indx][l][n] + x2*coeftable.coefs[indx+1][l][n]);
+        coefs_at_time(l,n) = (x1 * coeftable.coefs[indx](l,n) + x2 * coeftable.coefs[indx+1](l,n));
       }
     }
   }
@@ -714,7 +710,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
       // start at order+1 so this call will work if n=0.
       for (int n=ntrunc+1; n<coeftable.NMAX; n++) {
-        coefs_at_time[l][n] = 0.0;
+        coefs_at_time(l,n) = 0.0;
       }
 
     }
@@ -722,188 +718,4 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
 }
 
-
-
-void SphExpansion::get_selfgravity_coefficients(array_type3& self_grav_coefs, bool monopolenorm, bool power)
-{
-
-  // function to produce coefficient amplitudes that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
-  // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
-  // this will set up another copy of the coefficients, so be warned: this could be large
-
-  // inputs
-  // self_grav_coefs: the array that will be filled with self-gravity coefficients
-  // monopolenorm   : if true, will return the normed coefficients (normalised by the lowest-order coefficient)
-  // power          : if true, will return the squared sum of the coefficients, which is the gravitational potential energy (see note below)
-
-  // The theory:
-  // -The biorthogonality condition is the integral of the density and and the potential over 3d space.
-  // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficient amplitudes in the expansion.
-  // -Physically, that is 2 times the gravitational potential energy.
-
-  // todo:
-  // consider options for single lorder,morder return
-  // add power computation
-
-  int numl = coeftable.LMAX;
-  int numn = coeftable.NMAX;
-  int l,loffset,moffset,m,n,t;
-
-  self_grav_coefs.resize(boost::extents[coeftable.NUMT][(coeftable.LMAX+1)*(coeftable.LMAX+1)][coeftable.NMAX]);
-
-  double fac1,fac2;
-  double norm;
-
-  fac1 = 0.25/M_PI;
-
-  array_type2 factrl;
-  factorial(numl, factrl);
-
-  for (t=0;t<coeftable.NUMT;t++) {
-
-
-    // do the monopole
-    for (n=0;n<numn;n++) self_grav_coefs[t][0][n] = fac1*coeftable.coefs[t][0][n];
-
-    // do the higher orders
-    for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
-      for (m=0, moffset=0; m<=l; m++) {
-        fac1 = (2.0*l+1.0)/(4.0*M_PI);
-        if (m==0) {
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset][n] = fac1*coeftable.coefs[t][loffset+moffset][n];
-	  moffset++;
-        } else {
-	  fac2 = 2.0 * fac1 * factrl[l][m];
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset  ][n] = fac2*coeftable.coefs[t][loffset+moffset  ][n];
-          for (n=0;n<numn;n++) self_grav_coefs[t][loffset+moffset+1][n] = fac2*coeftable.coefs[t][loffset+moffset+1][n];
-	  moffset += 2;
-        }
-      }
-    } // higher-order l loop
-
-    // loop back through to compute the power, if desired
-    if (power) {
-      for (l=0;l<(numl+1)*(numl+1);l++) {
-	for (n=0;n<numn;n++) self_grav_coefs[t][l][n] = self_grav_coefs[t][l][n]*self_grav_coefs[t][l][n];
-      }
-
-    } // power
-
-    if (monopolenorm) {
-      // reset the norm
-      norm = 0.0;
-
-      // compute the monopole norm from the total monopole
-      // if returning power, this is the sum over all radial orders
-      // if returning amplitude, this is just the lowest-order radial term
-      if (power) {
-	for (n=0;n<numn;n++) norm += self_grav_coefs[t][0][n];
-      } else {
-        norm = self_grav_coefs[t][0][0];
-      }
-
-      for (l=0;l<(numl+1)*(numl+1);l++) {
-	for (n=0;n<numn;n++) self_grav_coefs[t][l][n] /= norm;
-      }
-
-    } // monopolenorm
-
-
-
-  } // time loop
-
-}
-
-
-
-/*
-void SphExpansion::get_selfgravity_coefficients_eigen(Eigen::MatrixXd& self_grav_coefs, bool monopolenorm, bool power)
-{
-
-  // function to produce coefficient amplitudes that have been normalised with the spherical harmonic norm such that the self-gravity can be compared
-  // this means including (1/(4*pi)) * (2*l+1) * ((l-m)!/(l+m)!)
-  // this will set up another copy of the coefficients, so be warned: this could be large
-
-  // inputs
-  // self_grav_coefs: the array that will be filled with self-gravity coefficients
-  // monopolenorm   : if true, will return the normed coefficients (normalised by the lowest-order coefficient)
-  // power          : if true, will return the squared sum of the coefficients, which is the gravitational potential energy (see note below)
-
-  // The theory:
-  // -The biorthogonality condition is the integral of the density and and the potential over 3d space.
-  // -The inner product of \rho and \phi for the entire system is the *squared sum* of all the coefficient amplitudes in the expansion.
-  // -Physically, that is 2 times the gravitational potential energy.
-
-  // todo:
-  // consider options for single lorder,morder return
-  // add power computation
-
-  int numl = coeftable.LMAX;
-  int numn = coeftable.NMAX;
-  int l,loffset,moffset,m,n,t;
-
-  self_grav_coefs.resize(coeftable.NUMT,(coeftable.LMAX+1)*(coeftable.LMAX+1),coeftable.NMAX);
-
-  double fac1,fac2;
-  double norm;
-
-  fac1 = 0.25/M_PI;
-
-  Eigen::MatrixXd factrl;
-  factorial_eigen(numl, factrl);
-
-  for (t=0;t<coeftable.NUMT;t++) {
-
-
-    // do the monopole
-    for (n=0;n<numn;n++) self_grav_coefs(t,0,n) = fac1*coeftable.coefs[t][0][n];
-
-    // do the higher orders
-    for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
-      for (m=0, moffset=0; m<=l; m++) {
-        fac1 = (2.0*l+1.0)/(4.0*M_PI);
-        if (m==0) {
-          for (n=0;n<numn;n++) self_grav_coefs(t,loffset+moffset,n) = fac1*coeftable.coefs[t][loffset+moffset][n];
-	  moffset++;
-        } else {
-	  fac2 = 2.0 * fac1 * factrl(l,m);
-          for (n=0;n<numn;n++) self_grav_coefs(t,loffset+moffset  ,n) = fac2*coeftable.coefs[t][loffset+moffset  ][n];
-          for (n=0;n<numn;n++) self_grav_coefs(t,loffset+moffset+1,n) = fac2*coeftable.coefs[t][loffset+moffset+1][n];
-	  moffset += 2;
-        }
-      }
-    } // higher-order l loop
-
-    // loop back through to compute the power, if desired
-    if (power) {
-      for (l=0;l<(numl+1)*(numl+1);l++) {
-	for (n=0;n<numn;n++) self_grav_coefs(t,l,n) = self_grav_coefs(t,l,n)*self_grav_coefs(t,l,n);
-      }
-
-    } // power
-
-    if (monopolenorm) {
-      // reset the norm
-      norm = 0.0;
-
-      // compute the monopole norm from the total monopole
-      // if returning power, this is the sum over all radial orders
-      // if returning amplitude, this is just the lowest-order radial term
-      if (power) {
-	for (n=0;n<numn;n++) norm += self_grav_coefs(t,0,n);
-      } else {
-        norm = self_grav_coefs(t,0,0);
-      }
-
-      for (l=0;l<(numl+1)*(numl+1);l++) {
-	for (n=0;n<numn;n++) self_grav_coefs(t,l,n) /= norm;
-      }
-
-    } // monopolenorm
-
-
-
-  } // time loop
-
-}
-*/
+#endif

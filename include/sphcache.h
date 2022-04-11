@@ -7,28 +7,22 @@ MSP 22 Apr 2020 clean version
 MSP 26 Sep 2020 add density calls
 MSP 27 Sep 2020 add USE_TABLE preprocessor directive
 MSP  7 Oct 2020 fix density normalisation (decide on final location of -4pi from Poisson)
+MSP  9 Apr 2022 converted to Eigen
 
  */
 #ifndef SPHCACHE_H
 #define SPHCACHE_H
+
+// Eigen stuff
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
 
 // include the modelfile stuff
 #include "sphmodel.h"
 
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
-
-// create 2- and 3-d array types
-typedef boost::multi_array<double, 3> array_type3;
-typedef boost::multi_array<double, 2> array_type2;
-
-typedef vector<double> dbl_vector;
-typedef boost::multi_array<vector<dbl_vector>, 2> efarray;
-
-bool debug = false;
-
-// use tabulated values for density rather than spline
-#define USE_TABLE 1
 
 
 
@@ -43,9 +37,8 @@ struct SphCache
   double RMIN;         // the minimum expansion radius
   double RMAX;         // the maximum expansion radius
   double SCL;          // the scaling value for radius
-  array_type3 eftable; // the eigenfunction table, sized LMAX+1,NMAX,NUMR
-  array_type2 evtable; // the eigenvector table, sized LMAX+1,NMAX
-  efarray eftable2;    // test eftable version
+  std::vector< MatrixXd > eftable; // the eigenfunction table, sized LMAX+1,NMAX,NUMR
+  MatrixXd evtable; // the eigenvector table, sized LMAX+1,NMAX
 
   // added after the SphModel is read in, in init_table
   vector<double> r;    // the radius array, len NUMR
@@ -58,13 +51,13 @@ struct SphCache
 
   // make the whole table available, whatever
   SphModel modeltable;
-  
+
 };
 
 void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
 
   ifstream in(sph_cache_name.c_str());
-  
+
   if (!in) {
     throw "sphcache::read_sph_cache: Unable to open file!\n";
   }
@@ -75,7 +68,7 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
   in.read((char *)&cachetable.LMAX, sizeof(int));
   in.read((char *)&cachetable.NMAX, sizeof(int));
   in.read((char *)&cachetable.NUMR, sizeof(int));
-  in.read((char *)&cachetable.CMAP, sizeof(int));	
+  in.read((char *)&cachetable.CMAP, sizeof(int));
   in.read((char *)&cachetable.RMIN, sizeof(double));
   in.read((char *)&cachetable.RMAX, sizeof(double));
   in.read((char *)&cachetable.SCL,  sizeof(double));
@@ -84,8 +77,8 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
     throw "\nsphcache::read_sph_cache: LMAX>32 set. If intended, adjust guards in sphcache.h. If not intended, check if sph_cache is the correct file?";
   }
 
-  // debug
-  if (debug) 
+
+#if DEBUGCACHE
   cout << setw(10) << cachetable.LMAX
        << setw(10) << cachetable.NMAX
        << setw(10) << cachetable.NUMR
@@ -94,28 +87,29 @@ void read_sph_cache (string& sph_cache_name, SphCache& cachetable) {
        << setw(10) << cachetable.RMAX
        << setw(10) << cachetable.SCL
        << endl;
+#endif
 
   // resize the arrays
-  cachetable.eftable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX][cachetable.NUMR]);
-  cachetable.evtable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
-  
-  cachetable.eftable2.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
+  cachetable.eftable.resize(cachetable.LMAX+1);
+  cachetable.evtable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   int dummy;
   for (int l=0; l<=cachetable.LMAX; l++) {
 
-  // read in the table element first: not necessary to save, vestigial from exp
-  in.read((char *)&dummy, sizeof(int));
+    cachetable.eftable[l].resize(cachetable.NMAX,cachetable.NUMR);
 
-  // read in eigenvector values
-  for (int n=0; n<cachetable.NMAX; n++) in.read((char *)&cachetable.evtable[l][n], sizeof(double));
+    // read in the table element first: not necessary to save, vestigial from exp
+    in.read((char *)&dummy, sizeof(int));
 
-  // read in eigenfunction values
-  for (int n=0; n<cachetable.NMAX; n++) {
-    for (int i=0; i<cachetable.NUMR; i++)
-      in.read((char *)&cachetable.eftable[l][n][i], sizeof(double));
+    // read in eigenvector values
+    for (int n=0; n<cachetable.NMAX; n++) in.read((char *)&cachetable.evtable(l,n), sizeof(double));
+
+    // read in eigenfunction values
+    for (int n=0; n<cachetable.NMAX; n++) {
+      for (int i=0; i<cachetable.NUMR; i++)
+        in.read((char *)&cachetable.eftable[l](n,i), sizeof(double));
+      }
     }
-  }
 
   std::cerr << "success!!" << std::endl;
 }
@@ -127,7 +121,7 @@ void init_table(SphModel& sphmodel, SphCache& cachetable)
   // duplicate the whole sphmodel for access:
   cachetable.modeltable = sphmodel;
   // is this too painful for the memory footprint?
-  
+
   // add the relevant vectors to the cachetable from the sphmodel
   cachetable.xi.resize(cachetable.NUMR);
   cachetable.r.resize(cachetable.NUMR);
@@ -160,13 +154,13 @@ void init_table(SphModel& sphmodel, SphCache& cachetable)
 
 
 
-void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
+void get_pot(double& r, SphCache& cachetable, MatrixXd& pottable)
 {
-  pottable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
+  pottable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-    
+
   if (cachetable.CMAP==1) {
         if (xi<-1.0) xi=-1.0;
         if (xi>=1.0) xi=1.0-1.0e-08;
@@ -182,29 +176,25 @@ void get_pot(double& r, SphCache& cachetable, array_type2& pottable)
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
 
-      #ifdef USETABLE      
-      pottable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1])/
-	sqrt(cachetable.evtable[l][n]) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
-      #else
-      pottable[l][n] = (x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1])/
-	sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.pspline(r);
-      #endif
+      pottable(l,n) = (x1*cachetable.eftable[l](n,indx) + x2*cachetable.eftable[l](n,indx+1))/
+	sqrt(cachetable.evtable(l,n)) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
+
     }
   }
 }
 
 
-void get_force(double& r, SphCache& cachetable, array_type2& forcetable) {
+void get_force(double& r, SphCache& cachetable, MatrixXd& forcetable) {
 
   // see the equivalent call, get_force in SLGridMP2.cc
-  
+
   // must have already run init_table
 
-  forcetable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
+  forcetable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-    
+
   if (cachetable.CMAP==1) {
         if (xi<-1.0) xi=-1.0;
         if (xi>=1.0) xi=1.0-1.0e-08;
@@ -215,7 +205,7 @@ void get_force(double& r, SphCache& cachetable, array_type2& forcetable) {
   if (indx>cachetable.NUMR-2) indx = cachetable.NUMR - 2;
 
   double p = (xi - cachetable.xi[indx])/cachetable.dxi;
-  
+
 				// Use three point formula
 
 				// Point -1: indx-1
@@ -224,26 +214,26 @@ void get_force(double& r, SphCache& cachetable, array_type2& forcetable) {
 
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
-      forcetable[l][n] = d_xi_to_r(xi,cachetable.CMAP,cachetable.SCL)/cachetable.dxi * (
-			     (p - 0.5)*cachetable.eftable[l][n][indx-1]*cachetable.p0[indx-1]
-			     -2.0*p*cachetable.eftable[l][n][indx]*cachetable.p0[indx]
-			     + (p + 0.5)*cachetable.eftable[l][n][indx+1]*cachetable.p0[indx+1]
-			     ) / sqrt(cachetable.evtable[l][n]);
+      forcetable(l,n) = d_xi_to_r(xi,cachetable.CMAP,cachetable.SCL)/cachetable.dxi * (
+			     (p - 0.5)*cachetable.eftable[l](n,indx-1)*cachetable.p0[indx-1]
+			     -2.0*p*cachetable.eftable[l](n,indx)*cachetable.p0[indx]
+			     + (p + 0.5)*cachetable.eftable[l](n,indx+1)*cachetable.p0[indx+1]
+         ) / sqrt(cachetable.evtable(l,n));
     }
   }
 
 }
 
-void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
+void get_density(double& r, SphCache& cachetable, MatrixXd& densitytable)
 {
 
   // see equivalent call in SLGridMP2.cc
-  
-  densitytable.resize(boost::extents[cachetable.LMAX+1][cachetable.NMAX]);
+
+  densitytable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-    
+
   if (cachetable.CMAP==1) {
         if (xi<-1.0) xi=-1.0;
         if (xi>=1.0) xi=1.0-1.0e-08;
@@ -263,26 +253,22 @@ void get_density(double& r, SphCache& cachetable, array_type2& densitytable)
     for (int n=0; n<cachetable.NMAX; n++) {
 
       // negative for normalisation
-      #ifdef USETABLE
-      densitytable[l][n] = -(x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
-        sqrt(cachetable.evtable[l][n]) * (x1*cachetable.d0[indx] + x2*cachetable.d0[indx+1]);
-      #else
-      densitytable[l][n] = -(x1*cachetable.eftable[l][n][indx] + x2*cachetable.eftable[l][n][indx+1]) *
-        sqrt(cachetable.evtable[l][n]) * cachetable.modeltable.dspline(r);
-      #endif
+      densitytable(l,n) = -(x1*cachetable.eftable[l](n,indx) + x2*cachetable.eftable[l](n,indx+1)) *
+        sqrt(cachetable.evtable(l,n)) * (x1*cachetable.d0[indx] + x2*cachetable.d0[indx+1]);
+
     }
   }
 }
 
 
-void get_dpotl(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot)
+void get_dpotl(double r, SphCache& cachetable, MatrixXd& potd, MatrixXd& dpot)
 {
   // r comes in as the actual radius, NOT xi
   get_pot  (r, cachetable, potd);
   get_force(r, cachetable, dpot);
 }
 
-void get_dpotl_density(double r, SphCache& cachetable, array_type2& potd, array_type2& dpot, array_type2& dend)
+void get_dpotl_density(double r, SphCache& cachetable, MatrixXd& potd, MatrixXd& dpot, MatrixXd& dend)
 {
   // r comes in as the actual radius, NOT xi
   get_pot  (r, cachetable, potd);

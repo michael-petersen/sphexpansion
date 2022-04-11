@@ -26,7 +26,7 @@ MSP 11 Jan 2022 convert to c++17 standard
 #include "expansion.h"
 
 // integration include
-#include "leapfrog.h"
+//#include "leapfrog.h"
 
 void make_rotation_curve(SphExpansion* S,
 			 array_type2 coefs,

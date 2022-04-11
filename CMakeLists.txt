@@ -39,6 +39,6 @@ if(yaml-cpp_FOUND)
   message(STATUS "Do we have yaml-cpp? ${HAVEYAML}")
 endif()
 
-#configure_file(${CMAKE_SOURCE_DIR}/config_cmake.h.in ${CMAKE_SOURCE_DIR}/config.h)
+#configure_file(${CMAKE_SOURCE_DIR}/examples/config_flags.h.in ${CMAKE_SOURCE_DIR}/flags.h)
 
 add_subdirectory(examples)

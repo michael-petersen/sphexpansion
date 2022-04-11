@@ -5,6 +5,7 @@ functions to read in the spherical model files
 
 MSP 22 Apr 2020 clean version
 MSP  3 Jan 2022 make spline flag
+MSP  8 Apr 2022 add linear interpolation option
 
 
 - still needs a linear interpolation fallback
@@ -16,10 +17,6 @@ MSP  3 Jan 2022 make spline flag
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
-#if SPLINEMODEL
-#include "spline.h"
-#endif
-
 struct SphModel
 {
   int NUMR;          // number of entries in the halo table
@@ -28,11 +25,6 @@ struct SphModel
   vector<double> m;  // the enclosed mass array, len NUMR
   vector<double> p;  // the potential array, len NUMR
 
-#if SPLINEMODEL
-  tk::spline pspline; // spline representation of potential
-  tk::spline dspline; // spline representation of density
-  tk::spline mspline; // spline representation of mass
-#endif
 };
 
 
@@ -44,13 +36,13 @@ void read_model (string& model_file, SphModel& modeltable) {
         cout << "Unable to open file";
         exit(1); // terminate with error
   }
-  
+
   string line;
 
   // is numr a dummy variable?
   int numr;
   double rtmp,dtmp,mtmp,ptmp;
-  
+
   int linenum = 0;
 
   while (getline(infile, line)) {
@@ -68,8 +60,8 @@ void read_model (string& model_file, SphModel& modeltable) {
 	modeltable.m.resize(modeltable.NUMR);
 	modeltable.p.resize(modeltable.NUMR);
       } else {
-        ss >> 
-        modeltable.r[linenum-1] >> 
+        ss >>
+        modeltable.r[linenum-1] >>
         modeltable.d[linenum-1] >>
         modeltable.m[linenum-1] >>
         modeltable.p[linenum-1];
@@ -80,30 +72,71 @@ void read_model (string& model_file, SphModel& modeltable) {
 
   infile.close();
 
-#if SPLINEMODEL
-  // construct spline interpolations
-  modeltable.pspline.set_points(modeltable.r,modeltable.p);
-  modeltable.dspline.set_points(modeltable.r,modeltable.d);
-  modeltable.mspline.set_points(modeltable.r,modeltable.m);
-#endif
-  
 }
 
 
-#if SPLINEMODEL
-// evaluation calls
 double get_pot (SphModel& sphmodel, double r) {
-  return sphmodel.pspline(r);
+
+  // find the closest r value starting from the smallest
+  double indx=0;
+  while (sphmodel.r[indx] < r) {
+    indx++;
+  }
+
+  // revert one index: this is the lower bound
+  indx--;
+
+  // do interpolation
+  double pslope,drt,drp;
+  pslope = sphmodel.p[indx+1] - sphmodel.p[indx];
+  drt    = sphmodel.r[indx+1] - sphmodel.r[indx];
+  drp    = r - sphmodel.r[indx];
+
+  return sphmodel.p[indx] + (pslope/drt)*(drp);
+
+}
+
+double get_density(SphModel& sphmodel, double r) {
+
+  // find the closest r value starting from the smallest
+  double indx=0;
+  while (sphmodel.r[indx] < r) {
+    indx++;
+  }
+
+  // revert one index: this is the lower bound
+  indx--;
+
+  // do interpolation
+  double dslope,drt,drp;
+  dslope = sphmodel.d[indx+1] - sphmodel.d[indx];
+  drt    = sphmodel.r[indx+1] - sphmodel.r[indx];
+  drp    = r - sphmodel.r[indx];
+
+  return sphmodel.d[indx] + (dslope/drt)*(drp);
+
 }
 
 double get_mass (SphModel& sphmodel, double r) {
-  return sphmodel.mspline(r); 
-}
 
-double get_density (SphModel& sphmodel, double r) {
-  return sphmodel.dspline(r);
+  // find the closest r value starting from the smallest
+  double indx=0;
+  while (sphmodel.r[indx] < r) {
+    indx++;
+  }
+
+  // revert one index: this is the lower bound
+  indx--;
+
+  // do interpolation
+  double mslope,drt,drp;
+  mslope = sphmodel.m[indx+1] - sphmodel.m[indx];
+  drt    = sphmodel.r[indx+1] - sphmodel.r[indx];
+  drp    = r - sphmodel.r[indx];
+
+  return sphmodel.m[indx] + (mslope/drt)*(drp);
+
 }
-#endif
 
 
 #endif

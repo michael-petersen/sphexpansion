@@ -21,13 +21,16 @@ MSP 22 Dec 2021 first version
 // eigen includes
 #include <Eigen/Dense>
 
+using Eigen::MatrixXd;
+
 // expansion includes
-#include "expansion.h"
+#include "sphexpansion.h"
+#include "cylexpansion.h"
 
 
 
 void make_rotation_curve(SphExpansion* S,
-			 array_type2 coefs,
+			 MatrixXd coefs,
 			 double xmin,
 			 double xmax,
 			 int nsamples,
@@ -93,23 +96,11 @@ int main () {
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
-
   bool onlymonopole = false;
-  array_type2 mwcoefs;
+  MatrixXd mwcoefs;
   MW->select_coefficient_time(0.0, mwcoefs);
 
   int numW=100;
-
-  Eigen::MatrixXd self_grav_coefs;
-  //MW->get_selfgravity_coefficients_eigen(self_grav_coefs);
-
-  Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(numW, numW);
-
-  ret.resize(40,40);
-
-	Eigen::MatrixXd factrl;
-  factorial_eigen(6, factrl);
-
 
   string rotationfile="tests/MWrotation.txt";
 
