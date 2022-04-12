@@ -22,23 +22,18 @@ MSP 22 Dec 2021 add tests for new yaml formats
 
 */
 
-//#define STANDALONE 1
-
-
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <math.h>
 #include <stdio.h>
 
-// Eigen includes (for later)
-//#include <Eigen/Eigen>
-
-// boost includes
-#include "boost/multi_array.hpp"
+// eigen includes
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
 
 // the spherical expansion headers
-#include "expansion.h"
+#include "sphexpansion.h"
 
 // the cylindrical expansion headers
 #include "cylexpansion.h"
@@ -47,7 +42,7 @@ MSP 22 Dec 2021 add tests for new yaml formats
 double reference_time = 0;//2.224; 1.97012;
 
 
-void print_orbit(array_type2 orbit,
+void print_orbit(MatrixXd orbit,
 		 string orbitfile)
 {
   ofstream outorbit;
@@ -55,12 +50,12 @@ void print_orbit(array_type2 orbit,
 
   outorbit << "# t [Gyr]; x [kpc]; y [kpc]; z [kpc]; vx [km/s] ; vy [km/s] ; vz [km/s] ; f_x [km/s/s] ; f_y [km/s/s] ; f_z [km/s/s];" << endl;
 
-  for (int i=0; i<orbit.shape()[1]; i++) {
+  for (int i=0; i<orbit.cols(); i++) {
 
-    outorbit << setw(14) << orbit[9][i];
+    outorbit << setw(14) << orbit(9,i);
 
     for (int j=0; j<9; j++) {
-      outorbit << setw(14) << orbit[j][i];
+      outorbit << setw(14) << orbit(j,i);
     }
     outorbit << endl;
   }
@@ -72,7 +67,7 @@ void print_orbit(array_type2 orbit,
 
 
 void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
-			      array_type2 mwcoefs, array_type2 lmccoefs,
+			      MatrixXd mwcoefs, MatrixXd lmccoefs,
 			      double t, double x, double y, double z,
 			      double& fx, double& fy, double& fz, bool verbose)
 {
@@ -181,7 +176,7 @@ void two_component_leapfrog(SphExpansion* MW,
 			    vector<double> vinit,
 			    int nint,
 			    double dt,
-			    array_type2& orbit)
+			    MatrixXd& orbit)
 {
   /*
 
@@ -192,15 +187,17 @@ void two_component_leapfrog(SphExpansion* MW,
   double tvir;
 
   // include the forces for now
-  orbit.resize(boost::extents[10][nint]);
+  orbit.resize(10,nint);
+
+	cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
 
   // initialise beginning values
-  orbit[0][0] = xinit[0];
-  orbit[1][0] = xinit[1];
-  orbit[2][0] = xinit[2];
-  orbit[3][0] = vinit[0];
-  orbit[4][0] = vinit[1];
-  orbit[5][0] = vinit[2];
+  orbit(0,0) = xinit[0];
+  orbit(1,0) = xinit[1];
+  orbit(2,0) = xinit[2];
+  orbit(3,0) = vinit[0];
+  orbit(4,0) = vinit[1];
+  orbit(5,0) = vinit[2];
 
   //now step forward one, using leapfrog (drift-kick-drift) integrator?
   //    https://en.wikipedia.org/wiki/Leapfrog_integration
@@ -208,7 +205,7 @@ void two_component_leapfrog(SphExpansion* MW,
   int step = 1;
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
-  array_type2 tcoefsmw,tcoefslmc;
+  MatrixXd tcoefsmw,tcoefslmc;
   MW->select_coefficient_time(0.,tcoefsmw);
   LMC->select_coefficient_time(0., tcoefslmc);
 
@@ -218,19 +215,19 @@ void two_component_leapfrog(SphExpansion* MW,
   // return forces for the initial step
   return_forces_mw_and_lmc(MW, LMC,
 			     tcoefsmw, tcoefslmc,
-			     tphys, orbit[0][0],orbit[1][0],orbit[2][0],
+			     tphys, orbit(0,0),orbit(1,0),orbit(2,0),
 			     fx, fy, fz, false);
 
-  orbit[6][0] = fx;
-  orbit[7][0] = fy;
-  orbit[8][0] = fz;
+  orbit(6,0) = fx;
+  orbit(7,0) = fy;
+  orbit(8,0) = fz;
 
   int j;
 
   for (step=1; step<nint; step++) {
 
     // advance timestep: this is in physical units by definition.
-    orbit[9][step] = dt*step;
+    orbit(9,step) = dt*step;
 
     // find the current virial time
     physical_to_virial_time(dt*(step),tvir);
@@ -244,22 +241,22 @@ void two_component_leapfrog(SphExpansion* MW,
 
     // advance positions
     for (j=0; j<3; j++) {
-      orbit[j][step] = orbit[j][step-1]   + (orbit[j+3][step-1]*dt  )  + (0.5*orbit[j+6][step-1]  * (dt*dt));
+      orbit(j,step) = orbit(j,step-1)   + (orbit(j+3,step-1)*dt  )  + (0.5*orbit(j+6,step-1)  * (dt*dt));
     }
 
     // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
     return_forces_mw_and_lmc(MW, LMC,
 			     tcoefsmw, tcoefslmc,
-			     dt*(step-1), orbit[0][step],orbit[1][step],orbit[2][step],
+			     dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
 			     fx, fy, fz, false);
 
-    orbit[6][step] = fx;
-    orbit[7][step] = fy;
-    orbit[8][step] = fz;
+    orbit(6,step) = fx;
+    orbit(7,step) = fy;
+    orbit(8,step) = fz;
 
     // advance velocities
     for (j=3; j<6; j++) {
-      orbit[j][step] = orbit[j][step-1] + (0.5*(orbit[j+3][step-1]+orbit[j+3][step])  * dt );
+      orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
     }
 
   }
@@ -269,7 +266,7 @@ void two_component_leapfrog(SphExpansion* MW,
 
 
 void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, CylExpansion* MWD,
-			                array_type2 mwcoefs, array_type2 lmccoefs, array_type2 mwdcoscoefs, array_type2 mwdsincoefs,
+			                MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
 			                double t, double x, double y, double z,
 			                double& fx, double& fy, double& fz, bool verbose)
 {
@@ -401,7 +398,7 @@ void three_component_leapfrog(SphExpansion* MW,
 			      vector<double> vinit,
 			      int nint,
 			      double dt,
-			      array_type2& orbit)
+			      MatrixXd& orbit)
 {
   /*
 
@@ -412,15 +409,18 @@ void three_component_leapfrog(SphExpansion* MW,
   double tvir;
 
   // include the forces for now
-  orbit.resize(boost::extents[10][nint]);
+  orbit.resize(10,nint);
+
+	cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
+
 
   // initialise beginning values
-  orbit[0][0] = xinit[0];
-  orbit[1][0] = xinit[1];
-  orbit[2][0] = xinit[2];
-  orbit[3][0] = vinit[0];
-  orbit[4][0] = vinit[1];
-  orbit[5][0] = vinit[2];
+	orbit(0,0) = xinit[0];
+  orbit(1,0) = xinit[1];
+  orbit(2,0) = xinit[2];
+  orbit(3,0) = vinit[0];
+  orbit(4,0) = vinit[1];
+  orbit(5,0) = vinit[2];
 
   //now step forward one, using leapfrog (drift-kick-drift) integrator?
   //    https://en.wikipedia.org/wiki/Leapfrog_integration
@@ -428,11 +428,11 @@ void three_component_leapfrog(SphExpansion* MW,
   int step = 1;
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
-  array_type2 tcoefsmw,tcoefslmc;
+  MatrixXd tcoefsmw,tcoefslmc;
   MW->select_coefficient_time(0., tcoefsmw,15);
   LMC->select_coefficient_time(0., tcoefslmc);
 
-  array_type2 mwcoscoefs,mwsincoefs;
+  MatrixXd mwcoscoefs,mwsincoefs;
   MWD->select_coefficient_time(0.0, mwcoscoefs, mwsincoefs);
 
   // not applying time offsets here; think about whether this is a problem
@@ -441,19 +441,19 @@ void three_component_leapfrog(SphExpansion* MW,
   // return forces for the initial step
   return_forces_mw_and_lmc_with_disc(MW, LMC, MWD,
 				     tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-				     tphys, orbit[0][0],orbit[1][0],orbit[2][0],
+				     tphys, orbit(0,0),orbit(1,0),orbit(2,0),
 				     fx, fy, fz, false);
 
-  orbit[6][0] = fx;
-  orbit[7][0] = fy;
-  orbit[8][0] = fz;
+  orbit(6,0) = fx;
+  orbit(7,0) = fy;
+  orbit(8,0) = fz;
 
   int j;
 
   for (step=1; step<nint; step++) {
 
     // advance timestep: this is in physical units by definition.
-    orbit[9][step] = dt*step;
+    orbit(9,step) = dt*step;
 
     // find the current virial time
     physical_to_virial_time(dt*(step),tvir);
@@ -468,23 +468,23 @@ void three_component_leapfrog(SphExpansion* MW,
 
     // advance positions
     for (j=0; j<3; j++) {
-      orbit[j][step] = orbit[j][step-1]   + (orbit[j+3][step-1]*dt  )  + (0.5*orbit[j+6][step-1]  * (dt*dt));
+      orbit(j,step) = orbit(j,step-1)   + (orbit(j+3,step-1)*dt  )  + (0.5*orbit(j+6,step-1)  * (dt*dt));
     }
 
     // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
     return_forces_mw_and_lmc_with_disc(MW, LMC, MWD,
 				       tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-				       dt*(step-1), orbit[0][step],orbit[1][step],orbit[2][step],
+				       dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
 				       fx, fy, fz, false);
 
-    orbit[6][step] = fx;
-    orbit[7][step] = fy;
-    orbit[8][step] = fz;
+		orbit(6,step) = fx;
+		orbit(7,step) = fy;
+		orbit(8,step) = fz;
 
-    // advance velocities
-    for (j=3; j<6; j++) {
-      orbit[j][step] = orbit[j][step-1] + (0.5*(orbit[j+3][step-1]+orbit[j+3][step])  * dt );
-    }
+		// advance velocities
+		for (j=3; j<6; j++) {
+			orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
+		}
 
   }
 
@@ -606,13 +606,13 @@ int main () {
   cout << "Input pos/vel: " << xinit[0] << " " << xinit[1] << " " << xinit[2] << " " <<
     vxinit[0] << " " << vxinit[1] << " " << vxinit[2] << " " << endl;
 
-  double nint=10;
+  double nint=100;
 
   // call this time in kpc/km/s units
   double dt;
   // force sampling at the native rate of the exp simulation as an interpolation test
   virial_to_physical_time(0.0005,dt);
-  array_type2 orbit;
+  MatrixXd orbit;
 
   //two_component_leapfrog(MW, LMC, xinit, vxinit, nint, dt, orbit);
 

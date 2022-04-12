@@ -2,10 +2,7 @@
 add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
 
 
-set(bin_PROGRAMS eigentest rotcurve densitymap )
-#set(bin_PROGRAMS fullintegrate extractcoefs densitymap rotcurve)
-
-
+set(bin_PROGRAMS eigentest rotcurve densitymap fullintegrate)
 
 set(common_LINKLIB yaml-cpp ${EIEN3_LIBRARIES})
 
@@ -16,8 +13,7 @@ set(common_INCLUDE $<INSTALL_INTERFACE:include>
   ${CMAKE_CURRENT_SOURCE_DIR}/.. ${EIGEN3_INCLUDE_DIR})
 
 add_executable(eigentest      eigentest.cc    )
-#add_executable(fullintegrate  fullintegrate.cc)
-#add_executable(extractcoefs   extractcoefs.cc )
+add_executable(fullintegrate  fullintegrate.cc)
 add_executable(densitymap     density_map.cc  )
 add_executable(rotcurve       rotcurve.cc     )
 
