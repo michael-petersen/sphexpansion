@@ -17,19 +17,17 @@ MSP  4 Nov 2021 rewritten for new expansion.h
 #include <math.h>
 #include <stdio.h>
 
-// boost includes
-#include "boost/multi_array.hpp"
+// eigen includes
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
 
 // expansion includes
-#include "expansion.h"
-
-// integration include
-#include "leapfrog.h"
+#include "sphexpansion.h"
 
 void make_surface(SphExpansion* S1,
-		  array_type2 coefs1,
+		  MatrixXd coefs1,
 		  SphExpansion* S2,
-		  array_type2 coefs2,
+		  MatrixXd coefs2,
 		  double reftime,
 		  double xmin,
 		  double xmax,
@@ -126,9 +124,9 @@ void make_surface(SphExpansion* S1,
 
 
 void make_density(SphExpansion* S1,
-		  array_type2 coefs1,
+		  MatrixXd coefs1,
 		  SphExpansion* S2,
-		  array_type2 coefs2,
+		  MatrixXd coefs2,
 		  double reftime,
 		  double xmin,
 		  double xmax,
@@ -202,9 +200,9 @@ void make_density(SphExpansion* S1,
 
 
 void make_density_3d(SphExpansion* S1,
-		     array_type2 coefs1,
+		     MatrixXd coefs1,
 		     SphExpansion* S2,
-		     array_type2 coefs2,
+		     MatrixXd coefs2,
 		     double reftime,
 		     double xmin,
 		     double xmax,
@@ -355,7 +353,7 @@ int main () {
   double reftime = 1.19;//1.393;
   reftime = 1.393;
 
-  array_type2 mwcoefs,lmccoefs;
+  MatrixXd mwcoefs,lmccoefs;
   MW->select_coefficient_time(reftime, mwcoefs);
   LMC->select_coefficient_time(reftime, lmccoefs);
 

@@ -10,6 +10,9 @@ build/*
 examples/obj/*
 examples/deprecated/*
 examples/rotatetest.cc
+examples/extractcoefs.cc
+examples/config_flags.h.in
+examples/eigenbasics.cc
 
 # not-fully-implemented features
 include/accumulate.h
