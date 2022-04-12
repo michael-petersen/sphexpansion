@@ -14,32 +14,32 @@ of something around, would like to track down what exactly is going on.
 #ifndef CYLEXPANSION_H
 #define CYLEXPANSION_H
 
+// important preprocessor flags
+#include "flags.h"
+
 // converters from r to xi (for mapping tables)
-#include "scaling.h"
+#include "common/scaling.h"
 
 // some basic basis elements
-#include "basis.h"
+#include "common/basis.h"
 
 // basic transformations from cartesian to spherical (and back)
-#include "transform.h"
+#include "common/transform.h"
 
 // basic translations from virial to physical units (and back)
-#include "translate.h"
+#include "common/translate.h"
 
 // the orientation stuff for centering the expansions
-#include "orient.h"
+#include "common/orient.h"
 
 // the cachefile stuff, also brings in the modelfile stuff
-#include "cylcache.h"
+#include "cylinder/cylcache.h"
 
 // the coefficient stuff
-#include "cylcoefs.h"
-
-
-
+#include "cylinder/cylcoefs.h"
 
 //using namespace std;
-using std::cout, std::cerr, std::endl, std::setw;
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
 // Eigen MatrixXd, std::vector <MatrixXd>
 #include <Eigen/StdVector>

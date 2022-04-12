@@ -21,25 +21,26 @@ using Eigen::MatrixXd;
 #include "flags.h"
 
 // converters from r to xi (for mapping tables)
-#include "scaling.h"
+#include "common/scaling.h"
 
 // some basic basis elements
-#include "basis.h"
+#include "common/basis.h"
 
 // basic transformations from cartesian to spherical (and back)
-#include "transform.h"
+#include "common/transform.h"
 
 // basic translations from virial to physical units (and back)
-#include "translate.h"
-
-// the cachefile stuff, also brings in the modelfile stuff
-#include "sphcache.h"
-
-// the coefficient stuff
-#include "sphcoefs.h"
+#include "common/translate.h"
 
 // the orientation stuff for centering the expansions
-#include "orient.h"
+#include "common/orient.h"
+
+// the cachefile stuff, also brings in the modelfile stuff
+#include "sphere/sphcache.h"
+
+// the coefficient stuff
+#include "sphere/sphcoefs.h"
+
 
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw;
