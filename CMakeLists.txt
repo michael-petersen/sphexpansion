@@ -24,9 +24,15 @@ endif()
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # required compiler features
-find_package(Boost)
+find_package(pybind11)
 find_package(Eigen3)
 find_package(yaml-cpp)
+
+if(pybind11_FOUND)
+  set(HAVEPYBIND11 TRUE)
+  message(STATUS "Do we have pybind11? ${HAVEPYBIND11}")
+  add_compile_definitions(HAVEPYBIND11=${HAVEPYBIND11})
+endif()
 
 if(Eigen3_FOUND)
   set(HAVEEIGEN TRUE)

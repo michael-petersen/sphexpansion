@@ -19,17 +19,15 @@ MSP 11 Jan 2022 convert to c++17 standard
 #include <math.h>
 #include <stdio.h>
 
-// boost includes
-#include "boost/multi_array.hpp"
+// eigen includes
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
 
 // expansion includes
-#include "expansion.h"
-
-// integration include
-//#include "leapfrog.h"
+#include "sphexpansion.h"
 
 void make_rotation_curve(SphExpansion* S,
-			 array_type2 coefs,
+			 MatrixXd coefs,
 			 double xmin,
 			 double xmax,
 			 int nsamples,
@@ -107,7 +105,7 @@ int main () {
 
 
   bool onlymonopole = false;
-  array_type2 mwcoefs,lmccoefs;
+  MatrixXd mwcoefs,lmccoefs;
   MW->select_coefficient_time(0.0, mwcoefs);
   LMC->select_coefficient_time(0.0, lmccoefs);
 
@@ -171,7 +169,7 @@ int main () {
   //vinit[1] = 0.;
   vinit[2] = 0.;
 
-  array_type2 orbit;
+  MatrixXd orbit;
 
   double dtintegrate = 0.01; // this is fine for circular orbits, needs to be ~0.003 for centre-crossing
 

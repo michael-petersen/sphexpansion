@@ -14,3 +14,6 @@ examples/rotatetest.cc
 # not-fully-implemented features
 include/accumulate.h
 include/leapfrog.h
+
+# external modules
+extern/*
