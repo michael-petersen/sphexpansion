@@ -20,4 +20,4 @@ The libraries to realise the potentials are in include/. Some working examples a
 
 sphexpansion now uses `cmake` as the primary installation tool (to build the example applications). To use, create a directory `build`, then in that directory, `cmake ..; make` to create working examples in `build/examples`.
 
-You may have to install `eigen`, a header-only C++ library. As a header only library, it is sufficient to download the tarball, unpack, and copy the Eigen/ directory to /usr/local/include (which is already part of the search path for clang). You may also use `brew install eigen` if using a Mac with homebrew.
+You may have to install `eigen` (v3), a header-only C++ library. As a header only library, it is sufficient to download the tarball, unpack, and copy the `Eigen/` directory to `/usr/local/include` (which is already part of the search path for clang). You may also use `brew install eigen` if using a Mac with homebrew. If using macports, the command is `sudo port install eigen3`.
