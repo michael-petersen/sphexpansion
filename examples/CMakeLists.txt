@@ -2,7 +2,7 @@
 add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
 
 
-set(bin_PROGRAMS eigentest rotcurve densitymap fullintegrate)
+set(bin_PROGRAMS rotcurve densitymap fullintegrate)
 
 set(common_LINKLIB yaml-cpp ${EIEN3_LIBRARIES})
 
@@ -12,12 +12,10 @@ set(common_INCLUDE $<INSTALL_INTERFACE:include>
   ${DEP_INC} ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/.. ${EIGEN3_INCLUDE_DIR})
 
-add_executable(eigentest      eigentest.cc    )
 add_executable(fullintegrate  fullintegrate.cc)
 add_executable(densitymap     density_map.cc  )
 add_executable(rotcurve       rotcurve.cc     )
 
-#target_compile_definitions(eigentest PRIVATE HAVEEIGEN=1)
 
 pybind11_add_module(mwlmc mwlmc.cc)
 

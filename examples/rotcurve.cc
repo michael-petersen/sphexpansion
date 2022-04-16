@@ -10,6 +10,7 @@ MSP 24 Apr 2020 first version
 MSP 29 Sep 2020 use as a test for density
 MSP 28 Sep 2021 fix for modern compatibility
 MSP 11 Jan 2022 convert to c++17 standard
+MSP 16 Apr 2022 point to stable example files
 
 */
 
@@ -23,8 +24,13 @@ MSP 11 Jan 2022 convert to c++17 standard
 #include <Eigen/Dense>
 using Eigen::MatrixXd;
 
+// set model parameters
+#include "modelfiles.h"
+
 // expansion includes
 #include "sphexpansion.h"
+
+
 
 void make_rotation_curve(SphExpansion* S,
 			 MatrixXd coefs,
@@ -85,23 +91,11 @@ int main () {
 
   // MW
   cout << "Initialising MW ... " << endl;
-  string sph_cache_name_mw  =     "data/run068s22h/SLGridSph.cache.mw.run068s22h";
-  string model_file_mw                      = "data/run068s22h/SLGridSph.mw.s22h";
-  string coef_file_mw       = "data/run068s22h/simpleoutcoef.nofac.mw.run068s22h";
-  string orient_file_mw             = "data/run068s22h/mw.orient.run068s22h.smth";
-
-  SphExpansion* MW;
-  MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
+  SphExpansion* MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  string sph_cache_name_lmc      = "data/run068s22h/SLGridSph.cache.lmc.run068s22h";
-  string model_file_lmc                      = "data/run068s22h/SLGridSph.lmc.s22h";
-  string coef_file_lmc       = "data/run068s22h/simpleoutcoef.nofac.lmc.run068s22h";
-  string orient_file_lmc             = "data/run068s22h/lmc.orient.run068s22h.smth";
-
-  SphExpansion* LMC;
-  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
+  SphExpansion* LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
 
   bool onlymonopole = false;
@@ -145,7 +139,6 @@ int main () {
 		      50,
 		      rotationfile, true);
 
-
   rotationfile="tests/LMCrotation.txt";
 
   make_rotation_curve(LMC,
@@ -154,46 +147,5 @@ int main () {
 		      120.,
 		      50,
 		      rotationfile, true);
-
-  /*
-    // skip test integration for now.
-  vector<double> xinit(3);
-  xinit[0] = 300.;
-  xinit[1] = 0.;
-  xinit[2] = 0.;
-
-  vector<double> vinit(3);
-  vinit[0] = 0.;
-  vinit[1] = 220./1.4;
-  //vinit[1] = 150./1.4;
-  //vinit[1] = 0.;
-  vinit[2] = 0.;
-
-  MatrixXd orbit;
-
-  double dtintegrate = 0.01; // this is fine for circular orbits, needs to be ~0.003 for centre-crossing
-
-  leapfrog(MW, mwcoefs,
-	      xinit, vinit,
-	      2000,
-	      dtintegrate,
-	      orbit);
-
-  string orbitfile="tests/circularorbitMW.txt";
-  print_orbit(orbit,orbitfile);
-
-  // also print an LMC orbit
-  xinit[0] = 100.;
-  vinit[1] = 90.;
-
-  leapfrog(LMC, lmccoefs,
-	      xinit, vinit,
-	      2000,
-	      dtintegrate,
-	      orbit);
-
-  orbitfile="tests/circularorbitLMC.txt";
-  print_orbit(orbit,orbitfile);
-  */
 
 }

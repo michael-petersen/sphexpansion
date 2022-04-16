@@ -1,8 +1,6 @@
 .DS_Store
 
 # deprecated code
-data/*
-tests/*
 build/*
 .legacy*
 
@@ -13,6 +11,7 @@ examples/rotatetest.cc
 examples/extractcoefs.cc
 examples/config_flags.h.in
 examples/eigenbasics.cc
+examples/eigentest.cc
 
 # not-fully-implemented features
 include/accumulate.h

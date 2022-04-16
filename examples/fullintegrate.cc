@@ -32,14 +32,15 @@ MSP 22 Dec 2021 add tests for new yaml formats
 #include <Eigen/Dense>
 using Eigen::MatrixXd;
 
+// set model parameters
+#include "modelfiles.h"
+
 // the spherical expansion headers
 #include "sphexpansion.h"
 
 // the cylindrical expansion headers
 #include "cylexpansion.h"
 
-// the best time is T=2.224: the present day. uniquely set per simulation.
-double reference_time = 0;//2.224; 1.97012;
 
 
 void print_orbit(MatrixXd orbit,
@@ -497,62 +498,17 @@ void three_component_leapfrog(SphExpansion* MW,
 
 int main () {
 
-  bool test1 = true;
-  string runtag = "run9mlde";//"run7mld";
-  string facname = "nfac";
-
   // MW
   cout << "Initialising MW ... " << endl;
-  string sph_cache_name_mw,model_file_mw,coef_file_mw,orient_file_mw;
-  if (test1) {
-    sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw."+runtag;
-    model_file_mw      = "/Volumes/External1/Disk076/ErkalMW.model";
-    coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef."+facname+".mw."+runtag;
-    orient_file_mw     = "/Volumes/External1/Disk076/mw.orient."+runtag+".smth";
-  } else {
-    sph_cache_name_mw  = "/Volumes/External1/Disk080/SLGridSph.cache.mw.system1_3";
-    model_file_mw      = "/Volumes/External1/Disk080/SLGridSph.NFW77";
-    coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.mw.system1_3";
-    orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system1_3.smth";
-  }
-
-  SphExpansion* MW;
-  MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
+  SphExpansion* MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  string sph_cache_name_lmc,model_file_lmc,coef_file_lmc,orient_file_lmc;
-  if (test1) {
-    sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc."+runtag;
-    model_file_lmc     = "/Volumes/External1/Disk076/ErkalLMC.model";
-    coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef."+facname+".lmc."+runtag;
-    orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient."+runtag+".smth";
-  } else {
-    sph_cache_name_lmc = "/Volumes/External1/Disk080/SLGridSph.cache.lmc.system1_3";
-    model_file_lmc     = "/Volumes/External1/Disk080/SLGridSph.NFW77L";
-    coef_file_lmc      = "/Volumes/External1/Disk080/simpleoutcoef.nfac.lmc.system1_3";
-    orient_file_lmc    = "/Volumes/External1/Disk080/lmc.orient.system1_3.smth";
-  }
-
-  SphExpansion* LMC;
-  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
+  SphExpansion* LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
   // MW
   cout << "Initialising MW disc ... " << endl;
-  string cyl_cache_name_mw,cyl_coef_name_mw,cyl_orient_name_mw;
-  if (test1) {
-    cyl_cache_name_mw = "/Volumes/External1/Disk076/.disc.cache."+runtag;
-    cyl_coef_name_mw = "/Volumes/External1/Disk076/outcoef.disc."+runtag;
-    cyl_orient_name_mw = "/Volumes/External1/Disk076/disc.orient."+runtag+".smth";
-  } else {
-    cyl_cache_name_mw = "/Volumes/External1/Disk080/.disc.cache.system1_3";
-    cyl_coef_name_mw = "/Volumes/External1/Disk080/outcoef.disc.system1_3";
-    cyl_orient_name_mw = "/Volumes/External1/Disk080/disc.orient.system1_3.smth";
-  }
-
-  CylExpansion* MWD;
-  MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
-
+  CylExpansion* MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
 
   vector<double> zerocoords(3);
   return_centre(reference_time, MWD->orient, zerocoords);

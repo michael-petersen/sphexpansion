@@ -8,6 +8,7 @@ clang++ --std=c++17 -I/opt/local/include -L/opt/local/lib -I../include/ density_
 
 MSP 13 Oct 2020 first written.
 MSP  4 Nov 2021 rewritten for new expansion.h
+MSP 16 Apr 2022 point to stable example files
 
 */
 
@@ -21,8 +22,12 @@ MSP  4 Nov 2021 rewritten for new expansion.h
 #include <Eigen/Dense>
 using Eigen::MatrixXd;
 
+// set model parameters
+#include "modelfiles.h"
+
 // expansion includes
 #include "sphexpansion.h"
+
 
 void make_surface(SphExpansion* S1,
 		  MatrixXd coefs1,
@@ -94,7 +99,7 @@ void make_surface(SphExpansion* S1,
 
       for (int zz=0; zz<asamples; zz++) {
 
-	  tin = zz*0.5*da;
+	  			tin = zz*0.5*da;
 
           spherical_to_cartesian(rin,pin,tin,
 			         xin,yin,zin);
@@ -252,28 +257,28 @@ void make_density_3d(SphExpansion* S1,
 
       for (int zz=0; zz<nsamples; zz++) {
 
-	zin = zz*dx + xmin;
+				zin = zz*dx + xmin;
 
 
-	S1->return_density(coefs1,
-			   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
-			   xin, yin, zin,
-			   mwd, monopole, dipole, quadrupole, ltrunc);
+				S1->return_density(coefs1,
+						   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
+						   xin, yin, zin,
+						   mwd, monopole, dipole, quadrupole, ltrunc);
 
-	S2->return_density(coefs2,
-			   xin-lmcxvp, yin-lmcyvp, zin-lmczvp,
-			   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
-			   lmcd, monopole, dipole, quadrupole, ltrunc);
+				S2->return_density(coefs2,
+						   xin-lmcxvp, yin-lmcyvp, zin-lmczvp,
+						   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
+						   lmcd, monopole, dipole, quadrupole, ltrunc);
 
-	virial_to_physical_density( mwd,  mwphysdens);
-	virial_to_physical_density(lmcd, lmcphysdens);
+				virial_to_physical_density( mwd,  mwphysdens);
+				virial_to_physical_density(lmcd, lmcphysdens);
 
-	densityfile  << setw(14) << xin
-		     << setw(14) << yin
-		     << setw(14) << zin
-		     << setw(14) << mwphysdens
-		     << setw(14) << lmcphysdens
-		     << endl;
+				densityfile  << setw(14) << xin
+					           << setw(14) << yin
+					           << setw(14) << zin
+					           << setw(14) << mwphysdens
+					           << setw(14) << lmcphysdens
+					           << endl;
       } // zloop
 
     } // yloop
@@ -291,71 +296,20 @@ int main () {
 
   // MW
   cout << "Initialising MW ... " << endl;
-  /*
-  string sph_cache_name_mw  = "/Volumes/External1/Disk080/SLGridSph.cache.mw.system1_3";
-  string model_file_mw      = "/Volumes/External1/Disk080/SLGridSph.NFW77";
-  //string coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.mw.system1_3";
-  string coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.mw.system1_3";
-  string orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system1_3.smth";
-  */
-  string sph_cache_name_mw  = "/Volumes/External1/Disk080/SLGridSph.cache.mw.system2_3";
-  string model_file_mw      = "/Volumes/External1/Disk080/SLGridSph.Hern77";
-  string coef_file_mw       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.mw.system2_3";
-  string orient_file_mw     = "/Volumes/External1/Disk080/mw.orient.system2_3.smth";
-
 
   SphExpansion* MW;
   MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
   // LMC
   cout << "Initialising LMC ... " << endl;
-  /*
-  string sph_cache_name_lmc  = "/Volumes/External1/Disk080/SLGridSph.cache.lmc.system1_3";
-  string model_file_lmc      = "/Volumes/External1/Disk080/SLGridSph.NFW77L";
-  //string coef_file_lmc       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.lmc.system1_3";
-  string coef_file_lmc       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.lmc.system1_3";
-  string orient_file_lmc     =
-  "/Volumes/External1/Disk080/lmc.orient.system1_3.smth";
-  */
-
-  string sph_cache_name_lmc  = "/Volumes/External1/Disk080/SLGridSph.cache.lmc.system2_3";
-  string model_file_lmc      = "/Volumes/External1/Disk080/SLGridSph.NFW77L";
-  //string coef_file_lmc       = "/Volumes/External1/Disk080/simpleoutcoef.nofac.lmc.system1_3";
-  string coef_file_lmc       = "/Volumes/External1/Disk080/simpleoutcoef.nfac.lmc.system2_3";
-  string orient_file_lmc     = "/Volumes/External1/Disk080/lmc.orient.system2_3.smth";
 
   SphExpansion* LMC;
   LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
-
-  /*
-  // MW
-  cout << "Initialising MW ... " << endl;
-  string sph_cache_name_mw  = "/Volumes/External1/Disk076/SLGridSph.mw.run9mld";
-  string model_file_mw      = "/Volumes/External1/Disk076/ErkalMW.model";
-  string coef_file_mw       = "/Volumes/External1/Disk076/simpleoutcoef.nofac.mw.run9mld";
-  string orient_file_mw     = "/Volumes/External1/Disk076/mw.orient.run9mld.smth";
-
-  SphExpansion* MW;
-  MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
-
-  // LMC
-  cout << "Initialising LMC ... " << endl;
-  string sph_cache_name_lmc = "/Volumes/External1/Disk076/SLGridSph.lmc.run9mld";
-  string model_file_lmc     = "/Volumes/External1/Disk076/ErkalLMC.model";
-  string coef_file_lmc      = "/Volumes/External1/Disk076/simpleoutcoef.nofac.lmc.run9mld";
-  string orient_file_lmc    = "/Volumes/External1/Disk076/lmc.orient.run9mld.smth";
-
-  SphExpansion* LMC;
-  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
-  */
-
-  double reftime = 1.19;//1.393;
-  reftime = 1.393;
-
+	// the reference time for the simulation (present day) comes from modelfiles.h
   MatrixXd mwcoefs,lmccoefs;
-  MW->select_coefficient_time(reftime, mwcoefs);
-  LMC->select_coefficient_time(reftime, lmccoefs);
+  MW->select_coefficient_time(reference_time, mwcoefs);
+  LMC->select_coefficient_time(reference_time, lmccoefs);
 
   string dfile="/Users/mpetersen/Desktop/MW_LMC_density.txt";
   //make_density(MW,mwcoefs,LMC,lmccoefs,reftime,-50,50.,100,dfile);
@@ -364,6 +318,6 @@ int main () {
   //make_density_3d(MW,mwcoefs,LMC,lmccoefs,reftime,-120,120.,35,dfile3d);
 
   string dfilesurf="/Users/mpetersen/Desktop/MW_LMC_density_3d_4.txt";
-  make_surface(MW,mwcoefs,LMC,lmccoefs,reftime,0.,100.,35,dfilesurf);
+  make_surface(MW,mwcoefs,LMC,lmccoefs,reference_time,0.,100.,35,dfilesurf);
 
 }

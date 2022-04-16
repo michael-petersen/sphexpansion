@@ -10,33 +10,35 @@ MSP 23 Apr 2020 clean version
 MSP  6 May 2020 close the loop with Msun addition
 MSP 28 Sep 2020 add density translation
 MSP 14 May 2021 added header guard
-
+MSP 16 Apr 2022 move simulation-specific definitions to different header
 
  */
 #ifndef TRANSLATE_H
 #define TRANSLATE_H
-
-//using namespace std;
 using std::cout, std::cerr, std::endl, std::setw;
 
-// set these parameters to tune the simulation virial units to the MW
-double mw_virial_radius        = 282.;                                  // virial radius of the MW, kpc/Rvir
-double solar_circular_velocity = 190.;                                  // circular velocity at the solar circle, km/s
-double rotation_peak           = 1.4 ;                                  // peak of the rotation curve from the MW spherical model (Vvir)
+/*
+for translations to work, the following quantities must be defined:
+mw_vel_scale
+mw_time_scale
+mw_force_scale
+mw_mass_scale
 
-// derived quantities
-double astronomicalG           = 0.0000043009125;                       // gravitational constant, (km/s)^2 * kpc / Msun
-double mw_vel_scale            = solar_circular_velocity/rotation_peak; // velocity scale of the MW, km/s/Vvir
-double mw_time_scale           = mw_virial_radius/mw_vel_scale;         // time scale for the MW, kpc/km/s
-double mw_force_scale          = mw_vel_scale/mw_time_scale;            // in km/s/s
-double mw_mass_scale           = mw_vel_scale * mw_vel_scale *
-                                 mw_virial_radius / astronomicalG;       // mass units of the simulation, Msun
+if not defined, all are assumed to be equal to unity (virial units)
+*/
+
+#if MODELDEFINED == 0
+double mw_vel_scale            = 1.
+double mw_time_scale           = 1.
+double mw_force_scale          = 1.
+double mw_mass_scale           = 1.
+#endif
 
 
 void virial_to_physical_density(double densvir, double& densphys)
 {
   // convert Mvir/Rvir^3 to Msun/pc^3
-    
+
   densphys = densvir * mw_mass_scale / pow(1000*mw_virial_radius,3);
 }
 
@@ -71,8 +73,8 @@ void virial_to_physical_velocity(double vxvir, double vyvir, double vzvir,
 
 void physical_to_virial_density(double densphys, double& densvir)
 {
-  // convert Msun/pc^3 to Mvir/Rvir^3 
-    
+  // convert Msun/pc^3 to Mvir/Rvir^3
+
   densvir = densphys * pow(1000*mw_virial_radius,3)/mw_mass_scale;
 }
 

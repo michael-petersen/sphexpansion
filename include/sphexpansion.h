@@ -43,8 +43,7 @@ using Eigen::MatrixXd;
 
 
 //using namespace std;
-using std::cout, std::cerr, std::endl, std::setw;
-
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
 class SphExpansion
 {
