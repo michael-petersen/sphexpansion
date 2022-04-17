@@ -56,11 +56,12 @@ private:
   CylCache cachetable;
 
   void initialise(string cyl_cache_name,
-		  string coef_file,
-		  string orient_file);
+		              string coef_file,
+		              string orient_file);
 
 
 public:
+
   // the constructor
   CylExpansion(string cyl_cache_name,
 	       string coef_file,
@@ -87,18 +88,18 @@ public:
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd coscoefs,
-		     MatrixXd sincoefs,
-		     double x, double y, double z,
-		     double& fx, double& fy, double& fz,
-		     bool monopole=false, bool dipole=false, bool quadrupole=false);
+		                 MatrixXd sincoefs,
+		                 double x, double y, double z,
+		                 double& fx, double& fy, double& fz,
+		                 bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   void select_coefficient_time(double desired_time,
-			     MatrixXd& coscoefs_at_time,
-			       MatrixXd& sincoefs_at_time);
+			                         MatrixXd& coscoefs_at_time,
+			                         MatrixXd& sincoefs_at_time);
 
   void get_table_forces(double r, double z, CylForce& forcetable);
 
-};
+}; // end class definition
 
 CylExpansion::CylExpansion(string cyl_cache_name,
 			   string coef_file,
@@ -114,9 +115,9 @@ void CylExpansion::initialise(string cyl_cache_name,
   // pull in the parts for the expansion
   read_cyl_cache(cyl_cache_name, CylExpansion::cachetable);
 
-  read_coef_file (coef_file, CylExpansion::coeftable);
+  read_coef_file(coef_file, CylExpansion::coeftable);
 
-  read_orient (orient_file, CylExpansion::orient);
+  read_orient   (orient_file, CylExpansion::orient);
 
 }
 
@@ -124,11 +125,11 @@ void CylExpansion::initialise(string cyl_cache_name,
 
 
 void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
-						 MatrixXd& sincoefs,
-						 double r, double phi, double z,
-						 double& potl0, double& potl,
-						 double& fr, double& fp, double& fz,
-						 bool monopole, bool dipole, bool quadrupole)
+						                                     MatrixXd& sincoefs,
+						                                     double r, double phi, double z,
+						                                     double& potl0, double& potl,
+						                                     double& fr, double& fp, double& fz,
+						                                     bool monopole, bool dipole, bool quadrupole)
 {
   /*
   // skipping density for now --> decide later if interesting.
@@ -141,7 +142,6 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
 
   double ccos,ssin,fac;
 
-  //get_table_forces(r, z, cachetable, forcetable);
   get_table_forces(r, z, forcetable);
 
   potl0  = 0.0;

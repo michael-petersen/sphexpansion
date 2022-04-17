@@ -2,7 +2,7 @@
 add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
 
 
-set(bin_PROGRAMS rotcurve densitymap fullintegrate)
+set(bin_PROGRAMS rotcurve densitymap fullintegrate comparediscs)
 
 set(common_LINKLIB yaml-cpp ${EIEN3_LIBRARIES})
 
@@ -15,6 +15,7 @@ set(common_INCLUDE $<INSTALL_INTERFACE:include>
 add_executable(fullintegrate  fullintegrate.cc)
 add_executable(densitymap     density_map.cc  )
 add_executable(rotcurve       rotcurve.cc     )
+add_executable(comparediscs   compare_discs.cc)
 
 
 pybind11_add_module(mwlmc mwlmc.cc)
