@@ -96,15 +96,22 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 
   ifstream in(cyl_cache_name.c_str());
 
-  cerr << "cylcache.read_cyl_cache: trying to read cached table. . . ";
+  if (!in) {
+    throw "cylcache::read_cyl_cache: Unable to open file!\n";
+  }
+
+  std::cerr << "cylcache.read_cyl_cache: trying to read cached table. . . ";
 
 
   // Attempt to read magic number
   //
   unsigned int tmagic;
   in.read(reinterpret_cast<char*>(&tmagic), sizeof(unsigned int));
+  //in.read((char *)(&tmagic), sizeof(unsigned int));
 
-  //cout << setw(14) << tmagic << endl;
+#if DEBUGCACHE
+  cout << "FORMAT FLAG=" << setw(14) << tmagic << " (vs 202004385) at " << in.tellg() << " for size " << sizeof(unsigned int) << endl;
+#endif
 
   if (tmagic == 202004385) {
 

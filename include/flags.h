@@ -28,7 +28,7 @@ MSP 14 Jan 2022 set yaml flag
 #define DEBUGCOEFS 1
 #endif
 
-// flags for deep debugging (expansion.h)
+// flags for deep debugging (sphexpansion.h)
 #ifndef DEEPDEBUGCOEFS
 #define DEEPDEBUGCOEFS 1
 #endif

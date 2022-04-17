@@ -42,6 +42,7 @@ endif()
 
 if(yaml-cpp_FOUND)
   set(HAVEYAML TRUE)
+  set(HAVEYAML FALSE)
   message(STATUS "Do we have yaml-cpp? ${HAVEYAML}")
 endif()
 

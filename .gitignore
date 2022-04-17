@@ -19,3 +19,6 @@ include/leapfrog.h
 
 # external modules
 extern/*
+
+# maximum resolution data
+data/disc.cache.run9mlde
