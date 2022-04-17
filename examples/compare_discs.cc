@@ -45,15 +45,15 @@ int main () {
 
 
 
-  double r2tmp = 0.01;
+  double r2tmp = 0.004;
   double phitmp = 0.0;
-  double zvir = 0.0;
+  double zvir = -0.001;
 
   CylForce ftable1,ftable2;
   MWD->get_table_forces(r2tmp,zvir,ftable1);
   MWDH->get_table_forces(r2tmp,zvir,ftable2);
 
-  cout << "Force table check:" << setw(14) << ftable1.potC(0,0) << setw(14) << ftable2.potC(0,0) << std::endl;
+  cout << "Force table check:" << setw(14) << ftable1.rforceC(0,0) << setw(14) << ftable2.rforceC(0,0) << std::endl;
 
   double tpotl0,tpotl,fr,fp,fztmp;
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,

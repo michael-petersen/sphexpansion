@@ -1,17 +1,17 @@
 /*
-sphcache.h
+cylcache.h
 
-functions to handle the preparations for the cachefile(s)
+functions to handle the preparations for the cylindrical cachefile(s)
 
-clean version, MSP 5 May 2020
+MSP  5 May 2020 clean version
 MSP 21 Dec 2021 update yaml headers
-
 
 Note that cachetable reading is slow.
 We might be able to find a better way using memmaps, which would also
 make querying the tables faster?
 
 Check on mapping values: are these okay?
+PARTICULARLY CMAP
 
  */
 #ifndef CYLCACHE_H
@@ -45,7 +45,7 @@ struct CylCache
   bool DENS;            // density flag
   bool CMAP;            // mapping flag
   bool CMAPR;            // mapping flag R
-  bool CMAPZ;            // mapping flag Z
+  int CMAPZ;            // mapping flag Z
   double RMIN;         // the minimum expansion radius
   double RMAX;         // the maximum expansion radius
   double ASCALE;       // the scaling value for scale length
@@ -222,6 +222,8 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
 
 #endif
 
+    cachetable.CMAP = cachetable.CMAPR;
+
   } else {
 
 #if FORMAT
@@ -249,10 +251,14 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
     in.read((char *)&cachetable.CYLMASS,sizeof(double));
     in.read((char *)&cachetable.TNOW,   sizeof(double));
 
+    cachetable.CMAPR = cachetable.CMAP;
+    cachetable.CMAPZ = 1; // always 1 in old style
+
   }
 
 #if ORDERS
   cout << setw(14) << cachetable.MMAX << setw(14) << cachetable.NORDER << endl;
+  cout << setw(14) << cachetable.CMAPR << setw(14) << cachetable.CMAP << setw(14) << cachetable.CMAPZ << endl;
 #endif
 
   // resize the arrays
@@ -359,13 +365,13 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
   cachetable.Rtable  = M_SQRT1_2 * cachetable.RMAX;
 
   // calculate radial scalings
-  cachetable.XMIN    = r_to_xi(cachetable.RMIN*cachetable.ASCALE,cachetable.CMAP,cachetable.ASCALE);
-  cachetable.XMAX    = r_to_xi(cachetable.Rtable*cachetable.ASCALE,cachetable.CMAP,cachetable.ASCALE);
+  cachetable.XMIN    = r_to_xi_cyl(cachetable.RMIN*cachetable.ASCALE,cachetable.CMAPR,cachetable.ASCALE);
+  cachetable.XMAX    = r_to_xi_cyl(cachetable.Rtable*cachetable.ASCALE,cachetable.CMAPR,cachetable.ASCALE);
   cachetable.dX      = (cachetable.XMAX - cachetable.XMIN)/cachetable.NUMX;
 
   // calculate vertical scalings
-  cachetable.YMIN    = z_to_y(-cachetable.Rtable*cachetable.ASCALE,cachetable.HSCALE);
-  cachetable.YMAX    = z_to_y( cachetable.Rtable*cachetable.ASCALE,cachetable.HSCALE);
+  cachetable.YMIN    = z_to_y_cyl(-cachetable.Rtable*cachetable.ASCALE,cachetable.CMAPZ,cachetable.HSCALE);
+  cachetable.YMAX    = z_to_y_cyl( cachetable.Rtable*cachetable.ASCALE,cachetable.CMAPZ,cachetable.HSCALE);
   cachetable.dY      = (cachetable.YMAX - cachetable.YMIN)/cachetable.NUMY;
 
 
@@ -382,8 +388,8 @@ void get_pot(double r, double z, CylCache cachetable, MatrixXd& Vc, MatrixXd& Vs
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
   if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
 
-  double X = (r_to_xi(r,cachetable.CMAP,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
-  double Y = (z_to_y(z,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
+  double X = (r_to_xi_cyl(r,cachetable.CMAPR,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
+  double Y = (z_to_y_cyl(z,cachetable.CMAPZ,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
 
   int ix = (int)X;
   int iy = (int)Y;
@@ -460,8 +466,8 @@ void get_table_forces(double r, double z, CylCache cachetable, CylForce& forceta
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
   if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
 
-  double X = (r_to_xi(r,cachetable.CMAP,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
-  double Y = (z_to_y(z,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
+  double X = (r_to_xi_cyl(r,cachetable.CMAPR,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
+  double Y = (z_to_y_cyl(z,cachetable.CMAPZ,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
 
   int ix = (int)X;
   int iy = (int)Y;

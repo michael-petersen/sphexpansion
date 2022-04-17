@@ -79,12 +79,12 @@ public:
   // notes: if monopole is true, dipole and quadrupole are forced to be false.
   //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
   void determine_fields_at_point_cyl(MatrixXd& coscoefs,
-				     MatrixXd& sincoefs,
-				     double r, double phi, double z,
-				     double& potl0, double& potl,
-				     double& potr, double& potp,
-				     double& potz,
-				     bool monopole=false, bool dipole=false, bool quadrupole=false);
+                        				     MatrixXd& sincoefs,
+                        				     double r, double phi, double z,
+                        				     double& potl0, double& potl,
+                        				     double& potr, double& potp,
+                        				     double& potz,
+                        				     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd coscoefs,
@@ -102,15 +102,15 @@ public:
 }; // end class definition
 
 CylExpansion::CylExpansion(string cyl_cache_name,
-			   string coef_file,
-			   string orient_file)
+                  			   string coef_file,
+                  			   string orient_file)
 {
   initialise(cyl_cache_name, coef_file, orient_file);
 }
 
 void CylExpansion::initialise(string cyl_cache_name,
-			      string coef_file,
-			      string orient_file)
+                  			      string coef_file,
+                  			      string orient_file)
 {
   // pull in the parts for the expansion
   read_cyl_cache(cyl_cache_name, CylExpansion::cachetable);
@@ -207,10 +207,10 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
 }
 
 void CylExpansion::return_forces(MatrixXd coscoefs,
-		   MatrixXd sincoefs,
-		   double x, double y, double z,
-		   double& fx, double& fy, double& fz,
-		   bool monopole, bool dipole, bool quadrupole)
+                          		   MatrixXd sincoefs,
+                          		   double x, double y, double z,
+                          		   double& fx, double& fy, double& fz,
+                          		   bool monopole, bool dipole, bool quadrupole)
 {
   /*
     force return from just one component, from the centre of the expansion
@@ -245,8 +245,9 @@ void CylExpansion::return_forces(MatrixXd coscoefs,
 
 
 void CylExpansion::select_coefficient_time(double desired_time,
-			     MatrixXd& coscoefs_at_time,
-			     MatrixXd& sincoefs_at_time) {
+                                			     MatrixXd& coscoefs_at_time,
+                                			     MatrixXd& sincoefs_at_time)
+{
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
@@ -322,8 +323,8 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
   if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
 
-  double X = (r_to_xi(r,cachetable.CMAP,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
-  double Y = (z_to_y(z,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
+  double X = (r_to_xi_cyl(r,cachetable.CMAP,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
+  double Y = (z_to_y_cyl(z,cachetable.CMAPZ,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
 
   int ix = (int)X;
   int iy = (int)Y;

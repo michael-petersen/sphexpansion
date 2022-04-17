@@ -14,6 +14,7 @@ MSP 24 Dec 2021 enable inertial centres if no orient file is passed
 MSP 24 Dec 2021 change spline calls to preprocessor flag
 
 wishlist:
+-change SphOrient to Orient everywhere
 -handle bad files gracefully
 -handle axis tipping orient files
 -find_initial_velocity: how to dynamically determine nPoints?
