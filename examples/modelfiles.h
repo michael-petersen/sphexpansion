@@ -4,8 +4,6 @@ The model files that ship with the repository, as examples.
 
 MSP 16 Apr 2022 first definitions
 
-@IMPROVE: move all parameters for simulation into this file? I.e. clean up translate.h?
-
 */
 #ifndef MODELFILES_H
 #define MODELFILES_H
@@ -40,7 +38,6 @@ string coef_file_mw        = indir+"simpleoutcoef.nfac.mw."+runtag;
 string orient_file_mw      = indir+"mw.orient."+runtag+".smth";
 
 // The MW disc tables
-// string cyl_cache_name_mw   = indir+"disc.cache."+runtag; // this is the maximum accuracy bais (too big for GitHub!)
 string cyl_cache_name_mw   = indir+"disc.cache.compact."+runtag;
 string cyl_coef_name_mw    = indir+"outcoef.disc."+runtag;
 string cyl_orient_name_mw  = indir+"disc.orient."+runtag+".smth";

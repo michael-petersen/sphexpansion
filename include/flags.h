@@ -23,31 +23,31 @@ MSP 14 Jan 2022 set yaml flag
 
 // flags for options in different headers
 
-// additional diagnostic output in coefficient files (sphcoefs, cylcoefs)
+// additional diagnostic output in coefficient files (sphcoefs.h, cylcoefs.h)
 #ifndef DEBUGCOEFS
-#define DEBUGCOEFS 1
+#define DEBUGCOEFS 0
 #endif
 
-// flags for deep debugging (sphexpansion.h)
+// flags for deep debugging (sphexpansion.h, cylexpansion.h)
 #ifndef DEEPDEBUGCOEFS
-#define DEEPDEBUGCOEFS 1
+#define DEEPDEBUGCOEFS 0
 #endif
 
 #ifndef DEEPDEBUGTIME
-#define DEEPDEBUGTIME 1
+#define DEEPDEBUGTIME 0
 #endif
 
 #ifndef DEBUGCACHE
-#define DEBUGCACHE 1
+#define DEBUGCACHE 0
 #endif
 
 // diagnostics for debugging cylexpansion.h
 #ifndef FORMAT
-#define FORMAT 1
+#define FORMAT 0
 #endif
 
 #ifndef ORDERS
-#define ORDERS 1
+#define ORDERS 0
 #endif
 
 

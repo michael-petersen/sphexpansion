@@ -1,24 +1,20 @@
 /*
 cylcache.h
 
-functions to handle the preparations for the cylindrical cachefile(s)
+functions to handle the preparations for the cylindrical cachefile(s) from EXP
 
 MSP  5 May 2020 clean version
 MSP 21 Dec 2021 update yaml headers
+MSP 18 Apr 2022 update CMAPR,CMAPZ parameters
 
 Note that cachetable reading is slow.
-We might be able to find a better way using memmaps, which would also
-make querying the tables faster?
-
-Check on mapping values: are these okay?
-PARTICULARLY CMAP
+We might be able to find a better way using memmaps, which would also make querying the tables faster?
 
  */
 #ifndef CYLCACHE_H
 #define CYLCACHE_H
 
 
-// should we have some way to block this out just in case?
 #if HAVEYAML
 #include "yaml-cpp/yaml.h"	// YAML support
 #endif

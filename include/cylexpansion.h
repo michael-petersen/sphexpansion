@@ -231,8 +231,9 @@ void CylExpansion::return_forces(MatrixXd coscoefs,
 				potl0,potl,
 				fr,fp,fz,monopole,dipole,quadrupole);
 
-  // DEEP debug
-  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl;
+#if DEEPDEBUGCOEFS
+  std::cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << std::endl;
+#endif
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
 				  fr, fp,
@@ -254,13 +255,6 @@ void CylExpansion::select_coefficient_time(double desired_time,
    time units must be virial time units to match the input coefficient table
    */
 
-  // coeftable.t is assumed to be evenly spaced
-  //double dt = coeftable.t[1] - coeftable.t[0];
-
-  //int indx = (int)( (desired_time-coeftable.t[0])/dt);
-
-
-
   // starting at the first indx, stop when we get to the matching time
   int indx = 0;
   while (coeftable.t[indx]<=desired_time) {
@@ -270,21 +264,20 @@ void CylExpansion::select_coefficient_time(double desired_time,
   // reset by one
   indx --;
 
-
   // guard against wanton extrapolation: should this stop the model?
   // indx<0 is not possible in this construction
   // if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
-  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << endl;
+  if (indx>coeftable.NUMT-2) std::cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << std::endl;
 
   if (indx<0) indx = 0;
   if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
 
-  // check the spacing on coeftable.t (can be nonuniform)
+  // check the local spacing on coeftable.t (can be globally nonuniform)
   double dt = coeftable.t[indx+1] - coeftable.t[indx];
 
-  // set up a debug flag for these
-  //cout << setw(14) << desired_time << setw(14) << coeftable.t[0] << setw(14) << coeftable.t[indx] << setw(14) << dt << endl;
-
+#if DEEPDEBUGTIME
+  std::cout << setw(14) << desired_time << setw(14) << coeftable.t[0] << setw(14) << coeftable.t[indx] << setw(14) << dt << std::endl;
+#endif
 
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
@@ -323,7 +316,7 @@ void CylExpansion::get_table_forces(double r, double z, CylForce& forcetable)
   if (z/cachetable.ASCALE > cachetable.Rtable) z =  cachetable.Rtable*cachetable.ASCALE;
   if (z/cachetable.ASCALE <-cachetable.Rtable) z = -cachetable.Rtable*cachetable.ASCALE;
 
-  double X = (r_to_xi_cyl(r,cachetable.CMAP,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
+  double X = (r_to_xi_cyl(r,cachetable.CMAPR,cachetable.ASCALE) - cachetable.XMIN)/cachetable.dX;
   double Y = (z_to_y_cyl(z,cachetable.CMAPZ,cachetable.HSCALE) - cachetable.YMIN)/cachetable.dY;
 
   int ix = (int)X;

@@ -19,7 +19,7 @@ wishlist:
 using Eigen::MatrixXd;
 
 // Machine constant for Legendre (note constexpr is not good in clang)
-double MINEPS = 1.e-20;
+double EPS=std::numeric_limits<double>::min();
 
 
 void legendre_R(int lmax, double x, MatrixXd& p)
