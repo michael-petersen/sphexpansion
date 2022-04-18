@@ -56,16 +56,16 @@ private:
   CylCache cachetable;
 
   void initialise(string cyl_cache_name,
-		              string coef_file,
-		              string orient_file);
+                  string coef_file,
+                  string orient_file);
 
 
 public:
 
   // the constructor
   CylExpansion(string cyl_cache_name,
-	       string coef_file,
-	       string orient_file);
+               string coef_file,
+               string orient_file);
 
   // expose the important expansion data: use the spherical code, it works here!
   SphOrient orient;
@@ -88,14 +88,14 @@ public:
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd coscoefs,
-		                 MatrixXd sincoefs,
-		                 double x, double y, double z,
-		                 double& fx, double& fy, double& fz,
-		                 bool monopole=false, bool dipole=false, bool quadrupole=false);
+                     MatrixXd sincoefs,
+                     double x, double y, double z,
+                     double& fx, double& fy, double& fz,
+                     bool monopole=false, bool dipole=false, bool quadrupole=false);
 
   void select_coefficient_time(double desired_time,
-			                         MatrixXd& coscoefs_at_time,
-			                         MatrixXd& sincoefs_at_time);
+                               MatrixXd& coscoefs_at_time,
+                               MatrixXd& sincoefs_at_time);
 
   void get_table_forces(double r, double z, CylForce& forcetable);
 
@@ -125,20 +125,16 @@ void CylExpansion::initialise(string cyl_cache_name,
 
 
 void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
-						                                     MatrixXd& sincoefs,
-						                                     double r, double phi, double z,
-						                                     double& potl0, double& potl,
-						                                     double& fr, double& fp, double& fz,
-						                                     bool monopole, bool dipole, bool quadrupole)
+                                                 MatrixXd& sincoefs,
+                                                 double r, double phi, double z,
+                                                 double& potl0, double& potl,
+                                                 double& fr, double& fp, double& fz,
+                                                 bool monopole, bool dipole, bool quadrupole)
 {
   /*
-  // skipping density for now --> decide later if interesting.
-
-  see the equivalent exp call in SphericalBasis.cc
+  @IMPROVE: no density call available here.
 
   */
-
-  int m,n;
 
   double ccos,ssin,fac;
 
@@ -150,7 +146,7 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
   fz     = 0.0;
   fp     = 0.0;
 
-  for (m=0; m<=cachetable.MMAX; m++) {
+  for (int m=0; m<=cachetable.MMAX; m++) {
 
     if (monopole   &&   m>0) {
       return;
@@ -172,7 +168,7 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
     ccos = cos(phi*m);
     ssin = sin(phi*m);
 
-    for (n=0; n<cachetable.NORDER; n++) {
+    for (int n=0; n<cachetable.NORDER; n++) {
 
       fac = coscoefs(m,n) * ccos;
 
@@ -227,17 +223,17 @@ void CylExpansion::return_forces(MatrixXd coscoefs,
   cartesian_to_cylindrical(xvir, yvir, rtmp, phitmp);
 
   determine_fields_at_point_cyl(coscoefs, sincoefs,
-				rtmp,phitmp,z,
-				potl0,potl,
-				fr,fp,fz,monopole,dipole,quadrupole);
+  rtmp,phitmp,z,
+  potl0,potl,
+  fr,fp,fz,monopole,dipole,quadrupole);
 
 #if DEEPDEBUGCOEFS
   std::cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << std::endl;
 #endif
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
-				  fr, fp,
-				  fxtmp, fytmp);
+    fr, fp,
+    fxtmp, fytmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fx,fy,fz);
 
