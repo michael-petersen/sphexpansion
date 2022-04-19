@@ -55,16 +55,16 @@ private:
   SphCoefs coeftable;
 
   void initialise(string sph_cache_name,
-		  string model_file,
-		  string coef_file,
-		  string orient_file);
+      string model_file,
+      string coef_file,
+      string orient_file);
 
 public:
   // the constructor
   SphExpansion(string sph_cache_name,
-	       string model_file,
-	       string coef_file,
-	       string orient_file="");
+         string model_file,
+         string coef_file,
+         string orient_file="");
 
   // expose the important expansion data
   SphCache cachetable; // does this actually have to be exposed?
@@ -87,60 +87,60 @@ public:
   // the base spherical class
   // harmonic flag is a bit flag for l orders (set as 2^l). see details in common/basis.h
   void determine_fields_at_point_sph(MatrixXd& coefs,
-				     double r, double theta, double phi,
-				     double& potl0, double& potl,
-				     double& potr, double& pott,
-				     double& potp,
-				     int harmonicflag=SPHHARMONICDEFAULT);
+             double r, double theta, double phi,
+             double& potl0, double& potl,
+             double& potr, double& pott,
+             double& potp,
+             int harmonicflag=SPHHARMONICDEFAULT);
 
   // version with density return
   void determine_fields_at_point_sph(MatrixXd& coefs,
-				     double r, double theta, double phi,
-				     double& dens0, double& dens,
-				     double& potl0, double& potl,
-				     double& potr, double& pott,
-				     double& potp,
-				     int harmonicflag=SPHHARMONICDEFAULT);
+             double r, double theta, double phi,
+             double& dens0, double& dens,
+             double& potl0, double& potl,
+             double& potr, double& pott,
+             double& potp,
+             int harmonicflag=SPHHARMONICDEFAULT);
 
   // version that is only density return
   void determine_fields_at_point_sph(MatrixXd& coefs,
-				     double r, double theta, double phi,
-				     double& dens0, double& dens,
-				     int harmonicflag=SPHHARMONICDEFAULT);
+             double r, double theta, double phi,
+             double& dens0, double& dens,
+             int harmonicflag=SPHHARMONICDEFAULT);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd& coefs,
-		     double x, double y, double z,
-		     double& fx, double& fy, double& fz,
-		     int harmonicflag=SPHHARMONICDEFAULT);
+         double x, double y, double z,
+         double& fx, double& fy, double& fz,
+         int harmonicflag=SPHHARMONICDEFAULT);
 
   // cartesian density wrapper function
   void return_density(MatrixXd& coefs,
-		      double x, double y, double z,
-		      double& d,
-		      int harmonicflag=SPHHARMONICDEFAULT);
+          double x, double y, double z,
+          double& d,
+          int harmonicflag=SPHHARMONICDEFAULT);
 
   // coefficient interpolator
   //  this call may also be used as a coarse method to truncate coefficient series.
   //  however, it will not result in any speedup, as the coefficients are still evaluated (as zeros).
   void select_coefficient_time(double desired_time,
-			       MatrixXd& coefs_at_time, int ntrunc=-1, int ltrunc=0);
+             MatrixXd& coefs_at_time, int ntrunc=-1, int ltrunc=0);
 
 
 };
 
 SphExpansion::SphExpansion(string sph_cache_name,
-			   string model_file,
-			   string coef_file,
-			   string orient_file)
+         string model_file,
+         string coef_file,
+         string orient_file)
 {
   initialise(sph_cache_name, model_file, coef_file, orient_file);
 }
 
 void SphExpansion::initialise(string sph_cache_name,
-			                        string model_file,
-			                        string coef_file,
-			                        string orient_file="")
+                              string model_file,
+                              string coef_file,
+                              string orient_file="")
 {
   // pull in the parts for the expansion
   try {
@@ -211,17 +211,16 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, Ma
 }
 
 
-void SphExpansion::determine_fields_at_point_sph
-(MatrixXd& coefs,
- double r, double theta, double phi,
- double& potl0, double& potl,
- double& potr, double& pott, double& potp,
- int harmonicflag)
+void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
+                                                 double r, double theta, double phi,
+                                                 double& potl0, double& potl,
+                                                 double& potr, double& pott, double& potp,
+                                                 int harmonicflag)
 {
   /*
-  // version without density
+  version without density
 
-  // no potl0 definition?
+  @IMPROVE: remove potl0
 
   see the equivalent exp call in SphericalBasis.cc
 
@@ -231,7 +230,7 @@ void SphExpansion::determine_fields_at_point_sph
 
   int l,loffset,moffset,m;
   double rs,fac1,fac2,fac3,fac4,costh,dp;
-  double p,pc,dpc,ps,dps;//,dens;
+  double p,pc,dpc,ps,dps;
 
   // block here, some problem with a zero in theta here. TBD.
   if (theta<1.e-6) theta = 1.e-6;
@@ -271,28 +270,28 @@ void SphExpansion::determine_fields_at_point_sph
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	      fac2 = fac1*legs(l,m);
+        fac2 = fac1*legs(l,m);
 
-	      get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
-	      potl += fac2*p;
-	      potr += fac2*dp;
-	      pott += fac1*dlegs(l,m)*p;
-	      moffset++;
+        get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
+        potl += fac2*p;
+        potr += fac2*dp;
+        pott += fac1*dlegs(l,m)*p;
+        moffset++;
       }
       else {
-	      fac2 = 2.0 * fac1 * factrl(l,m);
-	      fac3 = fac2 *  legs(l,m);
-	      fac4 = fac2 * dlegs(l,m);
+        fac2 = 2.0 * fac1 * factrl(l,m);
+        fac3 = fac2 *  legs(l,m);
+        fac4 = fac2 * dlegs(l,m);
 
-	      get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
-	      get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
+        get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
+        get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
 
-	      potl += fac3*( pc*cosm[m] + ps*sinm[m]);
-	      potr += fac3*(dpc*cosm[m] + dps*sinm[m]);
-	      pott += fac4*( pc*cosm[m] +  ps*sinm[m]);
-	      potp += fac3*(-pc*sinm[m] +  ps*cosm[m])*m;
+        potl += fac3*( pc*cosm[m] + ps*sinm[m]);
+        potr += fac3*(dpc*cosm[m] + dps*sinm[m]);
+        pott += fac4*( pc*cosm[m] +  ps*sinm[m]);
+        potp += fac3*(-pc*sinm[m] +  ps*cosm[m])*m;
 
-	      moffset +=2;
+        moffset +=2;
       }
     }
   }
@@ -374,35 +373,35 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	fac2 = fac1*legs(l,m);
+  fac2 = fac1*legs(l,m);
 
-	get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
-	dens += fac2*d;
+  get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
+  dens += fac2*d;
 
-	get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
-	potl += fac2*p;
-	potr += fac2*dp;
-	pott += fac1*dlegs(l,m)*p;
-	moffset++;
+  get_pot_coefs(l, loffset+moffset, cachetable.NMAX, coefs, potd, dpot, &p, &dp);
+  potl += fac2*p;
+  potr += fac2*dp;
+  pott += fac1*dlegs(l,m)*p;
+  moffset++;
       }
       else {
-	fac2 = 2.0 * fac1 * factrl(l,m);
-	fac3 = fac2 *  legs(l,m);
-	fac4 = fac2 * dlegs(l,m);
+  fac2 = 2.0 * fac1 * factrl(l,m);
+  fac3 = fac2 *  legs(l,m);
+  fac4 = fac2 * dlegs(l,m);
 
-	get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
-	get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
-	dens += fac3*(dc*cosm[m] + ds*sinm[m]);
+  get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
+  get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
+  dens += fac3*(dc*cosm[m] + ds*sinm[m]);
 
-	get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
-	get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
+  get_pot_coefs(l, loffset+moffset,   cachetable.NMAX, coefs, potd, dpot, &pc, &dpc);
+  get_pot_coefs(l, loffset+moffset+1, cachetable.NMAX, coefs, potd, dpot, &ps, &dps);
 
-	potl += fac3*( pc*cosm[m] + ps*sinm[m]);
-	potr += fac3*(dpc*cosm[m] + dps*sinm[m]);
-	pott += fac4*( pc*cosm[m] +  ps*sinm[m]);
-	potp += fac3*(-pc*sinm[m] +  ps*cosm[m])*m;
+  potl += fac3*( pc*cosm[m] + ps*sinm[m]);
+  potr += fac3*(dpc*cosm[m] + dps*sinm[m]);
+  pott += fac4*( pc*cosm[m] +  ps*sinm[m]);
+  potp += fac3*(-pc*sinm[m] +  ps*cosm[m])*m;
 
-	moffset +=2;
+  moffset +=2;
       }
     }
   }
@@ -473,23 +472,23 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
     for (m=0, moffset=0; m<=l; m++) {
       fac1 = (2.0*l+1.0)/(4.0*M_PI);
       if (m==0) {
-	      fac2 = fac1*legs(l,m);
+        fac2 = fac1*legs(l,m);
 
-	      get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
-	      dens += fac2*d;
+        get_dens_coefs(l,loffset+moffset,cachetable.NMAX, coefs, dend, &d);
+        dens += fac2*d;
 
-	      moffset++;
+        moffset++;
       }
       else
       {
-	      fac2 = 2.0 * fac1 * factrl(l,m);
-	      fac3 = fac2 *  legs(l,m);
+        fac2 = 2.0 * fac1 * factrl(l,m);
+        fac3 = fac2 *  legs(l,m);
 
-	      get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
-	      get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
-	      dens += fac3*(dc*cosm[m] + ds*sinm[m]);
+        get_dens_coefs(l,loffset+moffset,  cachetable.NMAX, coefs, dend, &dc);
+        get_dens_coefs(l,loffset+moffset+1,cachetable.NMAX, coefs, dend, &ds);
+        dens += fac3*(dc*cosm[m] + ds*sinm[m]);
 
-	      moffset +=2;
+        moffset +=2;
       }
     }
   }
@@ -508,8 +507,8 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 
 void SphExpansion::return_forces(MatrixXd& coefs,
                                  double x, double y, double z,
-				                         double& fx, double& fy, double& fz,
-				                         int harmonicflag)
+                                 double& fx, double& fy, double& fz,
+                                 int harmonicflag)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -526,15 +525,12 @@ void SphExpansion::return_forces(MatrixXd& coefs,
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
 
   determine_fields_at_point_sph(coefs, rtmp,thetatmp,phitmp,
-				tpotl0,tpotl,
-				fr,ft,fp,harmonicflag);
-
-  // DEEP debug
-  //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n';
+                                tpotl0,tpotl,
+                                fr,ft,fp,harmonicflag);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
-				fr, fp, ft,
-				fxtmp, fytmp, fztmp);
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fx,fy,fz);
 
@@ -542,9 +538,9 @@ void SphExpansion::return_forces(MatrixXd& coefs,
 
 
 void SphExpansion::return_density(MatrixXd& coefs,
-				                          double x, double y, double z,
-				                          double& d,
-				                          int harmonicflag)
+                                  double x, double y, double z,
+                                  double& d,
+                                  int harmonicflag)
 {
   /*
     return density
@@ -561,8 +557,8 @@ void SphExpansion::return_density(MatrixXd& coefs,
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
 
   determine_fields_at_point_sph(coefs,
-				rtmp,thetatmp,phitmp,
-				tdens0,d,harmonicflag);
+        rtmp,thetatmp,phitmp,
+        tdens0,d,harmonicflag);
 
 #if DEEPDEBUGCOEFS
   cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n';
@@ -571,7 +567,7 @@ void SphExpansion::return_density(MatrixXd& coefs,
 }
 
 void SphExpansion::select_coefficient_time(double desired_time,
-			     MatrixXd& coefs_at_time, int ntrunc, int ltrunc) {
+           MatrixXd& coefs_at_time, int ntrunc, int ltrunc) {
   /*
     linear interpolation to get the coefficient matrix at a specific time
 
@@ -640,7 +636,7 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
 #if DEEPDEBUGTIME
     cout << "dt=" << setw(16) << dt << "  t[indx+1]="  << setw(16) << coeftable.t[indx+1]
-	                            << "  t[indx]="  << setw(16) << coeftable.t[indx]
+                              << "  t[indx]="  << setw(16) << coeftable.t[indx]
                                     << "  desiredT="  << setw(16) << desired_time << "\n";
     cout << "x1=" << setw(16) << x1 << " x2=" << setw(14) << x2 << "\n";
 #endif

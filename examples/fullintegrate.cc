@@ -40,7 +40,7 @@ private:
 
 public:
 
-
+  // the expansion classes: these might be better private
   SphExpansion* MW;
   SphExpansion* LMC;
   CylExpansion* MWD;
@@ -48,10 +48,29 @@ public:
   // the constructor (no type, no arguments, all defined in modelfiles.h)
   MWLMC();
 
-  // print an orbit array
-  void print_orbit(MatrixXd orbit, string orbitfile);
+  // return all fields for the MW halo (in the frame of the MW halo)
+  void mwhalo_fields(MatrixXd mwcoefs,
+                     double t, double x, double y, double z,
+                     double& fx, double& fy, double& fz, double& pot, double& dens,
+                     int mwhharmonicflag=127, bool verbose=false);
+
+  // return all fields for the LMC halo
+  void lmc_fields(MatrixXd lmccoefs,
+                  double t, double x, double y, double z,
+                  double& fx, double& fy, double& fz, double& pot, double& dens,
+                  int lmcarmonicflag=127, bool verbose=false);
+
+  // return all fields for the MW disc
+  // NOTE: density does not work here. not enabled yet for cylindrical expansions.
+  //       leave as an inspirational placeholder
+  void mwd_fields(MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+                  double t, double x, double y, double z,
+                  double& fx, double& fy, double& fz, double& pot, double& dens,
+                  int mwdharmonicflag=127,
+                  bool verbose=false);
 
   // return total forces
+  // @IMPROVE: write all potential as well
   void all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
                   double t, double x, double y, double z,
                   double& fx, double& fy, double& fz,
@@ -67,6 +86,8 @@ public:
              int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
              bool fixedtime=false);
 
+  // print an orbit array
+  void print_orbit(MatrixXd orbit, string orbitfile);
 };
 
 
@@ -110,6 +131,179 @@ void MWLMC::print_orbit(MatrixXd orbit, string orbitfile)
   }
 
   outorbit.close();
+
+}
+
+void MWLMC::mwhalo_fields(MatrixXd mwcoefs,
+                          double t, double x, double y, double z,
+                          double& fx, double& fy, double& fz, double& pot, double& dens,
+                          int mwhharmonicflag, bool verbose)
+{
+  /*
+    always comes out in the frame of the expansion: translate to inertial before input, if desired
+
+   */
+
+  // zero out forces
+  fx = fy = fz = 0.;
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double dens0,denstmp,tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  // get all field values
+  MW->determine_fields_at_point_sph(mwcoefs,
+                                    rtmp,thetatmp,phitmp,
+                                    dens0,denstmp,
+                                    tpotl0,tpotl,
+                                    fr,ft,fp,
+                                    mwhharmonicflag);
+
+  // convert to cartesian
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
+
+  // translate all quantities to physical units
+  virial_to_physical_density(denstmp,dphys);
+  virial_to_physical_potential(tpotl,pphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // return MW force
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+  dens = dphys;
+  pot = pphys;
+}
+
+
+void MWLMC::lmc_fields(MatrixXd lmccoefs,
+                       double t, double x, double y, double z,
+                       double& fx, double& fy, double& fz, double& pot, double& dens,
+                       int lmcharmonicflag, bool verbose)
+{
+  /*
+    always comes out in the frame of the expansion: translate to inertial before input, if desired
+
+   */
+
+  // zero out forces
+  fx = fy = fz = 0.;
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double dens0,denstmp,tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+  // compute spherical coordinates in the frame of the LMC expansion
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  // get all field values
+  LMC->determine_fields_at_point_sph(lmccoefs,
+                                     rtmp,thetatmp,phitmp,
+                                     dens0,denstmp,
+                                     tpotl0,tpotl,
+                                     fr,ft,fp,
+                                     lmcharmonicflag);
+
+  // convert to cartesian
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
+
+  // translate all quantities to physical units
+  virial_to_physical_density(denstmp,dphys);
+  virial_to_physical_potential(tpotl,pphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // return LMC force
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+  dens = dphys;
+  pot = pphys;
+}
+
+
+void MWLMC::mwd_fields(MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+                       double t, double x, double y, double z,
+                       double& fx, double& fy, double& fz, double& pot, double& dens,
+                       int mwdharmonicflag,
+                       bool verbose)
+{
+  /*
+
+   */
+
+  // zero out forces
+  fx = fy = fz = 0.;
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  // the density fields are zombies right now: to be fixed with proper demand
+  double dens0 = 0;
+  double denstmp = 0;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_cylindrical(xvir, yvir, r2tmp, phitmp);
+
+  // same procedure for the disc
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
+                                     r2tmp,phitmp,zvir,
+                                     tpotl0,tpotl,
+                                     fr,fp,fztmp,mwdharmonicflag);
+
+  cylindrical_forces_to_cartesian(rtmp, phitmp,
+                                  fr, fp,
+                                  fxtmp, fytmp);
+
+  // translate to physical units
+  virial_to_physical_density(denstmp,dphys);
+  virial_to_physical_potential(tpotl,pphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // return MW force
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+  dens = dphys;
+  pot = pphys;
 
 }
 
@@ -252,16 +446,10 @@ void MWLMC::orbit(vector<double> xinit,
   /*
 
    */
-  double fx,fy,fz;
-
-
-  double tvir;
+  double fx,fy,fz,tvir;
 
   // include the forces for now
   orbit.resize(10,nint);
-
-  // cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
-
 
   // initialise beginning values
   orbit(0,0) = xinit[0];
@@ -290,9 +478,9 @@ void MWLMC::orbit(vector<double> xinit,
 
   // return forces for the initial step
   all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-       tphys, orbit(0,0),orbit(1,0),orbit(2,0),
-       fx, fy, fz,
-       mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+             tphys, orbit(0,0),orbit(1,0),orbit(2,0),
+             fx, fy, fz,
+             mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
   orbit(6,0) = fx;
   orbit(7,0) = fy;

@@ -11,6 +11,9 @@ MSP  6 May 2020 close the loop with Msun addition
 MSP 28 Sep 2020 add density translation
 MSP 14 May 2021 added header guard
 MSP 16 Apr 2022 move simulation-specific definitions to different header
+MSP 19 Apr 2022 add potential translation
+
+@IMPROVE: write overloaded versions of the functions
 
  */
 #ifndef TRANSLATE_H
@@ -47,6 +50,11 @@ void virial_to_physical_time(double tvir, double& tphys)
   tphys = mw_time_scale * tvir;
 }
 
+void virial_to_physical_potential(double pvir, double& pphys)
+{
+  pphys = mw_mass_scale * mw_force_scale * pvir;
+}
+
 void virial_to_physical_force(double  fxvir, double   fyvir, double   fzvir,
 			      double& fxphys, double& fyphys, double& fzphys)
 {
@@ -81,6 +89,11 @@ void physical_to_virial_density(double densphys, double& densvir)
 void physical_to_virial_time(double tphys, double& tvir)
 {
   tvir = tphys/mw_time_scale;
+}
+
+void physical_to_virial_potential(double pphys, double& pvir)
+{
+  pvir  = pphys / mw_mass_scale / mw_force_scale;
 }
 
 void physical_to_virial_force(double  fxphys, double fyphys, double fzphys,
