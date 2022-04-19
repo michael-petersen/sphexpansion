@@ -78,13 +78,15 @@ public:
   //
   // notes: if monopole is true, dipole and quadrupole are forced to be false.
   //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
+  // behaviour for flags is now overridden by harmonicflag, which uses basis.check_flags as a binary bit flag to determine which orders to set. 2047 (default) will enable all values at l<=10
   void determine_fields_at_point_cyl(MatrixXd& coscoefs,
                         				     MatrixXd& sincoefs,
                         				     double r, double phi, double z,
                         				     double& potl0, double& potl,
                         				     double& potr, double& potp,
                         				     double& potz,
-                        				     bool monopole=false, bool dipole=false, bool quadrupole=false);
+                        				     bool monopole=false, bool dipole=false, bool quadrupole=false,
+                                     int harmonicflag=2047);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd coscoefs,
@@ -129,12 +131,15 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
                                                  double r, double phi, double z,
                                                  double& potl0, double& potl,
                                                  double& fr, double& fp, double& fz,
-                                                 bool monopole, bool dipole, bool quadrupole)
+                                                 bool monopole, bool dipole, bool quadrupole,
+                                                 int harmonicflag)
 {
   /*
   @IMPROVE: no density call available here.
 
   */
+  if (monopole | dipole | quadrupole) std::cout << "WARNING cylexpansion.determine_fields_at_point_cyl: monopole/dipole/quadrupole are deprecated and will be removed at next release (v0.3.0)." << std::endl;
+
 
   double ccos,ssin,fac;
 
@@ -148,21 +153,26 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
 
   for (int m=0; m<=cachetable.MMAX; m++) {
 
-    if (monopole   &&   m>0) {
-      return;
-    }
 
-    if (dipole && quadrupole) {
-      if (m>2) continue;
+    if (harmonicflag==2047) {
+      if (monopole   &&   m>0) {
+        return;
+      }
+
+      if (dipole && quadrupole) {
+        } else {
+
+        if (dipole     && m!=0 && m!=1) {
+          continue;
+        }
+
+        if (quadrupole && m!=0 && m!=2) {
+          continue;
+        }
+      }
     } else {
-
-      if (dipole     && m!=0 && m!=1) {
-        continue;
-      }
-
-      if (quadrupole && m!=0 && m!=2) {
-        continue;
-      }
+      // new harmonicflag behaviour
+      if (check_flags(harmonicflag,m)==0) continue;
     }
 
     ccos = cos(phi*m);

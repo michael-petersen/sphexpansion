@@ -27,7 +27,30 @@ using Eigen::MatrixXd;
 
 
 
+
 int main () {
+
+  int harmonicflag = 2; // only include the quadrupole order
+
+/*
+  // verify that harmonicflag is working as expected
+  std::cout << "f:m,d,q,3,4,5,6" << std::endl;
+  for (int i=0; i<=127; i++) {
+    std::cout << i << ":";
+    for (int l=0; l<=6; l++) {
+      std::cout << check_flags(i,l) << ",";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "2047:";
+  for (int l=0; l<=10; l++) {
+    std::cout << check_flags(2047,l) << ",";
+  }
+  std::cout << std::endl;
+
+  return 0;
+*/
 
   // MW with high-resolution basis
   cout << "Initialising MW disc ... " << endl;
@@ -59,14 +82,14 @@ int main () {
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
 				     r2tmp,phitmp,zvir,
 				     tpotl0,tpotl,
-				     fr,fp,fztmp,false,false,false);
+				     fr,fp,fztmp,false,false,false,harmonicflag);
 
   cout << "Forces (lowres):" << setw(14) << fr << setw(14) << fp << setw(14) << fztmp << endl;
 
   MWDH->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
              r2tmp,phitmp,zvir,
              tpotl0,tpotl,
-             fr,fp,fztmp,false,false,false);
+             fr,fp,fztmp,false,false,false,harmonicflag);
 
   cout << "Forces ( hires):" << setw(14) << fr << setw(14) << fp << setw(14) << fztmp << endl;
 

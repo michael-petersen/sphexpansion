@@ -19,7 +19,39 @@ wishlist:
 using Eigen::MatrixXd;
 
 // Machine constant for Legendre (note constexpr is not good in clang)
+#ifndef EPSVAL
 double EPS=std::numeric_limits<double>::min();
+#define EPSVAL
+#endif
+
+int check_flags(int flag, int l)
+{
+  /*
+  check binary flag for whether harmonic term is enabled
+
+  monopole is always enabled!
+
+  the rest of the values are a binary flag,
+  2^0 = dipole
+  2^1 = quadropole
+  2^2 = octopole
+  2^3 = l4
+  etc
+
+  for example, 111 -> 7 is 2^2 + 2^1 + 2^0, so l<=octopole are enabled.
+               101 -> 5 is 2^2 +       2^0, so l=1,3 are enabled
+               010 -> 2 is       2^1      , so l=2 only is enabled
+
+  (in these examples, you set the integer value as flag, so 7, 5, 2 respectively.)
+
+  */
+  if (l==0) {
+    return 1;
+  } else {
+    int lflag = int(pow(2,l-1));
+    return (flag & lflag) == lflag;
+  }
+}
 
 
 void legendre_R(int lmax, double x, MatrixXd& p)
@@ -89,9 +121,9 @@ void dlegendre_R(int lmax, double x, MatrixXd& p, MatrixXd& dp)
     }
   }
 
-  if (1.0-fabs(x) < MINEPS) {
-    if (x>0) x =   1.0 - MINEPS;
-    else     x = -(1.0 - MINEPS);
+  if (1.0-fabs(x) < EPS) {
+    if (x>0) x =   1.0 - EPS;
+    else     x = -(1.0 - EPS);
   }
 
   somx2 = 1.0/(x*x - 1.0);

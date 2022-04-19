@@ -23,8 +23,10 @@ wishlist:
 #include <Eigen/Dense>
 using Eigen::ArrayXd;
 
+#ifndef EPSVAL
 double EPS=std::numeric_limits<double>::min();
-
+#define EPSVAL
+#endif
 
 
 

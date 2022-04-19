@@ -44,8 +44,11 @@ void make_rotation_curve(SphExpansion* S,
   xmin and xmax come in PHYSICAL units
   and the rotation curve is returned in physical units
    */
-
-  if (monopole) cout << "Only using monopole for rotation curve." << endl;
+	int harmonicflag = 2047; // default; up to l<=10
+  if (monopole) {
+		std::cout << "Only using monopole for rotation curve." << endl;
+		harmonicflag = 0;
+	}
 
   ofstream mwrotation;
   mwrotation.open(outfile);
@@ -65,12 +68,12 @@ void make_rotation_curve(SphExpansion* S,
     S->return_forces(
 		  coefs,
 		  xin, 0., 0.,
-		     fx, fy, fz, monopole);
+		     fx, fy, fz, false,false,false,1000, harmonicflag);
 
     S->return_density(
 		  coefs,
 		  xin, 0., 0.,
-		     d, monopole);
+		     d, false,false,false,1000, harmonicflag);
 
 
     virial_to_physical_density(d, physdens);
