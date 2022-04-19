@@ -41,6 +41,7 @@ using Eigen::MatrixXd;
 // the coefficient stuff
 #include "sphere/sphcoefs.h"
 
+int SPHHARMONICDEFAULT = 2047;
 
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
@@ -84,21 +85,13 @@ public:
 
 
   // the base spherical class
-  // the flags at the end can specify which components you want to control specifically
-  // monopole  =true means that only the monopole is considered, but at all spatial scales
-  // dipole    =true means that only the monopole and the dipole are considered
-  // quadrupole=true means that only the monopole and the quadrupole are considered
-  // ltrunc          is an integer that specifies the maximum number of l harmonics to return
-  //
-  // notes: if monopole is true, dipole and quadrupole are forced to be false.
-  //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
+  // harmonic flag is a bit flag for l orders (set as 2^l). see details in common/basis.h
   void determine_fields_at_point_sph(MatrixXd& coefs,
 				     double r, double theta, double phi,
 				     double& potl0, double& potl,
 				     double& potr, double& pott,
 				     double& potp,
-				     bool monopole=false, bool dipole=false, bool quadrupole=false,
-				     int ltrunc=1000, int harmonicflag=2047);
+				     int harmonicflag=SPHHARMONICDEFAULT);
 
   // version with density return
   void determine_fields_at_point_sph(MatrixXd& coefs,
@@ -107,29 +100,25 @@ public:
 				     double& potl0, double& potl,
 				     double& potr, double& pott,
 				     double& potp,
-				     bool monopole=false, bool dipole=false, bool quadrupole=false,
-				     int ltrunc=1000, int harmonicflag=2047);
+				     int harmonicflag=SPHHARMONICDEFAULT);
 
   // version that is only density return
   void determine_fields_at_point_sph(MatrixXd& coefs,
 				     double r, double theta, double phi,
 				     double& dens0, double& dens,
-				     bool monopole=false, bool dipole=false, bool quadrupole=false,
-				     int ltrunc=1000, int harmonicflag=2047);
+				     int harmonicflag=SPHHARMONICDEFAULT);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd& coefs,
 		     double x, double y, double z,
 		     double& fx, double& fy, double& fz,
-		     bool monopole=false, bool dipole=false, bool quadrupole=false,
-		     int ltrunc=1000, int harmonicflag=2047);
+		     int harmonicflag=SPHHARMONICDEFAULT);
 
   // cartesian density wrapper function
   void return_density(MatrixXd& coefs,
 		      double x, double y, double z,
 		      double& d,
-		      bool monopole=false, bool dipole=false, bool quadrupole=false,
-		      int ltrunc=1000, int harmonicflag=2047);
+		      int harmonicflag=SPHHARMONICDEFAULT);
 
   // coefficient interpolator
   //  this call may also be used as a coarse method to truncate coefficient series.
@@ -227,8 +216,7 @@ void SphExpansion::determine_fields_at_point_sph
  double r, double theta, double phi,
  double& potl0, double& potl,
  double& potr, double& pott, double& potp,
- bool monopole, bool dipole, bool quadrupole,
- int ltrunc, int harmonicflag)
+ int harmonicflag)
 {
   /*
   // version without density
@@ -238,8 +226,6 @@ void SphExpansion::determine_fields_at_point_sph
   see the equivalent exp call in SphericalBasis.cc
 
   */
-
-  if (monopole | dipole | quadrupole) std::cout << "WARNING sphexpansion.determine_fields_at_point_sph: monopole/dipole/quadrupole are deprecated and will be removed at next release (v0.3.0)." << std::endl;
 
   int numl = cachetable.LMAX;
 
@@ -265,7 +251,7 @@ void SphExpansion::determine_fields_at_point_sph
   pott = potp = 0.0;
 
   // l loop
-  if (monopole) return;
+  if (harmonicflag==0) return;
 
   MatrixXd factrl;
   factorial(numl, factrl);
@@ -278,20 +264,8 @@ void SphExpansion::determine_fields_at_point_sph
 
   for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
 
-    if (harmonicflag==2047) {
-      // advance loops if dipole or quadrupole flags are flown
-      if (dipole && quadrupole && l>2) {
-        continue;
-      } else {
-        if ( dipole && !quadrupole && l!=1) continue;
-        if (!dipole &&  quadrupole && l!=2) continue;
-      }
+    if (check_flags(harmonicflag,l)==0) continue;
 
-      // flag for selecting higher order terms
-      if (l>ltrunc) continue;
-    } else {
-      if (check_flags(harmonicflag,l)==0) continue;
-    }
 
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -339,8 +313,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
  double& dens0, double& dens,
  double& potl0, double& potl,
  double& potr, double& pott, double& potp,
- bool monopole, bool dipole, bool quadrupole,
- int ltrunc, int harmonicflag)
+ int harmonicflag)
 {
   /*
   // version WITH density
@@ -350,7 +323,6 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   see the equivalent exp call in SphericalBasis.cc
 
   */
-  if (monopole | dipole | quadrupole) std::cout << "WARNING sphexpansion.determine_fields_at_point_sph: monopole/dipole/quadrupole are deprecated and will be removed at next release (v0.3.0)." << std::endl;
 
 
   int numl = cachetable.LMAX;
@@ -383,7 +355,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 
 
   // l loop
-  if (monopole) return;
+  if (harmonicflag==0) return;
 
    MatrixXd factrl;
   factorial(numl, factrl);
@@ -396,20 +368,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 
   for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
 
-    if (harmonicflag==2047) {
-      // advance loops if dipole or quadrupole flags are flown
-      if (dipole && quadrupole && l>2) {
-        continue;
-      } else {
-        if ( dipole && !quadrupole && l!=1) continue;
-        if (!dipole &&  quadrupole && l!=2) continue;
-      }
-
-      // flag for selecting higher order terms
-      if (l>ltrunc) continue;
-    } else {
-      if (check_flags(harmonicflag,l)==0) continue;
-    }
+    if (check_flags(harmonicflag,l)==0) continue;
 
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -464,8 +423,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
  double r, double theta, double phi,
  double& dens0, double& dens,
- bool monopole, bool dipole, bool quadrupole,
- int ltrunc, int harmonicflag)
+ int harmonicflag)
 {
   /*
   // version that is ONLY density
@@ -473,8 +431,6 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   see the equivalent exp call in SphericalBasis.cc
 
   */
-  if (monopole | dipole | quadrupole) std::cout << "WARNING sphexpansion.determine_fields_at_point_sph: monopole/dipole/quadrupole are deprecated and will be removed at next release (v0.3.0)." << std::endl;
-
 
   int numl = cachetable.LMAX;
 
@@ -498,7 +454,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   dens0 = fac1*d;
 
   // l loop
-  if (monopole) return;
+  if (harmonicflag==0) return;
 
    MatrixXd factrl;
   factorial(numl, factrl);
@@ -511,20 +467,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 
   for (l=1, loffset=1; l<=numl; loffset+=(2*l+1), l++) {
 
-    if (harmonicflag==2047) {
-      // advance loops if dipole or quadrupole flags are flown
-      if (dipole && quadrupole && l>2) {
-        continue;
-      } else {
-        if ( dipole && !quadrupole && l!=1) continue;
-        if (!dipole &&  quadrupole && l!=2) continue;
-      }
-
-      // flag for selecting higher order terms
-      if (l>ltrunc) continue;
-    } else {
-      if (check_flags(harmonicflag,l)==0) continue;
-    }
+    if (check_flags(harmonicflag,l)==0) continue;
 
     // m loop
     for (m=0, moffset=0; m<=l; m++) {
@@ -566,8 +509,7 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
 void SphExpansion::return_forces(MatrixXd& coefs,
                                  double x, double y, double z,
 				                         double& fx, double& fy, double& fz,
-				                         bool monopole, bool dipole, bool quadrupole,
-				                         int ltrunc, int harmonicflag)
+				                         int harmonicflag)
 {
   /*
     test force return from just one component, from the centre of the expansion
@@ -585,7 +527,7 @@ void SphExpansion::return_forces(MatrixXd& coefs,
 
   determine_fields_at_point_sph(coefs, rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				fr,ft,fp,monopole,dipole,quadrupole,ltrunc,harmonicflag);
+				fr,ft,fp,harmonicflag);
 
   // DEEP debug
   //cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n';
@@ -602,8 +544,7 @@ void SphExpansion::return_forces(MatrixXd& coefs,
 void SphExpansion::return_density(MatrixXd& coefs,
 				                          double x, double y, double z,
 				                          double& d,
-				                          bool monopole, bool dipole, bool quadrupole,
-                                  int ltrunc, int harmonicflag)
+				                          int harmonicflag)
 {
   /*
     return density
@@ -621,10 +562,7 @@ void SphExpansion::return_density(MatrixXd& coefs,
 
   determine_fields_at_point_sph(coefs,
 				rtmp,thetatmp,phitmp,
-				tdens0,d,
-			        //tpotl0,tpotl,
-				//fr,ft,fp,
-				monopole,dipole,quadrupole,ltrunc, harmonicflag);
+				tdens0,d,harmonicflag);
 
 #if DEEPDEBUGCOEFS
   cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n';

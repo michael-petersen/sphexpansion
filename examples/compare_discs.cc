@@ -82,14 +82,14 @@ int main () {
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
 				     r2tmp,phitmp,zvir,
 				     tpotl0,tpotl,
-				     fr,fp,fztmp,false,false,false,harmonicflag);
+				     fr,fp,fztmp,harmonicflag);
 
   cout << "Forces (lowres):" << setw(14) << fr << setw(14) << fp << setw(14) << fztmp << endl;
 
   MWDH->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
              r2tmp,phitmp,zvir,
              tpotl0,tpotl,
-             fr,fp,fztmp,false,false,false,harmonicflag);
+             fr,fp,fztmp,harmonicflag);
 
   cout << "Forces ( hires):" << setw(14) << fr << setw(14) << fp << setw(14) << fztmp << endl;
 

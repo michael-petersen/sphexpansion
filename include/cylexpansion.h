@@ -38,6 +38,8 @@ of something around, would like to track down what exactly is going on.
 // the coefficient stuff
 #include "cylinder/cylcoefs.h"
 
+int CYLHARMONICDEFAULT = 2047;
+
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
@@ -71,29 +73,19 @@ public:
   SphOrient orient;
 
   // the base cylindrical class
-  // the flags at the end can specify which components you want to control specifically
-  // monopole  =true means that only the monopole is considered, but at all spatial scales
-  // dipole    =true means that only the monopole and the dipole are considered
-  // quadrupole=true means that only the monopole and the quadrupole are considered
-  //
-  // notes: if monopole is true, dipole and quadrupole are forced to be false.
-  //        you can set both dipole and quadrupole to true; you will get monopole+dipole+quadrupole.
   // behaviour for flags is now overridden by harmonicflag, which uses basis.check_flags as a binary bit flag to determine which orders to set. 2047 (default) will enable all values at l<=10
   void determine_fields_at_point_cyl(MatrixXd& coscoefs,
                         				     MatrixXd& sincoefs,
                         				     double r, double phi, double z,
                         				     double& potl0, double& potl,
                         				     double& potr, double& potp,
-                        				     double& potz,
-                        				     bool monopole=false, bool dipole=false, bool quadrupole=false,
-                                     int harmonicflag=2047);
+                        				     double& potz, int harmonicflag=CYLHARMONICDEFAULT);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd coscoefs,
                      MatrixXd sincoefs,
                      double x, double y, double z,
-                     double& fx, double& fy, double& fz,
-                     bool monopole=false, bool dipole=false, bool quadrupole=false);
+                     double& fx, double& fy, double& fz, int harmonicflag=CYLHARMONICDEFAULT);
 
   void select_coefficient_time(double desired_time,
                                MatrixXd& coscoefs_at_time,
@@ -131,15 +123,12 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
                                                  double r, double phi, double z,
                                                  double& potl0, double& potl,
                                                  double& fr, double& fp, double& fz,
-                                                 bool monopole, bool dipole, bool quadrupole,
                                                  int harmonicflag)
 {
   /*
   @IMPROVE: no density call available here.
 
   */
-  if (monopole | dipole | quadrupole) std::cout << "WARNING cylexpansion.determine_fields_at_point_cyl: monopole/dipole/quadrupole are deprecated and will be removed at next release (v0.3.0)." << std::endl;
-
 
   double ccos,ssin,fac;
 
@@ -153,27 +142,8 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
 
   for (int m=0; m<=cachetable.MMAX; m++) {
 
-
-    if (harmonicflag==2047) {
-      if (monopole   &&   m>0) {
-        return;
-      }
-
-      if (dipole && quadrupole) {
-        } else {
-
-        if (dipole     && m!=0 && m!=1) {
-          continue;
-        }
-
-        if (quadrupole && m!=0 && m!=2) {
-          continue;
-        }
-      }
-    } else {
-      // new harmonicflag behaviour
-      if (check_flags(harmonicflag,m)==0) continue;
-    }
+    // check harmonic flag before proceeding
+    if (check_flags(harmonicflag,m)==0) continue;
 
     ccos = cos(phi*m);
     ssin = sin(phi*m);
@@ -216,7 +186,7 @@ void CylExpansion::return_forces(MatrixXd coscoefs,
                           		   MatrixXd sincoefs,
                           		   double x, double y, double z,
                           		   double& fx, double& fy, double& fz,
-                          		   bool monopole, bool dipole, bool quadrupole)
+                                 int harmonicflag)
 {
   /*
     force return from just one component, from the centre of the expansion
@@ -235,7 +205,7 @@ void CylExpansion::return_forces(MatrixXd coscoefs,
   determine_fields_at_point_cyl(coscoefs, sincoefs,
   rtmp,phitmp,z,
   potl0,potl,
-  fr,fp,fz,monopole,dipole,quadrupole);
+  fr,fp,fz,harmonicflag);
 
 #if DEEPDEBUGCOEFS
   std::cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << std::endl;
@@ -259,6 +229,8 @@ void CylExpansion::select_coefficient_time(double desired_time,
     linear interpolation to get the coefficient matrix at a specific time
 
    time units must be virial time units to match the input coefficient table
+
+   @IMPROVE: could add harmonic flag here to speed up calculation if not using higher orders
    */
 
   // starting at the first indx, stop when we get to the matching time

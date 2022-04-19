@@ -68,12 +68,12 @@ void make_rotation_curve(SphExpansion* S,
     S->return_forces(
 		  coefs,
 		  xin, 0., 0.,
-		     fx, fy, fz, false,false,false,1000, harmonicflag);
+		     fx, fy, fz, harmonicflag);
 
     S->return_density(
 		  coefs,
 		  xin, 0., 0.,
-		     d, false,false,false,1000, harmonicflag);
+		     d, harmonicflag);
 
 
     virial_to_physical_density(d, physdens);

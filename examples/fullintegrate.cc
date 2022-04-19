@@ -132,7 +132,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   MW->determine_fields_at_point_sph(mwcoefs,
 				    rtmp,thetatmp,phitmp,
 				    tpotl0,tpotl,
-				    fr,ft,fp,false,false,false,2);
+				    fr,ft,fp);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -153,7 +153,7 @@ void return_forces_mw_and_lmc(SphExpansion* MW, SphExpansion* LMC,
   LMC->determine_fields_at_point_sph(lmccoefs,
 				     rtmp,thetatmp,phitmp,
 				     tpotl0,tpotl,
-				     fr,ft,fp,true,true,true);
+				     fr,ft,fp,0);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -334,7 +334,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   MW->determine_fields_at_point_sph( mwcoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				     fr,ft,fp,false,false,false);
+				     fr,ft,fp);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,
@@ -353,7 +353,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
 				     r2tmp,phitmp,zvir-mwd_centre[2],
 				     tpotl0,tpotl,
-				     fr,fp,fztmp,false,false,false);
+				     fr,fp,fztmp);
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
 				  fr, fp,
@@ -374,7 +374,7 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
   LMC->determine_fields_at_point_sph(lmccoefs,
 				rtmp,thetatmp,phitmp,
 				tpotl0,tpotl,
-				     fr,ft,fp,false,false,false);
+				     fr,ft,fp);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
 				fr, fp, ft,

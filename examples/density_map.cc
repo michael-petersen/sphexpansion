@@ -38,10 +38,7 @@ void make_surface(SphExpansion* S1,
 		  double xmax,
 		  int nsamples,
 		  string outfile,
-		  bool monopole=false,
-		  bool dipole=false,
-		  bool quadrupole=false,
-		  int ltrunc=10)
+		  int harmonicflag=SPHHARMONICDEFAULT)
 {
   /*
   xmin and xmax come in PHYSICAL units
@@ -107,11 +104,11 @@ void make_surface(SphExpansion* S1,
 
           S1->return_density(coefs1,
 			     xin, yin, zin,
-		             mwd, monopole, dipole, quadrupole, ltrunc);
+		             mwd, harmonicflag);
 
           S2->return_density(coefs2,
 			     xin-lmcxvp, yin-lmcyvp, zin-lmczvp,
-		             lmcd, monopole, dipole, quadrupole, ltrunc);
+		             lmcd, harmonicflag);
 
           virial_to_physical_density( mwd,  mwphysdens);
           virial_to_physical_density(lmcd, lmcphysdens);
@@ -137,10 +134,7 @@ void make_density(SphExpansion* S1,
 		  double xmax,
 		  int nsamples,
 		  string outfile,
-		  bool monopole=false,
-		  bool dipole=false,
-		  bool quadrupole=false,
-		  int ltrunc=10)
+		  int harmonicflag=SPHHARMONICDEFAULT)
 {
   /*
   xmin and xmax come in PHYSICAL units
@@ -183,12 +177,12 @@ void make_density(SphExpansion* S1,
       S1->return_density(coefs1,
 			 //0.-mwxvp, yin-mwyvp, zin-mwzvp,
 			 0., yin, zin,
-		         mwd, monopole, dipole, quadrupole, ltrunc);
+		         mwd, harmonicflag);
 
       S2->return_density(coefs2,
 			 0.-lmcxvp, yin-lmcyvp, zin-lmczvp,
 			 //0.-mwxvp, yin-mwyvp, zin-mwzvp,
-		         lmcd, monopole, dipole, quadrupole, ltrunc);
+		         lmcd, harmonicflag);
 
       virial_to_physical_density( mwd,  mwphysdens);
       virial_to_physical_density(lmcd, lmcphysdens);
@@ -213,10 +207,7 @@ void make_density_3d(SphExpansion* S1,
 		     double xmax,
 		     int nsamples,
 		     string outfile,
-		     bool monopole=false,
-		     bool dipole=false,
-		     bool quadrupole=false,
-		     int ltrunc=10)
+		     int harmonicflag=SPHHARMONICDEFAULT)
 {
   /*
   xmin and xmax come in PHYSICAL units
@@ -261,14 +252,12 @@ void make_density_3d(SphExpansion* S1,
 
 
 				S1->return_density(coefs1,
-						   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
 						   xin, yin, zin,
-						   mwd, monopole, dipole, quadrupole, ltrunc);
+						   mwd, harmonicflag);
 
 				S2->return_density(coefs2,
 						   xin-lmcxvp, yin-lmcyvp, zin-lmczvp,
-						   //0.-mwxvp, yin-mwyvp, zin-mwzvp,
-						   lmcd, monopole, dipole, quadrupole, ltrunc);
+						   lmcd, harmonicflag);
 
 				virial_to_physical_density( mwd,  mwphysdens);
 				virial_to_physical_density(lmcd, lmcphysdens);
