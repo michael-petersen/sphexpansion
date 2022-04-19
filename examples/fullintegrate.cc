@@ -1,24 +1,14 @@
 /*
 example code:
-integrate an orbit in the MW-LMC potential and compare to exp output
+integrate an orbit in the MW-LMC potential
 
-compile string:
-clang++ -I/opt/local/include -L/opt/local/lib -Iinclude/ fullintegrate.cc -o fullintegrate
-clang++ -I/opt/local/include -L/opt/local/lib -I../include/ fullintegrate.cc -o obj/fullintegrate
+standalone compile string (MacOSX):
 
-clang++ --std=c++17 -lyaml-cpp -I/opt/local/include -L/opt/local/lib -I../include/ fullintegrate.cc -o obj/fullintegrate
-otool -L obj/fullintegrate
-install_name_tool -change @rpath/libyaml-cpp.0.7.dylib /opt/local/lib/libyaml-cpp.dylib obj/fullintegrate
+clang++ --std=c++17 -I/usr/local/include/eigen3/ -I../include/ fullintegrate.cc -o obj/fullintegrate
 
-clang++ --std=c++17 -lyaml-cpp -I/opt/local/include  -I../include/ fullintegrate.cc -o obj/fullintegrate
+(assumes that eigen3 headers are in /usr/local/include/eigen3/)
 
-
--O3 doesn't add much.
--g -O0 really slows down.
-
-MSP 28 Apr 2020 initial commit
-MSP 13 Oct 2020 new model validation
-MSP 22 Dec 2021 add tests for new yaml formats
+MSP 19 Apr 2022 cleaned version v0.2.1
 
 */
 
@@ -42,9 +32,63 @@ using Eigen::MatrixXd;
 #include "cylexpansion.h"
 
 
+class MWLMC
+{
+private:
 
-void print_orbit(MatrixXd orbit,
-		 string orbitfile)
+	void initialise();
+
+public:
+
+
+	SphExpansion* MW;
+	SphExpansion* LMC;
+	CylExpansion* MWD;
+
+  // the constructor (no type, no arguments, all defined in modelfiles.h)
+  MWLMC();
+
+	// print an orbit array
+	void print_orbit(MatrixXd orbit, string orbitfile);
+
+	// return total forces
+	void all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+				                             double t, double x, double y, double z,
+				                             double& fx, double& fy, double& fz, bool verbose);
+
+	void orbit(vector<double> xinit,
+				      vector<double> vinit,
+				      int nint,
+				      double dt,
+				      MatrixXd& orbit,
+						  bool fixedtime=false);
+
+};
+
+
+
+MWLMC::MWLMC()
+{
+  initialise();
+};
+
+void MWLMC::initialise()
+{
+	// MW
+	cout << "Initialising MW ... " << endl;
+	MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
+
+	// LMC
+	cout << "Initialising LMC ... " << endl;
+	LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
+
+	// MW
+	cout << "Initialising MW disc ... " << endl;
+	MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
+};
+
+
+void MWLMC::print_orbit(MatrixXd orbit, string orbitfile)
 {
   ofstream outorbit;
   outorbit.open(orbitfile);
@@ -66,8 +110,7 @@ void print_orbit(MatrixXd orbit,
 }
 
 
-void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, CylExpansion* MWD,
-			                MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
 			                double t, double x, double y, double z,
 			                double& fx, double& fy, double& fz, bool verbose)
 {
@@ -192,15 +235,13 @@ void return_forces_mw_and_lmc_with_disc(SphExpansion* MW, SphExpansion* LMC, Cyl
 
 
 
-void three_component_leapfrog(SphExpansion* MW,
-			      SphExpansion* LMC,
-			      CylExpansion* MWD,
+void MWLMC::orbit(
 			      vector<double> xinit,
 			      vector<double> vinit,
 			      int nint,
 			      double dt,
 			      MatrixXd& orbit,
-					  bool fixedtime=false)
+					  bool fixedtime)
 {
   /*
 
@@ -213,7 +254,7 @@ void three_component_leapfrog(SphExpansion* MW,
   // include the forces for now
   orbit.resize(10,nint);
 
-	cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
+	// cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
 
 
   // initialise beginning values
@@ -241,8 +282,7 @@ void three_component_leapfrog(SphExpansion* MW,
   double tphys;
   virial_to_physical_time(0.,tphys);
   // return forces for the initial step
-  return_forces_mw_and_lmc_with_disc(MW, LMC, MWD,
-				     tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+  all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
 				     tphys, orbit(0,0),orbit(1,0),orbit(2,0),
 				     fx, fy, fz, false);
 
@@ -277,8 +317,7 @@ void three_component_leapfrog(SphExpansion* MW,
     }
 
     // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
-    return_forces_mw_and_lmc_with_disc(MW, LMC, MWD,
-				       tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+    all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
 				       dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
 				       fx, fy, fz, false);
 
@@ -302,21 +341,12 @@ void three_component_leapfrog(SphExpansion* MW,
 
 int main () {
 
-  // MW
-  cout << "Initialising MW ... " << endl;
-  SphExpansion* MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
-
-  // LMC
-  cout << "Initialising LMC ... " << endl;
-  SphExpansion* LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
-
-  // MW
-  cout << "Initialising MW disc ... " << endl;
-  CylExpansion* MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
+	MWLMC* Model = new MWLMC();
 
   vector<double> zerocoords(3);
-  return_centre(reference_time, MWD->orient, zerocoords);
+  return_centre(reference_time, Model->MWD->orient, zerocoords);
 
+	cout << "Reference time:" << setw(14) << reference_time << endl;
   cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << endl;
 
 
@@ -331,7 +361,7 @@ int main () {
   xphys[1] = 0.0;
   xphys[2] = 0.0;
   vxphys[0] = 0.0;
-  vxphys[1] = 1.7;
+  vxphys[1] = 1.9;
   vxphys[2] = 0.;
 
   virial_to_physical_length(xphys[0],xphys[1],xphys[2],xinit[0],xinit[1],xinit[2]);
@@ -340,7 +370,7 @@ int main () {
   cout << "Input pos/vel: " << xinit[0] << " " << xinit[1] << " " << xinit[2] << " " <<
     vxinit[0] << " " << vxinit[1] << " " << vxinit[2] << " " << endl;
 
-  double nint=10000;
+  double nint=1000;
 
   // call this time in kpc/km/s units
   double dt;
@@ -350,9 +380,11 @@ int main () {
   MatrixXd orbit;
 
   // try a solar-like orbit
-  three_component_leapfrog(MW, LMC, MWD, xinit, vxinit, nint, dt, orbit, true);
+	bool fixedtime=true;
+  Model->orbit(xinit, vxinit, nint, dt, orbit, fixedtime);
 
+	// print the output
   string orbitfile="tests/solarorbit.txt";
-  print_orbit(orbit,orbitfile);
+  Model->print_orbit(orbit,orbitfile);
 
 }

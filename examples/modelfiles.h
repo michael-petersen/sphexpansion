@@ -10,13 +10,11 @@ MSP 16 Apr 2022 first definitions
 
 using std::string;
 
-
 string indir = "../data/";
 string runtag = "run9mlde";
 
-
 // the virial time of the 'present day'
-double reference_time = 0.0;
+double reference_time = 1.19925;
 
 // set these parameters to tune the simulation virial units to the MW
 double mw_virial_radius        = 282.;                                  // virial radius of the MW, kpc/Rvir

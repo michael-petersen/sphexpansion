@@ -1,7 +1,6 @@
 
 add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
 
-
 set(bin_PROGRAMS rotcurve densitymap fullintegrate comparediscs)
 
 set(common_LINKLIB yaml-cpp ${EIEN3_LIBRARIES})
@@ -17,13 +16,9 @@ add_executable(densitymap     density_map.cc  )
 add_executable(rotcurve       rotcurve.cc     )
 add_executable(comparediscs   compare_discs.cc)
 
-
-pybind11_add_module(mwlmc mwlmc.cc)
-
-# EXAMPLE_VERSION_INFO is defined by setup.py and passed into the C++ code as a
-# define (VERSION_INFO) here.
-#target_compile_definitions(cmake_example PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
-
+if(HAVEPYBIND11)
+  pybind11_add_module(mwlmc mwlmc.cc)
+endif()
 
 foreach(program ${bin_PROGRAMS})
   target_link_libraries(${program} ${common_LINKLIB})
