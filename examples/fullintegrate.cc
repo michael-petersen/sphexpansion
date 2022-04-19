@@ -36,32 +36,32 @@ class MWLMC
 {
 private:
 
-	void initialise();
+  void initialise();
 
 public:
 
 
-	SphExpansion* MW;
-	SphExpansion* LMC;
-	CylExpansion* MWD;
+  SphExpansion* MW;
+  SphExpansion* LMC;
+  CylExpansion* MWD;
 
   // the constructor (no type, no arguments, all defined in modelfiles.h)
   MWLMC();
 
-	// print an orbit array
-	void print_orbit(MatrixXd orbit, string orbitfile);
+  // print an orbit array
+  void print_orbit(MatrixXd orbit, string orbitfile);
 
-	// return total forces
-	void all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
-				                             double t, double x, double y, double z,
-				                             double& fx, double& fy, double& fz, bool verbose);
+  // return total forces
+  void all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+                               double t, double x, double y, double z,
+                               double& fx, double& fy, double& fz, bool verbose);
 
-	void orbit(vector<double> xinit,
-				      vector<double> vinit,
-				      int nint,
-				      double dt,
-				      MatrixXd& orbit,
-						  bool fixedtime=false);
+  void orbit(vector<double> xinit,
+        vector<double> vinit,
+        int nint,
+        double dt,
+        MatrixXd& orbit,
+    bool fixedtime=false);
 
 };
 
@@ -74,17 +74,17 @@ MWLMC::MWLMC()
 
 void MWLMC::initialise()
 {
-	// MW
-	cout << "Initialising MW ... " << endl;
-	MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
+  // MW
+  cout << "Initialising MW ... " << endl;
+  MW = new SphExpansion(sph_cache_name_mw, model_file_mw, coef_file_mw, orient_file_mw);
 
-	// LMC
-	cout << "Initialising LMC ... " << endl;
-	LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
+  // LMC
+  cout << "Initialising LMC ... " << endl;
+  LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
-	// MW
-	cout << "Initialising MW disc ... " << endl;
-	MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
+  // MW
+  cout << "Initialising MW disc ... " << endl;
+  MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
 };
 
 
@@ -111,8 +111,8 @@ void MWLMC::print_orbit(MatrixXd orbit, string orbitfile)
 
 
 void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
-			                double t, double x, double y, double z,
-			                double& fx, double& fy, double& fz, bool verbose)
+                  double t, double x, double y, double z,
+                  double& fx, double& fy, double& fz, bool verbose)
 {
   /*
     specs: take a time, x,y,z; return x,y,z forces, in physical units
@@ -175,13 +175,13 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
   MW->determine_fields_at_point_sph( mwcoefs,
-				rtmp,thetatmp,phitmp,
-				tpotl0,tpotl,
-				     fr,ft,fp);
+  rtmp,thetatmp,phitmp,
+  tpotl0,tpotl,
+       fr,ft,fp);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
-				fr, fp, ft,
-				fxtmp, fytmp, fztmp);
+  fr, fp, ft,
+  fxtmp, fytmp, fztmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
@@ -194,13 +194,13 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
 
   // same procedure for the disc
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
-				     r2tmp,phitmp,zvir-mwd_centre[2],
-				     tpotl0,tpotl,
-				     fr,fp,fztmp);
+       r2tmp,phitmp,zvir-mwd_centre[2],
+       tpotl0,tpotl,
+       fr,fp,fztmp);
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
-				  fr, fp,
-				  fxtmp, fytmp);
+    fr, fp,
+    fxtmp, fytmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
@@ -215,13 +215,13 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
   LMC->determine_fields_at_point_sph(lmccoefs,
-				rtmp,thetatmp,phitmp,
-				tpotl0,tpotl,
-				     fr,ft,fp);
+  rtmp,thetatmp,phitmp,
+  tpotl0,tpotl,
+       fr,ft,fp);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
-				fr, fp, ft,
-				fxtmp, fytmp, fztmp);
+  fr, fp, ft,
+  fxtmp, fytmp, fztmp);
 
   // reset to physical units
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
@@ -236,12 +236,12 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
 
 
 void MWLMC::orbit(
-			      vector<double> xinit,
-			      vector<double> vinit,
-			      int nint,
-			      double dt,
-			      MatrixXd& orbit,
-					  bool fixedtime)
+        vector<double> xinit,
+        vector<double> vinit,
+        int nint,
+        double dt,
+        MatrixXd& orbit,
+    bool fixedtime)
 {
   /*
 
@@ -254,11 +254,11 @@ void MWLMC::orbit(
   // include the forces for now
   orbit.resize(10,nint);
 
-	// cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
+  // cout << "Orbit dims " << orbit.rows() << " x " << orbit.cols() << endl;
 
 
   // initialise beginning values
-	orbit(0,0) = xinit[0];
+  orbit(0,0) = xinit[0];
   orbit(1,0) = xinit[1];
   orbit(2,0) = xinit[2];
   orbit(3,0) = vinit[0];
@@ -283,8 +283,8 @@ void MWLMC::orbit(
   virial_to_physical_time(0.,tphys);
   // return forces for the initial step
   all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-				     tphys, orbit(0,0),orbit(1,0),orbit(2,0),
-				     fx, fy, fz, false);
+       tphys, orbit(0,0),orbit(1,0),orbit(2,0),
+       fx, fy, fz, false);
 
   orbit(6,0) = fx;
   orbit(7,0) = fy;
@@ -300,16 +300,16 @@ void MWLMC::orbit(
     // find the current virial time
     physical_to_virial_time(dt*(step),tvir);
 
-		if (fixedtime) {
-			tvir = 0.0;
-		} else {
+  if (fixedtime) {
+  tvir = 0.0;
+  } else {
 
       // get coefficients at the current virial time
       MW->select_coefficient_time(tvir, tcoefsmw);
       LMC->select_coefficient_time(tvir, tcoefslmc);
       MWD->select_coefficient_time(tvir, mwcoscoefs, mwsincoefs);
 
-		}
+  }
 
     // advance positions
     for (j=0; j<3; j++) {
@@ -318,17 +318,17 @@ void MWLMC::orbit(
 
     // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
     all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-				       dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
-				       fx, fy, fz, false);
+         dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
+         fx, fy, fz, false);
 
-		orbit(6,step) = fx;
-		orbit(7,step) = fy;
-		orbit(8,step) = fz;
+  orbit(6,step) = fx;
+  orbit(7,step) = fy;
+  orbit(8,step) = fz;
 
-		// advance velocities
-		for (j=3; j<6; j++) {
-			orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
-		}
+  // advance velocities
+  for (j=3; j<6; j++) {
+  orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
+  }
 
   }
 
@@ -341,12 +341,12 @@ void MWLMC::orbit(
 
 int main () {
 
-	MWLMC* Model = new MWLMC();
+  MWLMC* Model = new MWLMC();
 
   vector<double> zerocoords(3);
   return_centre(reference_time, Model->MWD->orient, zerocoords);
 
-	cout << "Reference time:" << setw(14) << reference_time << endl;
+  cout << "Reference time:" << setw(14) << reference_time << endl;
   cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << endl;
 
 
@@ -380,10 +380,10 @@ int main () {
   MatrixXd orbit;
 
   // try a solar-like orbit
-	bool fixedtime=true;
+  bool fixedtime=true;
   Model->orbit(xinit, vxinit, nint, dt, orbit, fixedtime);
 
-	// print the output
+  // print the output
   string orbitfile="tests/solarorbit.txt";
   Model->print_orbit(orbit,orbitfile);
 
