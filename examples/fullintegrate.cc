@@ -53,15 +53,19 @@ public:
 
   // return total forces
   void all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
-                               double t, double x, double y, double z,
-                               double& fx, double& fy, double& fz, bool verbose);
+                  double t, double x, double y, double z,
+                  double& fx, double& fy, double& fz,
+                  int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+                  bool verbose=false);
 
+  // compute an orbit integration in all three components
   void orbit(vector<double> xinit,
-        vector<double> vinit,
-        int nint,
-        double dt,
-        MatrixXd& orbit,
-    bool fixedtime=false);
+             vector<double> vinit,
+             int nint,
+             double dt,
+             MatrixXd& orbit,
+             int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+             bool fixedtime=false);
 
 };
 
@@ -112,7 +116,9 @@ void MWLMC::print_orbit(MatrixXd orbit, string orbitfile)
 
 void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
                   double t, double x, double y, double z,
-                  double& fx, double& fy, double& fz, bool verbose)
+                  double& fx, double& fy, double& fz,
+                  int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                  bool verbose)
 {
   /*
     specs: take a time, x,y,z; return x,y,z forces, in physical units
@@ -174,14 +180,14 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
 
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
-  MW->determine_fields_at_point_sph( mwcoefs,
-  rtmp,thetatmp,phitmp,
-  tpotl0,tpotl,
-       fr,ft,fp);
+  MW->determine_fields_at_point_sph(mwcoefs,
+                                    rtmp,thetatmp,phitmp,
+                                    tpotl0,tpotl,
+                                    fr,ft,fp,mwhharmonicflag);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
-  fr, fp, ft,
-  fxtmp, fytmp, fztmp);
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
@@ -194,13 +200,13 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
 
   // same procedure for the disc
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
-       r2tmp,phitmp,zvir-mwd_centre[2],
-       tpotl0,tpotl,
-       fr,fp,fztmp);
+                                     r2tmp,phitmp,zvir-mwd_centre[2],
+                                     tpotl0,tpotl,
+                                     fr,fp,fztmp,mwdharmonicflag);
 
   cylindrical_forces_to_cartesian(rtmp, phitmp,
-    fr, fp,
-    fxtmp, fytmp);
+                                  fr, fp,
+                                  fxtmp, fytmp);
 
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
@@ -215,13 +221,13 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
   //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
 
   LMC->determine_fields_at_point_sph(lmccoefs,
-  rtmp,thetatmp,phitmp,
-  tpotl0,tpotl,
-       fr,ft,fp);
+                                     rtmp,thetatmp,phitmp,
+                                     tpotl0,tpotl,
+                                     fr,ft,fp,lmcharmonicflag);
 
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
-  fr, fp, ft,
-  fxtmp, fytmp, fztmp);
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
 
   // reset to physical units
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
@@ -235,13 +241,13 @@ void MWLMC::all_forces(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs
 
 
 
-void MWLMC::orbit(
-        vector<double> xinit,
-        vector<double> vinit,
-        int nint,
-        double dt,
-        MatrixXd& orbit,
-    bool fixedtime)
+void MWLMC::orbit(vector<double> xinit,
+                  vector<double> vinit,
+                  int nint,
+                  double dt,
+                  MatrixXd& orbit,
+                  int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                  bool fixedtime)
 {
   /*
 
@@ -281,10 +287,12 @@ void MWLMC::orbit(
   // not applying time offsets here; think about whether this is a problem
   double tphys;
   virial_to_physical_time(0.,tphys);
+
   // return forces for the initial step
   all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
        tphys, orbit(0,0),orbit(1,0),orbit(2,0),
-       fx, fy, fz, false);
+       fx, fy, fz,
+       mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
   orbit(6,0) = fx;
   orbit(7,0) = fy;
@@ -319,7 +327,8 @@ void MWLMC::orbit(
     // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
     all_forces(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
          dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
-         fx, fy, fz, false);
+         fx, fy, fz,
+         mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
   orbit(6,step) = fx;
   orbit(7,step) = fy;
