@@ -107,11 +107,26 @@ void CylExpansion::initialise(string cyl_cache_name,
                   			      string orient_file)
 {
   // pull in the parts for the expansion
-  read_cyl_cache(cyl_cache_name, CylExpansion::cachetable);
+  try {
+    read_cyl_cache(cyl_cache_name, CylExpansion::cachetable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
 
-  read_coef_file(coef_file, CylExpansion::coeftable);
+  try {
+    read_coef_file(coef_file, CylExpansion::coeftable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
 
-  read_orient   (orient_file, CylExpansion::orient);
+  try {
+    read_orient   (orient_file, CylExpansion::orient);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
 
 }
 

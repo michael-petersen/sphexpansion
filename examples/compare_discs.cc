@@ -3,9 +3,11 @@ example code:
 compare two different disc cache files
 
 compile string:
-clang++ --std=c++17 -lyaml-cpp -I/opt/local/include  -I../include/ fullintegrate.cc -o obj/fullintegrate
+clang++ --std=c++17 -I/usr/local/include/eigen3/ -I../include/ comparediscs.cc -o obj/comparediscs
 
 MSP 17 Apr 2022 initial commit
+
+WARNING: this file will not work unless you have the high-resolution basis on hand.
 
 */
 
@@ -32,26 +34,6 @@ int main () {
 
   int harmonicflag = 2; // only include the quadrupole order
 
-/*
-  // verify that harmonicflag is working as expected
-  std::cout << "f:m,d,q,3,4,5,6" << std::endl;
-  for (int i=0; i<=127; i++) {
-    std::cout << i << ":";
-    for (int l=0; l<=6; l++) {
-      std::cout << check_flags(i,l) << ",";
-    }
-    std::cout << std::endl;
-  }
-
-  std::cout << "2047:";
-  for (int l=0; l<=10; l++) {
-    std::cout << check_flags(2047,l) << ",";
-  }
-  std::cout << std::endl;
-
-  return 0;
-*/
-
   // MW with high-resolution basis
   cout << "Initialising MW disc ... " << endl;
   CylExpansion* MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
@@ -62,7 +44,7 @@ int main () {
 
   // MW with high-resolution basis
   cout << "Initialising HI-RES MW disc ... " << endl;
-  string cyl_cache_name_mw_hires = "../data/disc.cache.run9mlde";
+  string cyl_cache_name_mw_hires = model_datadir+"disc.cache.run9mlde";
   CylExpansion* MWDH = new CylExpansion(cyl_cache_name_mw_hires, cyl_coef_name_mw, cyl_orient_name_mw);
 
 

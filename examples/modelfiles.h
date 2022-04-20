@@ -10,7 +10,13 @@ MSP 16 Apr 2022 first definitions
 
 using std::string;
 
-string indir = "../data/";
+std::string get_datadir (const std::string& str)
+{
+  std::size_t found = str.find_last_of("/\\");
+  return (str.substr(0,found+1)).append("../data/");
+}
+
+string model_datadir = get_datadir(__FILE__);
 string runtag = "run9mlde";
 
 // the virial time of the 'present day'
@@ -30,21 +36,21 @@ double mw_mass_scale           = mw_vel_scale * mw_vel_scale *
                                  mw_virial_radius / astronomicalG;       // mass units of the simulation, Msun
 
 // The MW halo tables
-string sph_cache_name_mw   = indir+"SLGridSph.mw."+runtag;
-string model_file_mw       = indir+"ErkalMW.model";
-string coef_file_mw        = indir+"simpleoutcoef.nfac.mw."+runtag;
-string orient_file_mw      = indir+"mw.orient."+runtag+".smth";
+string sph_cache_name_mw   = model_datadir+"SLGridSph.mw."+runtag;
+string model_file_mw       = model_datadir+"ErkalMW.model";
+string coef_file_mw        = model_datadir+"simpleoutcoef.nfac.mw."+runtag;
+string orient_file_mw      = model_datadir+"mw.orient."+runtag+".smth";
 
 // The MW disc tables
-string cyl_cache_name_mw   = indir+"disc.cache.compact."+runtag;
-string cyl_coef_name_mw    = indir+"outcoef.disc."+runtag;
-string cyl_orient_name_mw  = indir+"disc.orient."+runtag+".smth";
+string cyl_cache_name_mw   = model_datadir+"disc.cache.compact."+runtag;
+string cyl_coef_name_mw    = model_datadir+"outcoef.disc."+runtag;
+string cyl_orient_name_mw  = model_datadir+"disc.orient."+runtag+".smth";
 
 // The LMC halo tables
-string sph_cache_name_lmc  = indir+"SLGridSph.lmc."+runtag;
-string model_file_lmc      = indir+"ErkalLMC.model";
-string coef_file_lmc       = indir+"simpleoutcoef.nfac.lmc."+runtag;
-string orient_file_lmc     = indir+"lmc.orient."+runtag+".smth";
+string sph_cache_name_lmc  = model_datadir+"SLGridSph.lmc."+runtag;
+string model_file_lmc      = model_datadir+"ErkalLMC.model";
+string coef_file_lmc       = model_datadir+"simpleoutcoef.nfac.lmc."+runtag;
+string orient_file_lmc     = model_datadir+"lmc.orient."+runtag+".smth";
 
 // inform the compiler that we have a model
 #define MODELDEFINED 1

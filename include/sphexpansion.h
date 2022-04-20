@@ -150,9 +150,21 @@ void SphExpansion::initialise(string sph_cache_name,
     exit(1);
   }
 
-  read_model(model_file, SphExpansion::modeltable);
+  try {
+    read_model(model_file, SphExpansion::modeltable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
 
-  read_coef_file (coef_file, SphExpansion::coeftable);
+  try {
+    read_coef_file (coef_file, SphExpansion::coeftable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
+
+
   LMAX = coeftable.LMAX;
   NMAX = coeftable.NMAX;
   NUMT = coeftable.NUMT;
