@@ -618,7 +618,10 @@ void SphExpansion::select_coefficient_time(double desired_time,
   //if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
 
   // guard against going past the end of the simulation
-  if (indx>coeftable.NUMT-2) cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << "\n";
+  if (indx>coeftable.NUMT-2) {
+    cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step, but this behaviour is not supported." << "\n";
+    indx = coeftable.NUMT-2;
+  }
 
 #if DEEPDEBUGTIME
   cout << "indx=" << indx
@@ -632,11 +635,16 @@ void SphExpansion::select_coefficient_time(double desired_time,
 
     // set the coefficients to be the first coefficients from the simulation
 
+    // do these need to be loops now that we have eigen?
+    coefs_at_time = coeftable.coefs[0];
+
+    /*
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
         coefs_at_time(l,n) = coeftable.coefs[0](l,n);
       }
     }
+    */
 
   } else {
 
@@ -653,11 +661,15 @@ void SphExpansion::select_coefficient_time(double desired_time,
     cout << "x1=" << setw(16) << x1 << " x2=" << setw(14) << x2 << "\n";
 #endif
 
+    // do some eigen multiplication to get the coefficient table. this is faster, right?
+    coefs_at_time = (x1 * coeftable.coefs[indx] + x2 * coeftable.coefs[indx+1]);
+    /*
     for (int l=0; l<numl; l++){
       for (int n=0; n<coeftable.NMAX; n++) {
         coefs_at_time(l,n) = (x1 * coeftable.coefs[indx](l,n) + x2 * coeftable.coefs[indx+1](l,n));
       }
     }
+    */
   }
 
   // go through and zero out non-selected orders

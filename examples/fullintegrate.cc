@@ -444,6 +444,7 @@ void MWLMC::orbit(vector<double> xinit,
                   bool fixedtime)
 {
   /*
+  run EXP simulation from start to finish.
 
    */
   double fx,fy,fz,tvir;
@@ -466,7 +467,7 @@ void MWLMC::orbit(vector<double> xinit,
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
   MatrixXd tcoefsmw,tcoefslmc;
-  MW->select_coefficient_time(0., tcoefsmw,15);
+  MW->select_coefficient_time(0., tcoefsmw);
   LMC->select_coefficient_time(0., tcoefslmc);
 
   MatrixXd mwcoscoefs,mwsincoefs;
