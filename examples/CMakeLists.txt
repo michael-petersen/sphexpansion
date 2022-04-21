@@ -3,7 +3,7 @@ add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
 
 set(bin_PROGRAMS rotcurve densitymap fullintegrate comparediscs)
 
-set(common_LINKLIB yaml-cpp ${EIEN3_LIBRARIES})
+set(common_LINKLIB ${EIGEN3_LIBRARIES})
 
 set(common_INCLUDE $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>

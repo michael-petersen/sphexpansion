@@ -15,9 +15,6 @@ We might be able to find a better way using memmaps, which would also make query
 #define CYLCACHE_H
 
 
-#if HAVEYAML
-#include "yaml-cpp/yaml.h"	// YAML support
-#endif
 
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
 
@@ -122,101 +119,60 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
     //
     auto buf = std::make_unique<char[]>(ssize+1);
     in.read(buf.get(), ssize);
-    buf[ssize] = 0;		// Null terminate
+    buf[ssize] = 0;    // Null terminate
 
-#if HAVEYAML
-    YAML::Node node;
 
-    try {
-      node = YAML::Load(buf.get());
-    } catch (YAML::Exception& error) {
-      std::cerr << "YAML: error parsing <" << buf.get() << "> "
-		    << "in " << __FILE__ << ":" << __LINE__ << std::endl
-		    << "YAML error: " << error.what() << std::endl;
-	throw error;
+    cachetable.CMAPZ = 1;
+
+    std::string yamlblob = buf.get();
+
+    // loop through string parsing
+    // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
+    // but NOT the top vote getter!
+    std::string delim = "\n";
+    std::string entry;
+    auto start = 0U;
+    auto end = yamlblob.find(delim);
+    std::string token2,token3;
+    while (end != std::string::npos)
+    {
+        // retreive the entry
+        entry = yamlblob.substr(start, end - start);
+
+        // split the entry up to the ':'
+        token2 = entry.substr(0, entry.find(":"));
+
+        // split the entry after the ':'
+        token3 = entry.substr(entry.find(":")+2,entry.length()-entry.find(":")-2);
+        //std::cout<<token2<<"--"<<token3<<endl;
+
+        if (token2.compare("mmax") == 0)   cachetable.MMAX    = std::stoi(token3);
+        if (token2.compare("norder") == 0) cachetable.NORDER  = std::stoi(token3);
+        if (token2.compare("numx") == 0)   cachetable.NUMX    = std::stoi(token3);
+        if (token2.compare("numy") == 0)   cachetable.NUMY    = std::stoi(token3);
+        if (token2.compare("nmax") == 0)   cachetable.NMAX    = std::stoi(token3);
+        if (token2.compare("rmin") == 0)   cachetable.RMIN    = std::stod(token3);
+        if (token2.compare("rmax") == 0)   cachetable.RMAX    = std::stod(token3);
+        if (token2.compare("ascl") == 0)   cachetable.ASCALE  = std::stod(token3);
+        if (token2.compare("hscl") == 0)   cachetable.HSCALE  = std::stod(token3);
+        if (token2.compare("cmass") == 0)  cachetable.CYLMASS = std::stod(token3);
+        if (token2.compare("time") == 0)   cachetable.TNOW    = std::stod(token3);
+        if (token2.compare("dens") == 0)   cachetable.DENS    = token3.compare("true")==0;
+
+        if (token2.compare("cmap") == 0)   cachetable.CMAPR   = std::stoi(token3);
+        if (token2.compare("cmapr") == 0)  cachetable.CMAPR   = std::stoi(token3);
+        if (token2.compare("cmapz") == 0)  cachetable.CMAPZ   = std::stoi(token3);
+
+        // advance counters
+        start = end + delim.length();
+        end = yamlblob.find(delim, start);
     }
 
-      // Get parameters
-      //
-      cachetable.MMAX    = node["mmax"  ].as<int>();
-      cachetable.NUMX    = node["numx"  ].as<int>();
-      cachetable.NUMY    = node["numy"  ].as<int>();
-      cachetable.NMAX    = node["nmax"  ].as<int>();
-      cachetable.NORDER  = node["norder"].as<int>();
-      cachetable.DENS    = node["dens"  ].as<bool>();
-      cachetable.RMIN    = node["rmin"  ].as<double>();
-      cachetable.RMAX    = node["rmax"  ].as<double>();
-      cachetable.ASCALE  = node["ascl"  ].as<double>();
-      cachetable.HSCALE  = node["hscl"  ].as<double>();
-      cachetable.CYLMASS = node["cmass" ].as<double>();
-      cachetable.TNOW    = node["time"  ].as<double>();
-
-      if (node["cmap"]) 	// Backwards compatibility
-	      cachetable.CMAPR   = node["cmap" ].as<int>();
-      else
-	      cachetable.CMAPR   = node["cmapr"].as<int>();
-
-      if (node["cmapz"])	// Backwards compatibility
-	      cachetable.CMAPZ = node["cmapz"].as<int>();
-      else
-	      cachetable.CMAPZ = 1;//CMAPZ;
-
-#else // compile without libyaml
-
-  cachetable.CMAPZ = 1;
-
-  std::string yamlblob = buf.get();
-
-  // loop through string parsing
-  // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
-  // but NOT the top vote getter!
-  std::string delim = "\n";
-  std::string entry;
-  auto start = 0U;
-  auto end = yamlblob.find(delim);
-  std::string token2,token3;
-  while (end != std::string::npos)
-  {
-      // retreive the entry
-      entry = yamlblob.substr(start, end - start);
-
-      // split the entry up to the ':'
-      token2 = entry.substr(0, entry.find(":"));
-
-      // split the entry after the ':'
-      token3 = entry.substr(entry.find(":")+2,entry.length()-entry.find(":")-2);
-      //std::cout<<token2<<"--"<<token3<<endl;
-
-      if (token2.compare("mmax") == 0)   cachetable.MMAX    = std::stoi(token3);
-      if (token2.compare("norder") == 0) cachetable.NORDER  = std::stoi(token3);
-      if (token2.compare("numx") == 0)   cachetable.NUMX    = std::stoi(token3);
-      if (token2.compare("numy") == 0)   cachetable.NUMY    = std::stoi(token3);
-      if (token2.compare("nmax") == 0)   cachetable.NMAX    = std::stoi(token3);
-      if (token2.compare("rmin") == 0)   cachetable.RMIN    = std::stod(token3);
-      if (token2.compare("rmax") == 0)   cachetable.RMAX    = std::stod(token3);
-      if (token2.compare("ascl") == 0)   cachetable.ASCALE  = std::stod(token3);
-      if (token2.compare("hscl") == 0)   cachetable.HSCALE  = std::stod(token3);
-      if (token2.compare("cmass") == 0)  cachetable.CYLMASS = std::stod(token3);
-      if (token2.compare("time") == 0)   cachetable.TNOW    = std::stod(token3);
-      if (token2.compare("dens") == 0)   cachetable.DENS    = token3.compare("true")==0;
-
-      if (token2.compare("cmap") == 0)   cachetable.CMAPR   = std::stoi(token3);
-      if (token2.compare("cmapr") == 0)  cachetable.CMAPR   = std::stoi(token3);
-      if (token2.compare("cmapz") == 0)  cachetable.CMAPZ   = std::stoi(token3);
-
-      // advance counters
-      start = end + delim.length();
-      end = yamlblob.find(delim, start);
-  }
-
-  // last one is always 'time' which we can ignore
-  //std::cout << yamlblob.substr(start, end) << "|";
+    // last one is always 'time' which we can ignore
+    //std::cout << yamlblob.substr(start, end) << "|";
 
 
-  //std::cout << cachetable.MMAX  << " " << cachetable.ASCALE  << std::endl;
-
-
-#endif
+    //std::cout << cachetable.MMAX  << " " << cachetable.ASCALE  << std::endl;
 
     cachetable.CMAP = cachetable.CMAPR;
 
@@ -308,21 +264,21 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	      for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potC[m][n](j,k), sizeof(double));
+        for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potC[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	      for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceC[m][n](j,k), sizeof(double));
+        for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceC[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceC[m][n](j,k), sizeof(double));
+         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceC[m][n](j,k), sizeof(double));
       }
 
       if (cachetable.DENS) {
         for (int j=0; j<=cachetable.NUMX; j++) {
-	         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densC[m][n](j,k), sizeof(double));
-	      }
+           for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densC[m][n](j,k), sizeof(double));
+        }
       } // end if DENS
     } // end NORDER loop
   } // end MMAX loop
@@ -334,21 +290,21 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
     for (int n=0; n<cachetable.NORDER; n++) {
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potS[m][n](j,k), sizeof(double));
+         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.potS[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceS[m][n](j,k), sizeof(double));
+         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.rforceS[m][n](j,k), sizeof(double));
       }
 
       for (int j=0; j<=cachetable.NUMX; j++) {
-	       for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceS[m][n](j,k), sizeof(double));
+         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.zforceS[m][n](j,k), sizeof(double));
       }
 
       if (cachetable.DENS) {
         for (int j=0; j<=cachetable.NUMX; j++) {
-	         for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densS[m][n](j,k), sizeof(double));
-	      }
+           for (int k=0; k<=cachetable.NUMY; k++) in.read((char *)&cachetable.densS[m][n](j,k), sizeof(double));
+        }
       }
     } // end NORDER loop
   } // end MMAX loop
@@ -419,23 +375,23 @@ void get_pot(double r, double z, CylCache cachetable, MatrixXd& Vc, MatrixXd& Vs
     for (int n=0; n<cachetable.NORDER; n++) {
 
       Vc(mm,n) =
-      	(
-      	 cachetable.potC[mm][n](ix  ,iy  ) * c00 +
-      	 cachetable.potC[mm][n](ix+1,iy  ) * c10 +
-      	 cachetable.potC[mm][n](ix  ,iy+1) * c01 +
-      	 cachetable.potC[mm][n](ix+1,iy+1) * c11
-      	 );
+        (
+         cachetable.potC[mm][n](ix  ,iy  ) * c00 +
+         cachetable.potC[mm][n](ix+1,iy  ) * c10 +
+         cachetable.potC[mm][n](ix  ,iy+1) * c01 +
+         cachetable.potC[mm][n](ix+1,iy+1) * c11
+         );
 
       // get sine values for m>0
       if (mm) {
 
-      	Vs(mm,n) =
-      	  (
-      	   cachetable.potS[mm][n](ix  ,iy  ) * c00 +
-      	   cachetable.potS[mm][n](ix+1,iy  ) * c10 +
-      	   cachetable.potS[mm][n](ix  ,iy+1) * c01 +
-      	   cachetable.potS[mm][n](ix+1,iy+1) * c11
-      	   );
+        Vs(mm,n) =
+          (
+           cachetable.potS[mm][n](ix  ,iy  ) * c00 +
+           cachetable.potS[mm][n](ix+1,iy  ) * c10 +
+           cachetable.potS[mm][n](ix  ,iy+1) * c01 +
+           cachetable.potS[mm][n](ix+1,iy+1) * c11
+           );
             }
 
     } // end NORDER loop
@@ -497,55 +453,55 @@ void get_table_forces(double r, double z, CylCache cachetable, CylForce& forceta
     for (int n=0; n<cachetable.NORDER; n++) {
 
       forcetable.potC(mm,n) =
-	      (
+        (
         cachetable.potC[mm][n](ix  ,iy  ) * c00 +
-     	  cachetable.potC[mm][n](ix+1,iy  ) * c10 +
-     	  cachetable.potC[mm][n](ix  ,iy+1) * c01 +
-     	  cachetable.potC[mm][n](ix+1,iy+1) * c11
-	      );
+         cachetable.potC[mm][n](ix+1,iy  ) * c10 +
+         cachetable.potC[mm][n](ix  ,iy+1) * c01 +
+         cachetable.potC[mm][n](ix+1,iy+1) * c11
+        );
 
       forcetable.rforceC(mm,n) =
-	      (
-	      cachetable.rforceC[mm][n](ix  ,iy  ) * c00 +
-	      cachetable.rforceC[mm][n](ix+1,iy  ) * c10 +
-	      cachetable.rforceC[mm][n](ix  ,iy+1) * c01 +
-	      cachetable.rforceC[mm][n](ix+1,iy+1) * c11
-	      );
+        (
+        cachetable.rforceC[mm][n](ix  ,iy  ) * c00 +
+        cachetable.rforceC[mm][n](ix+1,iy  ) * c10 +
+        cachetable.rforceC[mm][n](ix  ,iy+1) * c01 +
+        cachetable.rforceC[mm][n](ix+1,iy+1) * c11
+        );
 
       forcetable.zforceC(mm,n) =
-	      (
-	      cachetable.zforceC[mm][n](ix  ,iy  ) * c00 +
-	      cachetable.zforceC[mm][n](ix+1,iy  ) * c10 +
-	      cachetable.zforceC[mm][n](ix  ,iy+1) * c01 +
-	      cachetable.zforceC[mm][n](ix+1,iy+1) * c11
-	      );
+        (
+        cachetable.zforceC[mm][n](ix  ,iy  ) * c00 +
+        cachetable.zforceC[mm][n](ix+1,iy  ) * c10 +
+        cachetable.zforceC[mm][n](ix  ,iy+1) * c01 +
+        cachetable.zforceC[mm][n](ix+1,iy+1) * c11
+        );
 
       // get sine values for m>0
       if (mm) {
 
-	forcetable.potS(mm,n) =
-	  (
-	   cachetable.potS[mm][n](ix  ,iy  ) * c00 +
-	   cachetable.potS[mm][n](ix+1,iy  ) * c10 +
-	   cachetable.potS[mm][n](ix  ,iy+1) * c01 +
-	   cachetable.potS[mm][n](ix+1,iy+1) * c11
-	   );
+  forcetable.potS(mm,n) =
+    (
+     cachetable.potS[mm][n](ix  ,iy  ) * c00 +
+     cachetable.potS[mm][n](ix+1,iy  ) * c10 +
+     cachetable.potS[mm][n](ix  ,iy+1) * c01 +
+     cachetable.potS[mm][n](ix+1,iy+1) * c11
+     );
 
         forcetable.rforceS(mm,n) =
-	  (
-	   cachetable.rforceS[mm][n](ix  ,iy  ) * c00 +
-	   cachetable.rforceS[mm][n](ix+1,iy  ) * c10 +
-	   cachetable.rforceS[mm][n](ix  ,iy+1) * c01 +
-	   cachetable.rforceS[mm][n](ix+1,iy+1) * c11
-	   );
+    (
+     cachetable.rforceS[mm][n](ix  ,iy  ) * c00 +
+     cachetable.rforceS[mm][n](ix+1,iy  ) * c10 +
+     cachetable.rforceS[mm][n](ix  ,iy+1) * c01 +
+     cachetable.rforceS[mm][n](ix+1,iy+1) * c11
+     );
 
         forcetable.zforceS(mm,n) =
-	  (
-	   cachetable.zforceS[mm][n](ix  ,iy  ) * c00 +
-	   cachetable.zforceS[mm][n](ix+1,iy  ) * c10 +
-	   cachetable.zforceS[mm][n](ix  ,iy+1) * c01 +
-	   cachetable.zforceS[mm][n](ix+1,iy+1) * c11
-	   );
+    (
+     cachetable.zforceS[mm][n](ix  ,iy  ) * c00 +
+     cachetable.zforceS[mm][n](ix+1,iy  ) * c10 +
+     cachetable.zforceS[mm][n](ix  ,iy+1) * c01 +
+     cachetable.zforceS[mm][n](ix+1,iy+1) * c11
+     );
       }
 
     } // end NORDER loop

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(
   SPHEXPANSION
-  VERSION 0.2.2
+  VERSION 0.2.3
   HOMEPAGE_URL https://github.com/michael-petersen/sphexpansion
   LANGUAGES CXX)
 
@@ -27,8 +27,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # required compiler features
 find_package(pybind11)
-find_package(Eigen3)
-find_package(yaml-cpp)
+find_package(Eigen3 REQUIRED)
 
 if(pybind11_FOUND)
   set(HAVEPYBIND11 TRUE)
@@ -40,11 +39,7 @@ if(Eigen3_FOUND)
   set(HAVEEIGEN TRUE)
   message(STATUS "Do we have eigen? ${HAVEEIGEN}")
   add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
-endif()
-
-if(yaml-cpp_FOUND)
-  set(HAVEYAML TRUE)
-  message(STATUS "Do we have yaml-cpp? ${HAVEYAML}")
+  include_directories( ${EIGEN3_INCLUDE_DIRS} )
 endif()
 
 add_subdirectory(examples)

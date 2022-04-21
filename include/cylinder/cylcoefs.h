@@ -14,9 +14,6 @@ todo:
 #ifndef CYLCOEFS_H
 #define CYLCOEFS_H
 
-#if HAVEYAML
-#include "yaml-cpp/yaml.h"	// YAML support
-#endif
 
 // standard namespace includes
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
@@ -73,17 +70,6 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     buf[ssize] = 0;		// Null terminate
 
 
-#if HAVEYAML
-    YAML::Node node = YAML::Load(buf.get());
-
-    // Get parameters
-    //
-    coeftable.MMAX    = node["mmax"].as<int>();
-    coeftable.NORDER  = node["nmax"].as<int>();
-    tnow              = node["time"].as<double>();
-
-#else // compile without libyaml
-
     std::string yamlblob = buf.get();
 
     // loop through string parsing
@@ -131,9 +117,6 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
     if (token2.compare("nmax") == 0)   coeftable.NORDER  = std::stoi(token3);
 
     //std::cout << coeftable.MMAX  << " " << coeftable.NORDER  << std::endl;
-
-
-#endif
 
 
   } else {
@@ -217,16 +200,6 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
       in.read(buf.get(), ssize);
       buf[ssize] = 0;		// Null terminate
 
-#if HAVEYAML
-      YAML::Node node = YAML::Load(buf.get());
-
-      // Get parameters
-      //
-      //cout << node["time"].as<double>() << endl;
-      coeftable.t[tt]   = node["time"].as<double>();
-
-#else // compile without libyaml
-
       std::string yamlblob = buf.get();
 
       // loop through string parsing
@@ -258,8 +231,6 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
 
       // last one is always 'nmax' which we can ignore here
       //std::cout<<coeftable.t[tt]<<endl;
-
-#endif
 
     } else {
 
