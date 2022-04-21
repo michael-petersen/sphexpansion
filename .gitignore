@@ -22,3 +22,7 @@ extern/*
 
 # maximum resolution data
 data/disc.cache.run9mlde
+
+# Python
+*.ipynb_checkpoints*
+
