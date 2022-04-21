@@ -5,6 +5,9 @@ set(bin_PROGRAMS rotcurve densitymap fullintegrate comparediscs)
 
 set(common_LINKLIB ${EIGEN3_LIBRARIES})
 
+# is this the best way to do this?
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
+
 set(common_INCLUDE $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/> ${CMAKE_BINARY_DIR}
