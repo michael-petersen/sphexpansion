@@ -21,6 +21,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # using Visual Studio C++
 endif()
 
+set(CMAKE_OSX_ARCHITECTURES "x86_64")
+
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # required compiler features
