@@ -4,18 +4,14 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
+#include <pybind11/stl.h>
+
+// local to this build
 #include "fullintegrate.h"
 
 namespace py = pybind11;
 
-int add(int i, int j) {
-    return i + j;
-}
-
 PYBIND11_MODULE(mwlmc, m) {
-//     m.doc() = "pybind11 example plugin"; // optional module docstring
-
-//     m.def("add", &add, "A function that adds two numbers");
 
     py::class_<MWLMC>(m, "MWLMC")
         .def(py::init<>())

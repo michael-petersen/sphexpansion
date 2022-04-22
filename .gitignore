@@ -12,6 +12,8 @@ examples/extractcoefs.cc
 examples/config_flags.h.in
 examples/eigenbasics.cc
 examples/eigentest.cc
+examples/fullintegrate.cc
+
 
 # not-fully-implemented features
 include/accumulate.h
@@ -25,4 +27,3 @@ data/disc.cache.run9mlde
 
 # Python
 *.ipynb_checkpoints*
-

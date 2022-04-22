@@ -1,7 +1,7 @@
 
 add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
 
-set(bin_PROGRAMS rotcurve densitymap fullintegrate comparediscs)
+set(bin_PROGRAMS rotcurve densitymap comparediscs)
 
 set(common_LINKLIB ${EIGEN3_LIBRARIES})
 
@@ -14,13 +14,12 @@ set(common_INCLUDE $<INSTALL_INTERFACE:include>
   ${DEP_INC} ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/.. ${EIGEN3_INCLUDE_DIR})
 
-add_executable(fullintegrate  fullintegrate.cc)
 add_executable(densitymap     density_map.cc  )
 add_executable(rotcurve       rotcurve.cc     )
 add_executable(comparediscs   compare_discs.cc)
 
 if(HAVEPYBIND11)
-  pybind11_add_module(mwlmc mwlmc.cc)
+  pybind11_add_module(mwlmc mwlmc.cc )
 endif()
 
 foreach(program ${bin_PROGRAMS})
