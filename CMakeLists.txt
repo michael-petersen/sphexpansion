@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(
   SPHEXPANSION
-  VERSION 0.2.3
+  VERSION 0.2.4
   HOMEPAGE_URL https://github.com/michael-petersen/sphexpansion
   LANGUAGES CXX)
 

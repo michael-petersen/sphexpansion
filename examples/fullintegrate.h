@@ -44,21 +44,18 @@ public:
   MWLMC();
 
   // return all fields for the MW halo (in the frame of the MW halo)
-  void mwhalo_fields(double t, double x, double y, double z,
-                     double& fx, double& fy, double& fz, double& pot, double& dens,
-                     int mwhharmonicflag=127, bool verbose=false);
+  std::vector<double> mwhalo_fields(double t, double x, double y, double z,
+                                    int mwhharmonicflag=127, bool verbose=false);
 
   // return all fields for the LMC halo
-  void lmc_fields(double t, double x, double y, double z,
-                  double& fx, double& fy, double& fz, double& pot, double& dens,
-                  int lmcarmonicflag=127, bool verbose=false);
+  std::vector<double> lmc_fields(double t, double x, double y, double z,
+                                 int lmcarmonicflag=127, bool verbose=false);
 
   // return all fields for the MW disc
   // NOTE: density does not work here. not enabled yet for cylindrical expansions.
   //       leave as an inspirational placeholder
   std::vector<double>  mwd_fields(double t, double x, double y, double z,
-                                  int mwdharmonicflag=127,
-                                  bool verbose=false);
+                                  int mwdharmonicflag=127, bool verbose=false);
 
   // return total forces
   // @IMPROVE: write all potential as well
@@ -67,7 +64,7 @@ public:
                                  bool verbose=false);
 
   // version for integration, to avoid extra allocations
-  void all_forces_fixed(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+  void all_forces_coefs(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
                         double t, double x, double y, double z,
                         double& fx, double& fy, double& fz,
                         int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
@@ -129,18 +126,14 @@ void MWLMC::print_orbit(MatrixXd orbit, string orbitfile)
 
 }
 
-void MWLMC::mwhalo_fields(double t, double x, double y, double z,
-                          double& fx, double& fy, double& fz, double& pot, double& dens,
-                          int mwhharmonicflag, bool verbose)
+std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
+                                         int mwhharmonicflag, bool verbose)
 {
   /*
     always comes out in the frame of the expansion: translate to inertial before input, if desired
 
    */
 
-
-  // zero out forces
-  fx = fy = fz = 0.;
 
   // translate all times and positions into exp virial units
   double tvir,xvir,yvir,zvir;
@@ -181,27 +174,28 @@ void MWLMC::mwhalo_fields(double t, double x, double y, double z,
   virial_to_physical_potential(tpotl,pphys);
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
-  // return MW force
-  fx += fxphys;
-  fy += fyphys;
-  fz += fzphys;
-  dens = dphys;
-  pot = pphys;
+  // initialise output array
+  std::vector<double> output(5);
+
+  output[0] = fxphys;
+  output[1] = fyphys;
+  output[2] = fzphys;
+  output[3] = dphys;
+  output[4] = pphys;
+
+  return output;
+
 }
 
 
-void MWLMC::lmc_fields(double t, double x, double y, double z,
-                       double& fx, double& fy, double& fz, double& pot, double& dens,
-                       int lmcharmonicflag, bool verbose)
+std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
+                                      int lmcharmonicflag, bool verbose)
 {
   /*
     always comes out in the frame of the expansion: translate to inertial before input, if desired
 
    */
    // translate all times and positions into exp virial units
-
-  // zero out forces
-  fx = fy = fz = 0.;
 
   // translate all times and positions into exp virial units
   double tvir,xvir,yvir,zvir;
@@ -241,12 +235,17 @@ void MWLMC::lmc_fields(double t, double x, double y, double z,
   virial_to_physical_potential(tpotl,pphys);
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
-  // return LMC force
-  fx += fxphys;
-  fy += fyphys;
-  fz += fzphys;
-  dens = dphys;
-  pot = pphys;
+  // initialise output array
+  std::vector<double> output(5);
+
+  output[0] = fxphys;
+  output[1] = fyphys;
+  output[2] = fzphys;
+  output[3] = dphys;
+  output[4] = pphys;
+
+  return output;
+
 }
 
 
@@ -257,15 +256,6 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
   /*
 
    */
-
-  // zero out forces
-  double fx = 0;
-  double fy = 0;
-  double fz = 0;
-  double dens = 0;
-  double pot = 0;
-
-  std::vector<double> output(5);
 
   // translate all times and positions into exp virial units
   double tvir,xvir,yvir,zvir;
@@ -308,17 +298,15 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
   virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
   // return MW force
-  fx += fxphys;
-  fy += fyphys;
-  fz += fzphys;
-  dens = dphys;
-  pot = pphys;
 
-  output[0] = fx;
-  output[1] = fy;
-  output[2] = fz;
-  output[3] = dens;
-  output[4] = pot;
+  // initialise output array
+  std::vector<double> output(5);
+
+  output[0] = fxphys;
+  output[1] = fyphys;
+  output[2] = fzphys;
+  output[3] = dphys;
+  output[4] = pphys;
 
   return output;
 
@@ -460,11 +448,12 @@ std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
 }
 
 
-void MWLMC::all_forces_fixed(MatrixXd mwcoefs, MatrixXd lmccoefs, MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
-                        double t, double x, double y, double z,
-                       double& fx, double& fy, double& fz,
-                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
-                       bool verbose)
+void MWLMC::all_forces_coefs(MatrixXd mwcoefs, MatrixXd lmccoefs,
+                             MatrixXd mwdcoscoefs, MatrixXd mwdsincoefs,
+                             double t, double x, double y, double z,
+                             double& fx, double& fy, double& fz,
+                             int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                             bool verbose)
 {
   /*
     specs: take a time, x,y,z; return x,y,z forces, in physical units
@@ -630,7 +619,7 @@ MatrixXd MWLMC::orbit(vector<double> xinit,
   virial_to_physical_time(0.,tphys);
 
   // return forces for the initial step
-  all_forces_fixed(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+  all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
              tphys, orbit(0,0),orbit(1,0),orbit(2,0),
              fx, fy, fz,
              mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
@@ -666,10 +655,10 @@ MatrixXd MWLMC::orbit(vector<double> xinit,
     }
 
     // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
-    all_forces_fixed(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-         dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
-         fx, fy, fz,
-         mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+    all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                     dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
+                     fx, fy, fz,
+                     mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
   orbit(6,step) = fx;
   orbit(7,step) = fy;
