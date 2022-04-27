@@ -20,7 +20,9 @@ string model_datadir = get_datadir(__FILE__);
 string runtag = "run9mlde";
 
 // the virial time of the 'present day'
-double reference_time = 1.19925;
+double reference_time = 1.19925; // (in virial)
+double native_timestep = 0.000125; // native timestep of the simulation (in virial)
+int    native_steps = reference_time/native_timestep; // number of native timesteps in the simulation (does this match NUMT?)
 
 // set these parameters to tune the simulation virial units to the MW
 double mw_virial_radius        = 282.;                                  // virial radius of the MW, kpc/Rvir

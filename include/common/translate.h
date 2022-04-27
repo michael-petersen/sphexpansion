@@ -71,6 +71,12 @@ void virial_to_physical_length(double xvir, double   yvir, double   zvir,
   zphys = mw_virial_radius * zvir;
 }
 
+void virial_to_physical_length(double xvir, double& xphys)
+{
+  // no overload, single coordinate transformation
+  xphys = mw_virial_radius * xvir;
+}
+
 void virial_to_physical_velocity(double vxvir, double vyvir, double vzvir,
 			double& vxphys, double& vyphys, double& vzphys)
 {

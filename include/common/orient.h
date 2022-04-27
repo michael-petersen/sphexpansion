@@ -14,7 +14,7 @@ MSP 24 Dec 2021 enable inertial centres if no orient file is passed
 MSP 24 Dec 2021 change spline calls to preprocessor flag
 
 wishlist:
--change SphOrient to Orient everywhere
+-change SphOrient to Orient everywhere (make class definition)
 -handle bad files gracefully
 -handle axis tipping orient files
 -find_initial_velocity: how to dynamically determine nPoints?
@@ -29,6 +29,15 @@ wishlist:
 
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
+
+class Orient
+{
+private:
+
+
+public:
+
+};
 
 struct SphOrient
 {
@@ -53,8 +62,7 @@ struct SphOrient
 
 };
 
-void find_time_index(double desired_time, SphOrient orient,
-		     int& indx, double& dt)
+void find_time_index(double desired_time, SphOrient orient, int& indx, double& dt)
 {
   // starting at the first indx, stop when we get to the matching time
   indx = 0;
@@ -77,8 +85,8 @@ void find_time_index(double desired_time, SphOrient orient,
 
 
 void interpolate_centre(double desired_time,
-			SphOrient& orient,
-			vector<double>& centre)
+                        SphOrient& orient,
+                        vector<double>& centre, bool verbose=false)
 {
 
   // find the matching time
@@ -98,19 +106,30 @@ void interpolate_centre(double desired_time,
   if (indx<0) {
     // interpolate the centre backwards in time before the simulation starts
     // selects the earliest time
+
+    if (verbose) std::cout << "orient: extrapolating before simulation start." << std::endl;
+
     float dtime = (desired_time-orient.time[0]);
 
-      centre[0] = orient.xcen[0] + dtime*orient.zerotimevelocities[0];
-      centre[1] = orient.ycen[0] + dtime*orient.zerotimevelocities[1];
-      centre[2] = orient.zcen[0] + dtime*orient.zerotimevelocities[2];
+    centre[0] = orient.xcen[0] + dtime*orient.zerotimevelocities[0];
+    centre[1] = orient.ycen[0] + dtime*orient.zerotimevelocities[1];
+    centre[2] = orient.zcen[0] + dtime*orient.zerotimevelocities[2];
 
+  } else {
+    // check against the old commits
+    double x1 = (orient.time[indx+1] - desired_time)/dt;
+    double x2 = (desired_time - orient.time[indx])/dt;
+
+    centre[0] = (x1*orient.xcen[indx] + x2*orient.xcen[indx+1]);
+    centre[1] = (x1*orient.ycen[indx] + x2*orient.ycen[indx+1]);
+    centre[2] = (x1*orient.zcen[indx] + x2*orient.zcen[indx+1]);
   }
 
 }
 
 void interpolate_velocity_centre(double desired_time,
-			         SphOrient& orient,
-			         vector<double>& velcentre)
+               SphOrient& orient,
+               vector<double>& velcentre)
 {
   // find the matching time
   int indx;
@@ -134,7 +153,7 @@ void interpolate_velocity_centre(double desired_time,
 
   } else {
     // verify that this works? shouldn't ever get to this point.
-    if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
+    //if (indx>orient.NUMT-2) indx = orient.NUMT - 2;
 
     double x1 = (orient.time[indx+1] - desired_time)/dt;
     double x2 = (desired_time - orient.time[indx])/dt;
@@ -148,22 +167,22 @@ void interpolate_velocity_centre(double desired_time,
 
 
 void return_centre(double desired_time,
-		   SphOrient& orient,
-		   vector<double>& centre)
+                   SphOrient& orient,
+                   vector<double>& centre)
 {
       interpolate_centre(desired_time, orient, centre);
 }
 
 void return_vel_centre(double desired_time,
-		       SphOrient& orient,
-		       vector<double>& velcentre)
+                       SphOrient& orient,
+                       vector<double>& velcentre)
 {
       interpolate_velocity_centre(desired_time, orient, velcentre);
 }
 
 void find_initial_velocity(SphOrient& orient,
-			   bool accel=false,
-			   int nPoints=2000)
+         bool accel=false,
+         int nPoints=2000)
 {
   // find the slope and intercept at the beginning of the series, from
   // the first nPoints points
@@ -238,23 +257,23 @@ void read_orient (string orient_file, SphOrient& orient) {
     istringstream ss(line);
 
     if (linenum==0) {
-    	ss >> orient.NUMT;
-    	orient.time.resize(orient.NUMT);
-    	orient.xcen.resize(orient.NUMT);
-    	orient.ycen.resize(orient.NUMT);
-    	orient.zcen.resize(orient.NUMT);
-  	  orient.ucen.resize(orient.NUMT);
-  	  orient.vcen.resize(orient.NUMT);
+      ss >> orient.NUMT;
+      orient.time.resize(orient.NUMT);
+      orient.xcen.resize(orient.NUMT);
+      orient.ycen.resize(orient.NUMT);
+      orient.zcen.resize(orient.NUMT);
+      orient.ucen.resize(orient.NUMT);
+      orient.vcen.resize(orient.NUMT);
       orient.wcen.resize(orient.NUMT);
     } else {
         ss >>
         orient.time[linenum-1] >>
         orient.xcen[linenum-1] >>
         orient.ycen[linenum-1] >>
-    	  orient.zcen[linenum-1] >>
+        orient.zcen[linenum-1] >>
         orient.ucen[linenum-1] >>
         orient.vcen[linenum-1] >>
-    	  orient.wcen[linenum-1];
+        orient.wcen[linenum-1];
 
     }
   linenum ++;
@@ -270,6 +289,11 @@ void read_orient (string orient_file, SphOrient& orient) {
       //cout << setw(14) << i << setw(14) << orient.time[i] << setw(14) << abs(orient.time[i] - orient.time[i-1] - dt) << setw(14) << dt << endl;
       orient.eventime = false;
     }
+  }
+
+  // force eventime = false for safety
+  if (orient.eventime == false) {
+    std::cout << "Uneven time spacing for component orient." << endl;
   }
 
   // for some future verbose flag, perhaps
