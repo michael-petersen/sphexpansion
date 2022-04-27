@@ -501,7 +501,7 @@ MatrixXd MWLMC::get_trajectories(double dt, bool virial)
 std::vector<double> MWLMC::get_expansion_centres_physical(double t, bool verbose)
 {
   // check for a valid time
-  if t > 0.0 {
+  if (t > 0.0) {
     std::cout << "Cannot select a time after the present day! Setting to present day..." << std::endl;
     t = 0.0;
   }
@@ -543,9 +543,9 @@ std::vector<double> MWLMC::get_expansion_centres_physical(double t, bool verbose
 std::vector<double> MWLMC::get_expansion_centres_virial(double tvir, bool verbose)
 {
   // check for a valid time
-  if (t > reference_time) {
+  if (tvir > reference_time) {
     std::cout << "Cannot select a time after the present day! Setting to present day..." << std::endl;
-    t = reference_time;
+    tvir = reference_time;
   }
 
   // make one big return container
