@@ -74,6 +74,17 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("tend")            = 0.0,
              py::arg("dt")              = 0.002)
 
+        .def("rewind", &MWLMC::rewind,
+             py::arg("xinit"),
+             py::arg("vinit"),
+             py::arg("dt")              = 0.002,
+             py::arg("mwhharmonicflag") = 127,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("lmcharmonicflag") = 127,
+             py::arg("rewindtime")      = 2.5,
+             py::arg("discframe")       = true)
+
+
         .def("print_orbit", &MWLMC::print_orbit);
 
 }

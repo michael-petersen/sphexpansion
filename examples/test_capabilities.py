@@ -6,6 +6,14 @@ import matplotlib.pyplot as plt
 
 Model = mwlmc.MWLMC()
 
+X = Model.rewind((-8.27,0.,0.),(0.,240.,0.))
+plt.figure()
+plt.plot(X[0],X[1],color='black',lw=1.)
+plt.tight_layout()
+plt.savefig('orbittest.png')
+
+
+
 X = Model.mworbit((-8.27,0.,0.),(0.,200.,0.))
 plt.figure()
 plt.plot(X[0],X[2],color='black',lw=1.)

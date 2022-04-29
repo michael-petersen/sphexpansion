@@ -1023,7 +1023,6 @@ MatrixXd MWLMC::orbit(vector<double> xinit,
     }
   }
 
-
   return orbit;
 
 }
@@ -1140,99 +1139,130 @@ MatrixXd MWLMC::rewind(vector<double> xinit,
                        double rewind_time,
                        bool discframe)
 {
-  /*
-  starting at reference_time, run back to the beginning of the simulation for ICs.
+ /*
+ takes physical units
 
-  takes the present-day position and velocities, so the first step is to inver the velocities in place.
+  */
+  // start by converting everything to system units
 
-   */
-  double fx,fy,fz,tvir;
+ double fx,fy,fz,tvir;
 
-  MatrixXd orbit;
+ MatrixXd orbit;
 
-  // calculate nint from the number of simulation steps
-  // set this to be a floor?
-  int nint = reference_time/dt;
+ // number of integration steps to take
+ int nint = (int)(rewind_time/dt);
 
-  // include the forces in the output values for now
-  orbit.resize(10,nint);
+ if (nint<0) {
+   std::cerr << "rewind: rewind_time must be positive. Exiting." << std::endl;
+   exit(-1);
+ }
 
-  // initialise beginning values
-  orbit(0,0) =  xinit[0];
-  orbit(1,0) =  xinit[1];
-  orbit(2,0) =  xinit[2];
-  orbit(3,0) = -vinit[0];
-  orbit(4,0) = -vinit[1];
-  orbit(5,0) = -vinit[2];
+ // include the forces for now
+ orbit.resize(10,nint);
 
-  //now step forward one, using leapfrog (drift-kick-drift) integrator?
-  //    https://en.wikipedia.org/wiki/Leapfrog_integration
-  //
-  int step = 1;
+ // set times
+ double tvirbegin  = reference_time;
+ double dtvir      = physical_to_virial_time_return(dt);
+ double tphysbegin = 0.;
+ double dtphys     = dt;
 
-  // get the initial coefficient values: we are starting from the present day, so this is reference_time
-  MatrixXd tcoefsmw,tcoefslmc;
-  MW->select_coefficient_time(reference_time, tcoefsmw);
-  LMC->select_coefficient_time(reference_time, tcoefslmc);
+ orbit(0,0) =  xinit[0];
+ orbit(1,0) =  xinit[1];
+ orbit(2,0) =  xinit[2];
+ orbit(3,0) = -vinit[0];
+ orbit(4,0) = -vinit[1];
+ orbit(5,0) = -vinit[2];
+ //now step forward one, using leapfrog (drift-kick-drift) integrator?
+ //    https://en.wikipedia.org/wiki/Leapfrog_integration
+ //
+ int step = 1;
 
-  MatrixXd mwcoscoefs,mwsincoefs;
-  MWD->select_coefficient_time(reference_time, mwcoscoefs, mwsincoefs);
+ // get the initial coefficient values: the time here is in tvir units, so always start with 0
+ MatrixXd tcoefsmw,tcoefslmc, mwcoscoefs,mwsincoefs;
+ MW->select_coefficient_time(tvirbegin, tcoefsmw);
+ LMC->select_coefficient_time(tvirbegin, tcoefslmc);
+ MWD->select_coefficient_time(tvirbegin, mwcoscoefs, mwsincoefs);
 
-  // not applying time offsets here; think about whether this is a problem
-  double tphys;
-  virial_to_physical_time(reference_time,tphys);
+ // return forces for the initial step
+ all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                  tphysbegin, orbit(0,0),orbit(1,0),orbit(2,0),
+                  fx, fy, fz,
+                  mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
-  // return forces for the initial step
-  all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-                   tphys, orbit(0,0),orbit(1,0),orbit(2,0),
-                   fx, fy, fz,
-                   mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+ orbit(6,0) = fx;
+ orbit(7,0) = fy;
+ orbit(8,0) = fz;
 
-  orbit(6,0) = fx;
-  orbit(7,0) = fy;
-  orbit(8,0) = fz;
+ int j;
+ double tvirnow, tphysnow;
 
-  int j;
+ for (step=1; step<nint; step++) {
 
-  for (step=1; step<nint; step++) {
+   // decrement timestep: this is in virial units by definition.
+   tvirnow  = tvirbegin  - dtvir*step;
+   tphysnow = tphysbegin - dtphys*step;
+   orbit(9,step) = tphysnow; // record the time
 
-    // advance timestep: this is in physical units by definition.
-    orbit(9,step) = dt*step;
+   //std::cout << "step=" << step << " tphysnow=" << tphysnow << " tvirnow=" << tvirnow << std::endl;
 
-    // find the current virial time
-    physical_to_virial_time(dt*(step),tvir);
+   MW->select_coefficient_time(tvirnow, tcoefsmw);
+   LMC->select_coefficient_time(tvirnow, tcoefslmc);
+   MWD->select_coefficient_time(tvirnow, mwcoscoefs, mwsincoefs);
 
-    // get coefficients at the current virial time
-    MW->select_coefficient_time(tvir, tcoefsmw);
-    LMC->select_coefficient_time(tvir, tcoefslmc);
-    MWD->select_coefficient_time(tvir, mwcoscoefs, mwsincoefs);
+   // 'advance' positions
+   for (j=0; j<3; j++) {
+     orbit(j,step) = orbit(j,step-1)   + (orbit(j+3,step-1)*dt  )  + (0.5*orbit(j+6,step-1)  * (dt*dt));
+   }
 
-    // advance positions
-    for (j=0; j<3; j++) {
-      orbit(j,step) = orbit(j,step-1)   + (orbit(j+3,step-1)*dt  )  + (0.5*orbit(j+6,step-1)  * (dt*dt));
-    }
+   // this call goes out in physical units
+   all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                    // need to shift the time by one unit to get the proper centre
+                    tphysnow - dtphys, orbit(0,step),orbit(1,step),orbit(2,step),
+                    fx, fy, fz,
+                    mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
-    // calculate new forces: time goes in as physical time (e.g. kpc/km/s)
-    all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
-                     dt*(step-1), orbit(0,step),orbit(1,step),orbit(2,step),
-                     fx, fy, fz,
-                     mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
 
-  orbit(6,step) = fx;
-  orbit(7,step) = fy;
-  orbit(8,step) = fz;
+   orbit(6,step) = fx;
+   orbit(7,step) = fy;
+   orbit(8,step) = fz;
 
-  // advance velocities
-  for (j=3; j<6; j++) {
-  orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
-  }
+   // advance velocities
+   for (j=3; j<6; j++) {
+     orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
+   }
 
-  }
+ }
 
-  return orbit;
+
+ // convert to physical units again...
+ vector<double> initcoords(3),initvel(3);
+ tvirnow  = tvirbegin;
+ return_centre(tvirnow, MWD->orient, initcoords);
+ //std::cout << setw(14) << tvirnow  << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << std::endl;
+ return_vel_centre(tvirnow, MWD->orient, initvel);
+
+ if (discframe) {
+   vector<double> zerocoords(3),zerovel(3);
+   for (int n=0; n<nint; n++) {
+     tvirnow  = tvirbegin - dtvir*n;
+     // get the present-day MWD coordinates: the zero of the total
+     return_centre(tvirnow, MWD->orient, zerocoords);
+     //std::cout << setw(14) << tvirnow  << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << std::endl;
+     return_vel_centre(tvirnow, MWD->orient, zerovel);
+     for (j=0; j<3; j++) {
+       orbit(j,n)   = orbit(j,n) - virial_to_physical_length(zerocoords[j]) + virial_to_physical_length(initcoords[j]);
+       orbit(j+3,n) = orbit(j,n) - virial_to_physical_velocity(zerovel[j]) + virial_to_physical_length(initvel[j]);
+       //orbit(j,n) = virial_to_physical_length(orbit(j,n));
+       //orbit(j+3,n) = virial_to_physical_velocity(orbit(j+3,n));
+       //orbit(j+6,n) = virial_to_physical_force(orbit(j+6,n));
+     }
+     //orbit(9,n) = virial_to_physical_time_return(orbit(9,n) - reference_time);
+   }
+ }
+
+ return orbit;
 
 }
-
 
 
 #endif
