@@ -50,6 +50,11 @@ void virial_to_physical_time(double tvir, double& tphys)
   tphys = mw_time_scale * tvir;
 }
 
+double virial_to_physical_time_return(double tvir)
+{
+  return mw_time_scale * tvir;
+}
+
 void virial_to_physical_potential(double pvir, double& pphys)
 {
   pphys = mw_mass_scale * mw_force_scale * pvir;
@@ -63,6 +68,11 @@ void virial_to_physical_force(double  fxvir, double   fyvir, double   fzvir,
   fzphys = mw_force_scale * fzvir;
 }
 
+double virial_to_physical_force(double  fxvir)
+{
+  return mw_force_scale * fxvir;
+}
+
 void virial_to_physical_length(double xvir, double   yvir, double   zvir,
 			      double& xphys, double& yphys, double& zphys)
 {
@@ -71,10 +81,10 @@ void virial_to_physical_length(double xvir, double   yvir, double   zvir,
   zphys = mw_virial_radius * zvir;
 }
 
-void virial_to_physical_length(double xvir, double& xphys)
+double virial_to_physical_length(double xvir)
 {
   // no overload, single coordinate transformation
-  xphys = mw_virial_radius * xvir;
+  return mw_virial_radius * xvir;
 }
 
 void virial_to_physical_velocity(double vxvir, double vyvir, double vzvir,
@@ -83,6 +93,11 @@ void virial_to_physical_velocity(double vxvir, double vyvir, double vzvir,
   vxphys = mw_vel_scale * vxvir;
   vyphys = mw_vel_scale * vyvir;
   vzphys = mw_vel_scale * vzvir;
+}
+
+double virial_to_physical_velocity(double vxvir)
+{
+  return mw_vel_scale * vxvir;
 }
 
 void physical_to_virial_density(double densphys, double& densvir)
@@ -95,6 +110,11 @@ void physical_to_virial_density(double densphys, double& densvir)
 void physical_to_virial_time(double tphys, double& tvir)
 {
   tvir = tphys/mw_time_scale;
+}
+
+double physical_to_virial_time_return(double tphys)
+{
+  return tphys/mw_time_scale;
 }
 
 void physical_to_virial_potential(double pphys, double& pvir)
@@ -118,6 +138,11 @@ void physical_to_virial_length(double xphys, double yphys, double zphys,
   zvir = zphys/mw_virial_radius;
 }
 
+double physical_to_virial_length(double xphys)
+{
+  return xphys/mw_virial_radius;
+}
+
 void physical_to_virial_velocity(double  vxphys, double vyphys, double vzphys,
 		         	 double& vxvir, double& vyvir, double& vzvir)
 {
@@ -126,5 +151,9 @@ void physical_to_virial_velocity(double  vxphys, double vyphys, double vzphys,
   vzvir = vzphys/mw_vel_scale;
 }
 
+double physical_to_virial_velocity(double  vxphys)
+{
+  return vxphys/mw_vel_scale;
+}
 
 #endif

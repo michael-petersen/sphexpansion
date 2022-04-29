@@ -13,6 +13,10 @@ examples/config_flags.h.in
 examples/eigenbasics.cc
 examples/eigentest.cc
 examples/fullintegrate.cc
+examples/figures/*
+examples/compare_discs.cc
+examples/density_map.cc
+examples/rotcurve.cc
 
 
 # not-fully-implemented features

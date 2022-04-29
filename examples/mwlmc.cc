@@ -15,21 +15,70 @@ PYBIND11_MODULE(mwlmc, m) {
 
     py::class_<MWLMC>(m, "MWLMC")
         .def(py::init<>())
-        .def("mwhalo_fields", &MWLMC::mwhalo_fields
-             //py::arg("mwhharmonicflag") = 127
-            )
-        .def("lmc_fields", &MWLMC::lmc_fields)
-        .def("mwd_fields", &MWLMC::mwd_fields)
-        .def("all_forces", &MWLMC::all_forces)
-        .def("get_expansion_centres_physical", &MWLMC::get_expansion_centres_physical)
-        .def("get_expansion_centres_virial", &MWLMC::get_expansion_centres_virial)
-        .def("orbit", &MWLMC::orbit,
-             py::arg("xinit"), py::arg("vinit"),
-             py::arg("nint"), py::arg("dt"),
+        .def("mwhalo_fields", &MWLMC::mwhalo_fields,
+             py::arg("t"),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("globalframe")     = true,
+             py::arg("mwhharmonicflag") = 127,
+             py::arg("verbose")         = false)
+
+        .def("lmc_fields", &MWLMC::lmc_fields,
+             py::arg("t"),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("globalframe")     = true,
+             py::arg("lmcharmonicflag") = 127,
+             py::arg("verbose")         = false)
+
+        .def("mwd_fields", &MWLMC::mwd_fields,
+             py::arg("t"),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("globalframe")     = true,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("verbose")         = false)
+
+        .def("all_forces", &MWLMC::all_forces,
+             py::arg("t"),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("globalframe")     = true,
              py::arg("mwhharmonicflag") = 127,
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
-             py::arg("fixedtime") = false)
+             py::arg("verbose")         = false)
+
+        .def("get_trajectories", &MWLMC::get_trajectories,
+             py::arg("dt")     = native_timestep,
+             py::arg("virial") = false)
+
+        //.def("get_expansion_centres_virial", &MWLMC::get_expansion_centres_virial,
+        //     py::arg("tvir"),
+        //     py::arg("verbose")  = false)
+
+        .def("orbit", &MWLMC::orbit,
+             py::arg("xinit"),
+             py::arg("vinit"),
+             py::arg("tbegin")          = -2.5,
+             py::arg("tend")            = 0.0,
+             py::arg("dt")              = 0.002,
+             py::arg("mwhharmonicflag") = 127,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("lmcharmonicflag") = 127,
+             py::arg("discframe")       = true)
+
+        .def("mworbit", &MWLMC::mworbit,
+             py::arg("xinit"),
+             py::arg("vinit"),
+             py::arg("tbegin")          = -2.5,
+             py::arg("tend")            = 0.0,
+             py::arg("dt")              = 0.002)
+
         .def("print_orbit", &MWLMC::print_orbit);
 
 }

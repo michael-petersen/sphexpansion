@@ -573,7 +573,7 @@ void SphExpansion::return_density(MatrixXd& coefs,
         tdens0,d,harmonicflag);
 
 #if DEEPDEBUGCOEFS
-  cout << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n';
+  std::cout << "sphexpansion.h::return_density:"  << setw(14) << rtmp << setw(14) << thetatmp << setw(14) << phitmp << setw(14) << fr << setw(14) << ft << setw(14) << fp << '\n';
 #endif
 
 }
@@ -607,10 +607,6 @@ void SphExpansion::select_coefficient_time(double desired_time,
     indx ++;
   }
 
-  // reset by one
-  indx --;
-  //int indx = (int)( (desired_time-coeftable.t[0])/dt);
-
   // check the spacing on coeftable.t (can be nonuniform)
   double dt = coeftable.t[indx+1] - coeftable.t[indx];
 
@@ -624,15 +620,19 @@ void SphExpansion::select_coefficient_time(double desired_time,
   }
 
 #if DEEPDEBUGTIME
-  cout << "indx=" << indx
+  std::cout << "indx=" << indx
        << " MinT=" << coeftable.t[0]
        << " MaxT=" << coeftable.t[coeftable.NUMT-1]
        << " desired_time=" << desired_time
-       << "\n";
+       << std::endl;
 #endif
 
-  if (indx<0) {
+  if (indx<=0) {
 
+#if DEEPDEBUGTIME
+  std::cout << "sphexpansion.h: starting before the simulation starts..."
+       << std::endl;
+#endif
     // set the coefficients to be the first coefficients from the simulation
 
     // do these need to be loops now that we have eigen?

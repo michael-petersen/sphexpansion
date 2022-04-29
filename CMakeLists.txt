@@ -32,13 +32,11 @@ find_package(Eigen3 REQUIRED)
 if(pybind11_FOUND)
   set(HAVEPYBIND11 TRUE)
   message(STATUS "Do we have pybind11? ${HAVEPYBIND11}")
-  add_compile_definitions(HAVEPYBIND11=${HAVEPYBIND11})
 endif()
 
 if(Eigen3_FOUND)
   set(HAVEEIGEN TRUE)
   message(STATUS "Do we have eigen? ${HAVEEIGEN}")
-  add_compile_definitions(HAVEEIGEN=${HAVEEIGEN})
   include_directories( ${EIGEN3_INCLUDE_DIRS} )
 endif()
 
