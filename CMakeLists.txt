@@ -29,10 +29,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 #find_package(pybind11)
 
 find_package(Eigen3 REQUIRED)
-
-set(MY_PYBIND ${MY_CURR}/extern/pybind11-2.9.2)
-
-add_subdirectory(${MY_PYBIND})
+add_subdirectory(extern/pybind11-2.9.2)
 
 if(pybind11_FOUND)
   set(HAVEPYBIND11 TRUE)
