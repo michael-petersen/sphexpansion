@@ -821,35 +821,9 @@ void MWLMC::mw_forces_coefs(MatrixXd mwcoefs,
   // zero out forces
   fx = fy = fz = 0.;
 
-
   // translate all times and positions into exp virial units
-  double tvir,xvir,yvir,zvir;
-  physical_to_virial_time(t,tvir);
+  double xvir,yvir,zvir;
   physical_to_virial_length(x,y,z, xvir,yvir,zvir);
-
-  // reset time to have the correct system zero (e.g. pericentre is T=0)
-  tvir += reference_time;
-
-  // initialise the centre vectors
-  vector<double> zerocoords(3),mw_centre(3),mwd_centre(3);
-
-  // get the present-day MWD coordinates: the zero of the system
-  return_centre(reference_time, MWD->orient, zerocoords);
-
-  // get the centres of the expansions at the specified times in exp reference space
-  return_centre(tvir,  MW->orient,  mw_centre);
-  return_centre(tvir, MWD->orient, mwd_centre);
-
-  // shift the expansion centres to the pericentre coordinate system
-  for (int j=0;j<=2;j++) {
-    mw_centre[j]  -= zerocoords[j];
-    mwd_centre[j] -= zerocoords[j];
-  }
-
-  if (verbose) {
-    cout << "MW virial centre (x,y,z)=(" << mw_centre[0] << ","<< mw_centre[1] << ","<< mw_centre[2] << ")" <<endl;
-    cout << "MWD virial centre (x,y,z)=(" << mwd_centre[0] << ","<< mwd_centre[1] << ","<< mwd_centre[2] << ")" <<endl;
-  }
 
   double rtmp,phitmp,thetatmp,r2tmp;
   double tpotl0,tpotl,fr,ft,fp;
@@ -857,10 +831,8 @@ void MWLMC::mw_forces_coefs(MatrixXd mwcoefs,
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys;
 
-  // compute spherical coordinates in the frame of the MW expansion
-  cartesian_to_spherical(xvir-mwd_centre[0], yvir-mwd_centre[1], zvir-mwd_centre[2], rtmp, phitmp, thetatmp);
-
-  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
+  // compute spherical coordinates
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
 
   MW->determine_fields_at_point_sph(mwcoefs,
                                     rtmp,thetatmp,phitmp,
@@ -878,11 +850,11 @@ void MWLMC::mw_forces_coefs(MatrixXd mwcoefs,
   fy += fyphys;
   fz += fzphys;
 
-  r2tmp = sqrt((xvir-mwd_centre[0])*(xvir-mwd_centre[0]) + (yvir-mwd_centre[1])*(yvir-mwd_centre[1]));
+  r2tmp = sqrt(xvir*xvir + yvir*yvir);
 
   // same procedure for the disc
   MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
-                                     r2tmp,phitmp,zvir-mwd_centre[2],
+                                     r2tmp,phitmp,zvir,
                                      tpotl0,tpotl,
                                      fr,fp,fztmp,mwdharmonicflag);
 
@@ -896,7 +868,6 @@ void MWLMC::mw_forces_coefs(MatrixXd mwcoefs,
   fx += fxphys;
   fy += fyphys;
   fz += fzphys;
-
 
 }
 
@@ -1084,17 +1055,11 @@ MatrixXd MWLMC::mworbit(vector<double> xinit,
    // include the forces for now
    orbit.resize(10,nint);
 
-
    // set times
    double tvirbegin  = physical_to_virial_time_return(tbegin) + reference_time;
    double dtvir      = physical_to_virial_time_return(dt);
    double tphysbegin = tbegin;
    double dtphys     = dt;
-
-   vector<double> zerocoords(3),zerovel(3);
-   // get the present-day MWD coordinates: the zero of the total
-   return_centre(tvirbegin, MWD->orient, zerocoords);
-   return_vel_centre(tvirbegin, MWD->orient, zerovel);
 
    orbit(0,0) = xinit[0];
    orbit(1,0) = xinit[1];
@@ -1119,7 +1084,7 @@ MatrixXd MWLMC::mworbit(vector<double> xinit,
 
    // return forces for the initial step
    mw_forces_coefs(tcoefsmw, mwcoscoefs, mwsincoefs,
-                    tphysbegin, orbit(0,0)-zerocoords[0],orbit(1,0)-zerocoords[1],orbit(2,0)-zerocoords[2],
+                    tphysbegin, orbit(0,0),orbit(1,0),orbit(2,0),
                     fx, fy, fz,
                     127,127);
 
@@ -1145,11 +1110,9 @@ MatrixXd MWLMC::mworbit(vector<double> xinit,
      // this call goes out in physical units
      mw_forces_coefs(tcoefsmw, mwcoscoefs, mwsincoefs,
                       // need to shift the time by one unit to get the proper centre
-                      tphysbegin, orbit(0,step)-zerocoords[0],orbit(1,step)-zerocoords[1],orbit(2,step)-zerocoords[2],
+                      tphysbegin, orbit(0,step),orbit(1,step),orbit(2,step),
                       fx, fy, fz,
                       127,127);
-
-
 
      orbit(6,step) = fx;
      orbit(7,step) = fy;
