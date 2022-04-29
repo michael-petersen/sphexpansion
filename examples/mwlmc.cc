@@ -53,9 +53,8 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("get_trajectories", &MWLMC::get_trajectories,
-             py::arg("dt")     = native_timestep,
-             py::arg("virial") = false)
+        .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
+             py::arg("dt")     = native_timestep)
 
         //.def("get_expansion_centres_virial", &MWLMC::get_expansion_centres_virial,
         //     py::arg("tvir"),

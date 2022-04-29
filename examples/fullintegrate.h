@@ -45,19 +45,19 @@ public:
 
   // return all fields for the MW halo (in the frame of the MW halo)
   std::vector<double> mwhalo_fields(double t, double x, double y, double z,
-                                    bool globalframe=true,
+                                    bool globalframe=false,
                                     int mwhharmonicflag=127, bool verbose=false);
 
   // return all fields for the LMC halo
   std::vector<double> lmc_fields(double t, double x, double y, double z,
-                                 bool globalframe=true,
+                                 bool globalframe=false,
                                  int lmcarmonicflag=127, bool verbose=false);
 
   // return all fields for the MW disc
   // NOTE: density does not work here. not enabled yet for cylindrical expansions.
   //       leave as an inspirational placeholder
   std::vector<double>  mwd_fields(double t, double x, double y, double z,
-                                  bool globalframe=true,
+                                  bool globalframe=false,
                                   int mwdharmonicflag=127, bool verbose=false);
 
   // return total forces
@@ -93,7 +93,7 @@ public:
                  double tend=0.0,
                  double dt=0.002,
                  int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
-                 int discframe=true);
+                 bool discframe=true);
 
   // compute an orbit integration using only the initial Milky Way potential
   MatrixXd mworbit(vector<double> xinit,
@@ -105,9 +105,10 @@ public:
    // compute an orbit rewind in all three components
    MatrixXd rewind(vector<double> xinit,
                    vector<double> vinit,
-                   double dt,
+                   double dt=0.002,
                    int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
-                   double rewind_time=reference_time);
+                   double rewind_time=2.5,
+                   bool discframe = true);
 
   // get centres of the expansions with PHYSICAL time input
   std::vector<double> get_expansion_centres_physical(double t, bool verbose=false);
@@ -115,7 +116,11 @@ public:
   // get centres of the expansions with VIRIAL time input
   std::vector<double> get_expansion_centres_virial(double tvir, bool verbose=false);
 
+  std::vector<double> get_lmc_centre_virial(double tvir, bool verbose);
+
   MatrixXd get_trajectories(double dt=native_timestep, bool virial=false);
+
+  MatrixXd get_lmc_trajectory(double dt=native_timestep);
 
   // print an orbit array
   void print_orbit(MatrixXd orbit, string orbitfile);
@@ -544,6 +549,32 @@ MatrixXd MWLMC::get_trajectories(double dt, bool virial)
 
 }
 
+MatrixXd MWLMC::get_lmc_trajectory(double dt)
+{
+  // get the trajectories with the specified time sampling (returns native time sampling if not specified)
+  int nint = reference_time/dt;
+
+  MatrixXd trajectory;
+  trajectory.resize(nint,4);
+
+  double tphys,xphys;
+
+  for (int n=0;n<nint;n++)
+  {
+    // always start in native time, as we know the simulation bounds
+    std::vector<double> trajectorytmp = get_lmc_centre_virial(n*dt,false);
+    // translate back to physical units
+    virial_to_physical_time(n*dt,tphys);
+    trajectory(n,0) = tphys;
+
+    for (int j=0;j<3;j++) {
+      trajectory(n,j+1) = virial_to_physical_length(trajectorytmp[j]);
+    }
+  }
+
+  return trajectory;
+
+}
 
 
 std::vector<double> MWLMC::get_expansion_centres_physical(double t, bool verbose)
@@ -621,6 +652,34 @@ std::vector<double> MWLMC::get_expansion_centres_virial(double tvir, bool verbos
   for (int i=0;i<3;i++) centres[i+3] = mw_centre[i];
   for (int i=0;i<3;i++) centres[i+6] = lmc_centre[i];
   for (int i=0;i<3;i++) centres[i+9] = mwd_centre[i];
+
+  return centres;
+
+}
+
+
+std::vector<double> MWLMC::get_lmc_centre_virial(double tvir, bool verbose)
+{
+  // check for a valid time
+  if (tvir > reference_time) {
+    std::cout << "Cannot select a time after the present day! Setting to present day..." << std::endl;
+    tvir = reference_time;
+  }
+
+  // make one big return container
+  std::vector<double> centres(3);
+
+  // initialise temporary centre vectors
+  vector<double> zerocoords(3),lmc_centre(3);
+
+  // get the present-day MWD coordinates: the zero of the total
+  return_centre(tvir, MWD->orient, zerocoords);
+
+  // get the centres of the expansions at the specified times in exp reference space
+  return_centre(tvir, LMC->orient, lmc_centre);
+
+  // fill return vector
+  for (int i=0;i<3;i++) centres[i  ] = lmc_centre[i] - zerocoords[i];
 
   return centres;
 
@@ -755,12 +814,7 @@ void MWLMC::mw_forces_coefs(MatrixXd mwcoefs,
                             bool verbose)
 {
   /*
-    specs: take a time, x,y,z; return x,y,z forces, in physical units
-    input/output units must be physical
-    where x0,y0,z0 = present-day galactic centre
-       and      t0 = present day (so previous times are negative)
-
-   if we don't want to pass the entire SphExpansion objects, the necessary pieces can be broken out in a fairly straightforward way.
+    No translation: will only ever happen in the local frame of the MW.
 
    */
 
@@ -854,7 +908,7 @@ MatrixXd MWLMC::orbit(vector<double> xinit,
                       double tend,
                       double dt,
                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
-                      int discframe)
+                      bool discframe)
 {
   /*
   takes physical units
@@ -1117,10 +1171,11 @@ MatrixXd MWLMC::mworbit(vector<double> xinit,
 
 
 MatrixXd MWLMC::rewind(vector<double> xinit,
-                      vector<double> vinit,
-                      double dt,
-                      int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
-                      double rewind_time)
+                       vector<double> vinit,
+                       double dt,
+                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                       double rewind_time,
+                       bool discframe)
 {
   /*
   starting at reference_time, run back to the beginning of the simulation for ICs.
