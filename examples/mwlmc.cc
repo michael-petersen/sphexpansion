@@ -53,13 +53,8 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("get_trajectories", &MWLMC::get_trajectories,
-             py::arg("dt")     = native_timestep,
-             py::arg("virial") = false)
-
-        //.def("get_expansion_centres_virial", &MWLMC::get_expansion_centres_virial,
-        //     py::arg("tvir"),
-        //     py::arg("verbose")  = false)
+        .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
+             py::arg("dt")     = native_timestep)
 
         .def("orbit", &MWLMC::orbit,
              py::arg("xinit"),
@@ -78,6 +73,17 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("tbegin")          = -2.5,
              py::arg("tend")            = 0.0,
              py::arg("dt")              = 0.002)
+
+        .def("rewind", &MWLMC::rewind,
+             py::arg("xinit"),
+             py::arg("vinit"),
+             py::arg("dt")              = 0.002,
+             py::arg("mwhharmonicflag") = 127,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("lmcharmonicflag") = 127,
+             py::arg("rewindtime")      = 2.5,
+             py::arg("discframe")       = true)
+
 
         .def("print_orbit", &MWLMC::print_orbit);
 

@@ -1,16 +1,35 @@
 
-import matplotlib.pyplot as plt
 
 #import numpy as np
 import mwlmc
-Model = mwlmc.MWLMC()
-X = Model.mworbit((-8.27,0.,0.),(0.,240.,0.))
-
 import matplotlib.pyplot as plt
+
+Model = mwlmc.MWLMC()
+
+X = Model.rewind((-8.27,0.,0.),(0.,240.,0.))
 plt.figure()
 plt.plot(X[0],X[1],color='black',lw=1.)
 plt.tight_layout()
 plt.savefig('orbittest.png')
+
+
+
+X = Model.mworbit((-8.27,0.,0.),(0.,200.,0.))
+plt.figure()
+plt.plot(X[0],X[2],color='black',lw=1.)
+plt.tight_layout()
+plt.savefig('orbittest.png')
+
+
+X = Model.get_lmc_trajectory()
+plt.figure()
+plt.plot(X[:,0],X[:,1],color='black',lw=1.)
+plt.plot(X[:,0],X[:,2],color='black',lw=1.)
+plt.plot(X[:,0],X[:,3],color='black',lw=1.)
+plt.tight_layout()
+plt.savefig('orbittest.png')
+
+
 
 
 #Model.get_expansion_centres_virial(0.0)
