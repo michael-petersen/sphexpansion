@@ -20,7 +20,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = true,
+             py::arg("globalframe")     = false,
              py::arg("mwhharmonicflag") = 127,
              py::arg("verbose")         = false)
 
@@ -29,7 +29,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = true,
+             py::arg("globalframe")     = false,
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
@@ -38,7 +38,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = true,
+             py::arg("globalframe")     = false,
              py::arg("mwdharmonicflag") = 127,
              py::arg("verbose")         = false)
 
@@ -70,7 +70,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwhharmonicflag") = 127,
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
-             py::arg("discframe")       = true)
+             py::arg("discframe§")       = true)
 
         .def("mworbit", &MWLMC::mworbit,
              py::arg("xinit"),
