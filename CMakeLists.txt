@@ -26,8 +26,10 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64")
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # required compiler features
-find_package(pybind11)
+#find_package(pybind11)
+
 find_package(Eigen3 REQUIRED)
+add_subdirectory(extern/pybind11-2.9.2)
 
 if(pybind11_FOUND)
   set(HAVEPYBIND11 TRUE)
