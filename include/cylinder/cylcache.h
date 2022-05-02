@@ -93,7 +93,7 @@ void read_cyl_cache(string& cyl_cache_name, CylCache& cachetable)
     throw "cylcache::read_cyl_cache: Unable to open file!\n";
   }
 
-  std::cerr << "cylcache.read_cyl_cache: trying to read cached table. . . ";
+  std::cerr << "cylcache::read_cyl_cache: trying to read cached table . . . ";
 
 
   // Attempt to read magic number
