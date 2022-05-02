@@ -50,9 +50,15 @@ and consider citing this paper
         pages = {629-637},
           doi = {10.1086/300669}
 }
-
-
 ```
+
+-----------------------------
+
+### License
+
+Copyright 2022 Sophia Lilleengen and Michael Petersen.
+
+mwlmc is free software made available under the MIT License. For details see the [LICENSE](./LICENSE) file.
 
 -----------------------------
 
