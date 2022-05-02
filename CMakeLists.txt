@@ -43,3 +43,13 @@ if(Eigen3_FOUND)
 endif()
 
 add_subdirectory(examples)
+
+set(common_LINKLIB ${EIGEN3_LIBRARIES})
+
+# is this the best way to do this?
+include_directories(include)
+
+if(HAVEPYBIND11)
+  pybind11_add_module(mwlmc examples/mwlmc.cc )
+endif()
+
