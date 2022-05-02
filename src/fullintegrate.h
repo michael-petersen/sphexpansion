@@ -74,6 +74,10 @@ public:
                                     bool globalframe=false,
                                     int mwhharmonicflag=127, bool verbose=false);
 
+  MatrixXd mwhalo_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                    bool globalframe=false,
+                                    int mwhharmonicflag=127, bool verbose=false);
+
   // return all fields for the LMC halo
   std::vector<double> lmc_fields(double t, double x, double y, double z,
                                  bool globalframe=false,
@@ -108,7 +112,7 @@ public:
                    double dt=0.002);
 
    // compute an orbit integration using only the initial Milky Way potential
-   std::vector< MatrixXd > mworbit_parallel(MatrixXd xinit,
+   std::vector< MatrixXd > mworbit(MatrixXd xinit,
                                             MatrixXd vinit,
                                             double tbegin=-2.5,
                                             double tend=0.0,
@@ -121,6 +125,13 @@ public:
                    int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
                    double rewind_time=2.5,
                    bool discframe = true);
+
+   std::vector< MatrixXd > rewind(MatrixXd xinit,
+                                  MatrixXd vinit,
+                                  double dt=0.002,
+                                  int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+                                  double rewind_time=2.5,
+                                  bool discframe = true);
 
   // get the LMC trajectory (relative to the MW disc centre)
   MatrixXd get_lmc_trajectory(double dt=native_timestep);
@@ -250,6 +261,98 @@ std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
   return output;
 
 }
+
+
+
+MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                         bool globalframe,
+                                         int mwhharmonicflag, bool verbose)
+{
+  /*
+    always comes out in the frame of the expansion: translate to inertial before input, if desired
+
+   */
+
+   double tvir;
+
+   // translate all times and positions into exp virial units
+   physical_to_virial_time(t,tvir);
+
+   // reset time to have the correct system zero (e.g. pericentre is T=0)
+   tvir += reference_time;
+
+   // get coefficients
+   MatrixXd mwcoefs;
+   MW->select_coefficient_time(tvir, mwcoefs);
+
+   double rtmp,phitmp,thetatmp,r2tmp;
+   double dens0,denstmp,tpotl0,tpotl,fr,ft,fp;
+   double fxtmp,fytmp,fztmp;
+
+   double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+   double xvir,yvir,zvir,xtmp,ytmp,ztmp;
+
+   // get the present-day MWD coordinates: the zero of the system
+   vector<double> zerocoords(3);
+   return_centre(reference_time, MWD->orient, zerocoords);
+
+   // initialise output array
+   int npositions = x.size();
+
+   MatrixXd output;
+   output.resize(npositions,5);
+
+   for (int n=0;n<npositions;n++) {
+
+   if (globalframe) {
+
+     // shift the expansion centres to the pericentre coordinate system
+     xtmp = x[n] - zerocoords[0];
+     ytmp = y[n] - zerocoords[1];
+     ztmp = z[n] - zerocoords[2];
+
+   } else {
+     xtmp = x[n];
+     ytmp = y[n];
+     ztmp = z[n];
+   }
+
+
+  physical_to_virial_length(xtmp,ytmp,ztmp,xvir,yvir,zvir);
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  // get all field values
+  MW->determine_fields_at_point_sph(mwcoefs,
+                                    rtmp,thetatmp,phitmp,
+                                    dens0,denstmp,
+                                    tpotl0,tpotl,
+                                    fr,ft,fp,
+                                    mwhharmonicflag);
+
+  // convert to cartesian
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
+
+  // translate all quantities to physical units
+  virial_to_physical_density(denstmp,dphys);
+  virial_to_physical_potential(tpotl,pphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  output(n,0) = fxphys;
+  output(n,1) = fyphys;
+  output(n,2) = fzphys;
+  output(n,3) = dphys;
+  output(n,4) = pphys;
+} // end npositions loop
+
+  return output;
+
+}
+
 
 
 std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
@@ -980,11 +1083,11 @@ MatrixXd MWLMC::mworbit(vector<double> xinit,
 
 
 
- std::vector< MatrixXd > MWLMC::mworbit_parallel(MatrixXd xinit,
-                                                 MatrixXd vinit,
-                                                 double tbegin,
-                                                 double tend,
-                                                 double dt)
+std::vector< MatrixXd > MWLMC::mworbit(MatrixXd xinit,
+                                       MatrixXd vinit,
+                                       double tbegin,
+                                       double tend,
+                                       double dt)
  {
    /*
    integration of just the Milky Way components
@@ -993,9 +1096,6 @@ MatrixXd MWLMC::mworbit(vector<double> xinit,
     double fx,fy,fz,tvir;
 
     int norbits = xinit.rows();
-    //std::cout << "parallel orbits: " << norbits << std::endl;
-
-    //MatrixXd orbit;
     std::vector< MatrixXd > orbit;
     orbit.resize(norbits);
 
@@ -1224,6 +1324,151 @@ MatrixXd MWLMC::rewind(vector<double> xinit,
      for (j=0; j<3; j++) {
        orbit(j,n)   = orbit(j,n) - virial_to_physical_length(zerocoords[j]) + virial_to_physical_length(initcoords[j]);
        orbit(j+3,n) = orbit(j,n) - virial_to_physical_velocity(zerovel[j]) + virial_to_physical_length(initvel[j]);
+     }
+   }
+ }
+
+ return orbit;
+
+}
+
+
+
+
+
+std::vector< MatrixXd > MWLMC::rewind(MatrixXd xinit,
+                                      MatrixXd vinit,
+                                      double dt,
+                                      int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                                      double rewind_time,
+                                      bool discframe)
+{
+ /*
+ rewind
+ -------------
+ for a given position and velocity, rewind the orbit by a specified amount of time
+
+ takes physical units
+
+  */
+
+ double fx,fy,fz,tvir;
+
+ int norbits = xinit.rows();
+ std::vector< MatrixXd > orbit;
+ orbit.resize(norbits);
+
+ // number of integration steps to take
+ int nint = (int)(rewind_time/dt);
+
+ if (nint<0) {
+   std::cerr << "rewind: rewind_time must be positive. Exiting." << std::endl;
+   exit(-1);
+ }
+
+
+ // set beginning times and timesteps
+ double tvirbegin  = reference_time;
+ double dtvir      = physical_to_virial_time_return(dt);
+ double tphysbegin = 0.;
+ double dtphys     = dt;
+
+ // initialise positions and (inverted) velocities for backwards integration
+ // include the forces for now
+ for (int n=0;n<norbits;n++) {
+   orbit[n].resize(10,nint);
+   orbit[n](0,0) =  xinit(n,0);
+   orbit[n](1,0) =  xinit(n,1);
+   orbit[n](2,0) =  xinit(n,2);
+   orbit[n](3,0) = -vinit(n,0);
+   orbit[n](4,0) = -vinit(n,1);
+   orbit[n](5,0) = -vinit(n,2);
+ }
+
+ //now step forward one, using leapfrog (drift-kick-drift) integrator
+ //    https://en.wikipedia.org/wiki/Leapfrog_integration
+ //
+ int step = 1;
+
+ // get the initial coefficient values: the time here is in tvir units, so always start with 0
+ MatrixXd tcoefsmw,tcoefslmc, mwcoscoefs,mwsincoefs;
+ MW->select_coefficient_time(tvirbegin, tcoefsmw);
+ LMC->select_coefficient_time(tvirbegin, tcoefslmc);
+ MWD->select_coefficient_time(tvirbegin, mwcoscoefs, mwsincoefs);
+
+ // return forces for the initial step
+ for (int n=0;n<norbits;n++) {
+   all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                    tphysbegin, orbit[n](0,0),orbit[n](1,0),orbit[n](2,0),
+                    fx, fy, fz,
+                    mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+
+   orbit[n](6,0) = fx;
+   orbit[n](7,0) = fy;
+   orbit[n](8,0) = fz;
+  }
+
+ int j;
+ double tvirnow, tphysnow;
+
+ for (step=1; step<nint; step++) {
+
+   // 'advance' timestep: this is in virial units by definition.
+   tvirnow  = tvirbegin  - dtvir*step;
+   tphysnow = tphysbegin - dtphys*step;
+
+   MW->select_coefficient_time(tvirnow, tcoefsmw);
+   LMC->select_coefficient_time(tvirnow, tcoefslmc);
+   MWD->select_coefficient_time(tvirnow, mwcoscoefs, mwsincoefs);
+
+   for (int n=0;n<norbits;n++) {
+     orbit[n](9,step) = tphysnow; // record the time
+
+     // 'advance' positions
+     for (j=0; j<3; j++) {
+       orbit[n](j,step) = orbit[n](j,step-1)   + (orbit[n](j+3,step-1)*dt  )  + (0.5*orbit[n](j+6,step-1)  * (dt*dt));
+     }
+
+     // this call goes out in physical units
+     all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                      // need to shift the time by one unit to get the proper centre
+                      tphysnow - dtphys, orbit[n](0,step),orbit[n](1,step),orbit[n](2,step),
+                      fx, fy, fz,
+                      mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+
+
+     orbit[n](6,step) = fx;
+     orbit[n](7,step) = fy;
+     orbit[n](8,step) = fz;
+
+     // advance velocities
+     for (j=3; j<6; j++) {
+       orbit[n](j,step) = orbit[n](j,step-1) + (0.5*(orbit[n](j+3,step-1)+orbit[n](j+3,step))  * dt );
+     }
+   } // orbit loop
+
+ }
+
+
+ // convert to physical units again...
+ // get the original coordinate centre
+ vector<double> initcoords(3),initvel(3);
+ tvirnow  = tvirbegin;
+ return_centre(tvirnow, MWD->orient, initcoords);
+ return_vel_centre(tvirnow, MWD->orient, initvel);
+
+ if (discframe) {
+   vector<double> zerocoords(3),zerovel(3);
+   for (int ni=0; ni<nint; ni++) {
+     tvirnow  = tvirbegin - dtvir*ni;
+     // get the present-day MWD coordinates: the zero of the total
+     return_centre(tvirnow, MWD->orient, zerocoords);
+     return_vel_centre(tvirnow, MWD->orient, zerovel);
+     for (int n=0;n<norbits;n++) {
+       for (j=0; j<3; j++) {
+         orbit[n](j,ni)   = orbit[n](j,ni) - virial_to_physical_length(zerocoords[j]) + virial_to_physical_length(initcoords[j]);
+         orbit[n](j+3,ni) = orbit[n](j,ni) - virial_to_physical_velocity(zerovel[j]) + virial_to_physical_length(initvel[j]);
+       }
      }
    }
  }
