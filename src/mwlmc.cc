@@ -149,7 +149,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("discframe")       = true)
 
         .def("rewind", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,bool>(&MWLMC::rewind),
-                Compute an orbit rewind in all three components.
+                R"pbdoc(Compute an orbit rewind in all three components.
 
                 Parameters
                 ----------
