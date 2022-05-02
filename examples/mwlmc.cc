@@ -1,7 +1,9 @@
 /*
 
+
 */
 
+// generic header includes: requires both pybind11 and eigen
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
@@ -56,18 +58,14 @@ PYBIND11_MODULE(mwlmc, m) {
         .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
              py::arg("dt")     = native_timestep)
 
-        .def("orbit", &MWLMC::orbit,
+        .def("mworbit", &MWLMC::mworbit,
              py::arg("xinit"),
              py::arg("vinit"),
              py::arg("tbegin")          = -2.5,
              py::arg("tend")            = 0.0,
-             py::arg("dt")              = 0.002,
-             py::arg("mwhharmonicflag") = 127,
-             py::arg("mwdharmonicflag") = 127,
-             py::arg("lmcharmonicflag") = 127,
-             py::arg("discframe")       = true)
+             py::arg("dt")              = 0.002)
 
-        .def("mworbit", &MWLMC::mworbit,
+        .def("mworbit_parallel", &MWLMC::mworbit_parallel,
              py::arg("xinit"),
              py::arg("vinit"),
              py::arg("tbegin")          = -2.5,
@@ -83,7 +81,6 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("lmcharmonicflag") = 127,
              py::arg("rewindtime")      = 2.5,
              py::arg("discframe")       = true)
-
 
         .def("print_orbit", &MWLMC::print_orbit);
 
