@@ -152,7 +152,7 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
   //cout << setw(14) << (coeftable.MMAX*coeftable.NORDER) << setw(14) << sizeof(double) << setw(14) << end << endl;
   //cout << coeftable.NUMT << endl;
 
-  cout << "cylcoefs.read_coef_file: reading NUMT, LMAX, NORDER from file . . . ";
+  cout << "cylcoefs::read_coef_file: reading NUMT, LMAX, NORDER from file . . . ";
 #if FORMAT
   if (newformat) {
     cout << "NEW FORMAT" << endl;
