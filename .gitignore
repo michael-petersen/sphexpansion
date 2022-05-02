@@ -5,18 +5,20 @@ build/*
 .legacy*
 
 # non-public examples
-examples/obj/*
-examples/deprecated/*
-examples/rotatetest.cc
-examples/extractcoefs.cc
-examples/config_flags.h.in
-examples/eigenbasics.cc
-examples/eigentest.cc
-examples/fullintegrate.cc
-examples/figures/*
-examples/compare_discs.cc
-examples/density_map.cc
-examples/rotcurve.cc
+src/obj/*
+src/deprecated/*
+src/rotatetest.cc
+src/extractcoefs.cc
+src/config_flags.h.in
+src/eigenbasics.cc
+src/eigentest.cc
+src/fullintegrate.cc
+src/figures/*
+src/compare_discs.cc
+src/density_map.cc
+src/rotcurve.cc
+src/test_capabilities.py
+src/Makefile
 
 
 # not-fully-implemented features

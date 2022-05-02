@@ -42,7 +42,8 @@ if(Eigen3_FOUND)
   include_directories( ${EIGEN3_INCLUDE_DIRS} )
 endif()
 
-add_subdirectory(examples)
+add_subdirectory(src)
+# add_subdirectory(examples)
 
 set(common_LINKLIB ${EIGEN3_LIBRARIES})
 
@@ -50,6 +51,6 @@ set(common_LINKLIB ${EIGEN3_LIBRARIES})
 include_directories(include)
 
 if(HAVEPYBIND11)
-  pybind11_add_module(mwlmc examples/mwlmc.cc )
+  pybind11_add_module(mwlmc src/mwlmc.cc )
 endif()
 
