@@ -42,7 +42,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwhharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("lmc_fields", &MWLMC::lmc_fields, R"pbdoc(
+        .def("lmc_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::lmc_fields),R"pbdoc(
                 Return all fields for the LMC halo (in the frame of the LMC).
 
                 Parameters
@@ -54,7 +54,7 @@ PYBIND11_MODULE(mwlmc, m) {
                 verbose : bool = False
 
                 Returns
-                
+
                 -------
                 fx, fy, fz : float
                 density : float
@@ -69,8 +69,16 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("mwd_fields", &MWLMC::mwd_fields,
-             "Return all fields for the MW disc.",
+       .def("lmc_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::lmc_fields),
+            py::arg("t"),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::arg("globalframe")     = false,
+            py::arg("lmcharmonicflag") = 127,
+            py::arg("verbose")         = false)
+
+        .def("mwd_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::mwd_fields),"Return all fields for the MW disc.",
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
@@ -79,8 +87,16 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("all_forces", &MWLMC::all_forces,
-             "Return total forces (in the frame of the MW disc).",
+        .def("mwd_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::mwd_fields),"Return all fields for the MW disc.",
+             py::arg("t"),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("globalframe")     = false,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("verbose")         = false)
+
+        .def("all_forces", py::overload_cast<double,double,double,double,bool,int,int,int,bool>(&MWLMC::all_forces), "Return total forces (in the frame of the MW disc).",
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
@@ -90,6 +106,17 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
+
+       .def("all_forces", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,int,int,bool>(&MWLMC::all_forces),
+            py::arg("t"),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::arg("globalframe")     = true,
+            py::arg("mwhharmonicflag") = 127,
+            py::arg("mwdharmonicflag") = 127,
+            py::arg("lmcharmonicflag") = 127,
+            py::arg("verbose")         = false)
 
         .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
              "Get the LMC trajectory (relative to the MW disc centre).",
@@ -122,14 +149,14 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("discframe")       = true)
 
         .def("rewind", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,bool>(&MWLMC::rewind),
-                Compute an orbit rewind in all three components.
-                
+                R"pbdoc(Compute an orbit rewind in all three components.
+
                 Parameters
                 ----------
                 xinit : array-like
                 vinit : array-like
-                dt : 
-                
+                dt :
+
                 Returns
                 -------
             )pbdoc",

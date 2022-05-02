@@ -83,10 +83,18 @@ public:
                                  bool globalframe=false,
                                  int lmcarmonicflag=127, bool verbose=false);
 
+  MatrixXd lmc_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                bool globalframe=false,
+                                int lmcarmonicflag=127, bool verbose=false);
+
   // return all fields for the MW disc
   // NOTE: density does not work here. not enabled yet for cylindrical expansions.
   //       leave as an inspirational placeholder
-  std::vector<double>  mwd_fields(double t, double x, double y, double z,
+  std::vector<double> mwd_fields(double t, double x, double y, double z,
+                                  bool globalframe=false,
+                                  int mwdharmonicflag=127, bool verbose=false);
+
+  MatrixXd mwd_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
                                   bool globalframe=false,
                                   int mwdharmonicflag=127, bool verbose=false);
 
@@ -96,6 +104,11 @@ public:
                                  bool globalframe=true,
                                  int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
                                  bool verbose=false);
+
+  MatrixXd all_forces(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                bool globalframe=true,
+                                int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+                                bool verbose=false);
 
 
   // compute an orbit integration in all three components
@@ -355,6 +368,7 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
 
 
 
+
 std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
                                       bool globalframe,
                                       int lmcharmonicflag, bool verbose)
@@ -381,6 +395,8 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
   double fxtmp,fytmp,fztmp;
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+
 
   // compute spherical coordinates in the frame of the LMC expansion
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
@@ -417,6 +433,79 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
 }
 
 
+MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                      bool globalframe,
+                                      int lmcharmonicflag, bool verbose)
+{
+  /*
+    always comes out in the frame of the expansion: translate to inertial before input, if desired
+
+   */
+   // translate all times and positions into exp virial units
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  MatrixXd lmccoefs;
+  LMC->select_coefficient_time(tvir, lmccoefs);
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double dens0,denstmp,tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+  // initialise output array
+  int npositions = x.size();
+
+  MatrixXd output;
+  output.resize(npositions,5);
+
+  for (int n=0;n<npositions;n++) {
+
+    physical_to_virial_length(x[n],y[n],z[n], xvir,yvir,zvir);
+
+
+  // compute spherical coordinates in the frame of the LMC expansion
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  // get all field values
+  LMC->determine_fields_at_point_sph(lmccoefs,
+                                     rtmp,thetatmp,phitmp,
+                                     dens0,denstmp,
+                                     tpotl0,tpotl,
+                                     fr,ft,fp,
+                                     lmcharmonicflag);
+
+  // convert to cartesian
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
+
+  // translate all quantities to physical units
+  virial_to_physical_density(denstmp,dphys);
+  virial_to_physical_potential(tpotl,pphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  output(n,0) = fxphys;
+  output(n,1) = fyphys;
+  output(n,2) = fzphys;
+  output(n,3) = dphys;
+  output(n,4) = pphys;
+} // end npositions loop
+
+
+  return output;
+
+}
+
+
+
+
 std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
                                       bool globalframe,
                                       int mwdharmonicflag,
@@ -447,6 +536,8 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
   double denstmp = 0;
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+
 
   // compute spherical coordinates in the frame of the MW expansion
   cartesian_to_cylindrical(xvir, yvir, r2tmp, phitmp);
@@ -480,6 +571,81 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
   return output;
 
 }
+
+
+
+MatrixXd MWLMC::mwd_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                      bool globalframe,
+                                      int mwdharmonicflag,
+                                      bool verbose)
+{
+  /*
+
+   */
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  // get coefficients
+  MatrixXd mwdcoscoefs,mwdsincoefs;
+  MWD->select_coefficient_time(0.0, mwdcoscoefs, mwdsincoefs);
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  // the density fields are zombies right now: to be fixed with proper demand
+  double dens0 = 0;
+  double denstmp = 0;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
+
+  // initialise output array
+  int npositions = x.size();
+
+  MatrixXd output;
+  output.resize(npositions,5);
+
+  for (int n=0;n<npositions;n++) {
+
+  physical_to_virial_length(x[n],y[n],z[n], xvir,yvir,zvir);
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_cylindrical(xvir, yvir, r2tmp, phitmp);
+
+  // same procedure for the disc
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
+                                     r2tmp,phitmp,zvir,
+                                     tpotl0,tpotl,
+                                     fr,fp,fztmp,mwdharmonicflag);
+
+  cylindrical_forces_to_cartesian(rtmp, phitmp,
+                                  fr, fp,
+                                  fxtmp, fytmp);
+
+  // translate to physical units
+  virial_to_physical_density(denstmp,dphys);
+  virial_to_physical_potential(tpotl,pphys);
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // return MW force
+
+  output(n,0) = fxphys;
+  output(n,1) = fyphys;
+  output(n,2) = fzphys;
+  output(n,3) = dphys;
+  output(n,4) = pphys;
+} // end npositions loop
+
+  return output;
+
+}
+
+
 
 
 std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
@@ -616,6 +782,152 @@ std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
   return output;
 
 }
+
+
+
+MatrixXd  MWLMC::all_forces(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
+                                       bool globalframe,
+                                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                                       bool verbose)
+{
+  /*
+
+   */
+
+  // zero out forces
+  double fx = 0;
+  double fy = 0;
+  double fz = 0;
+
+  // translate all times and positions into exp virial units
+  double tvir,xvir,yvir,zvir;
+  physical_to_virial_time(t,tvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  // get the initial coefficient values: the time here is in tvir units, so always start with 0
+  MatrixXd tcoefsmw,tcoefslmc;
+  MW->select_coefficient_time(tvir, tcoefsmw);
+  LMC->select_coefficient_time(tvir, tcoefslmc);
+
+  MatrixXd mwdcoscoefs,mwdsincoefs;
+  MWD->select_coefficient_time(tvir, mwdcoscoefs, mwdsincoefs);
+
+  // initialise the centre vectors
+  vector<double> zerocoords(3),mw_centre(3),lmc_centre(3),mwd_centre(3);
+
+  // get the present-day MWD coordinates: the zero of the system
+  return_centre(reference_time, MWD->orient, zerocoords);
+
+  //cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << endl;
+
+  // get the centres of the expansions at the specified times in exp reference space
+  return_centre(tvir,  MW->orient,  mw_centre);
+  return_centre(tvir, LMC->orient, lmc_centre);
+  return_centre(tvir, MWD->orient, mwd_centre);
+
+  // shift the expansion centres to the pericentre coordinate system
+  for (int j=0;j<=2;j++) {
+    mw_centre[j]  -= zerocoords[j];
+    lmc_centre[j] -= zerocoords[j];
+    mwd_centre[j] -= zerocoords[j];
+  }
+
+  if (verbose) {
+    cout << "MW virial centre (x,y,z)=(" << mw_centre[0] << ","<< mw_centre[1] << ","<< mw_centre[2] << ")" <<endl;
+    cout << "MWD virial centre (x,y,z)=(" << mwd_centre[0] << ","<< mwd_centre[1] << ","<< mwd_centre[2] << ")" <<endl;
+    cout << "LMC virial centre (x,y,z)=(" << lmc_centre[0] << ","<< lmc_centre[1] << ","<< lmc_centre[2] << ")" <<endl;
+  }
+
+  double rtmp,phitmp,thetatmp,r2tmp;
+  double tpotl0,tpotl,fr,ft,fp;
+  double fxtmp,fytmp,fztmp;
+
+  double xphys,yphys,zphys,fxphys,fyphys,fzphys;
+
+  // initialise output array
+  int npositions = x.size();
+
+  MatrixXd output;
+  output.resize(npositions,3);
+
+  for (int n=0;n<npositions;n++) {
+
+    physical_to_virial_length(x[n],y[n],z[n], xvir,yvir,zvir);
+
+
+  // compute spherical coordinates in the frame of the MW expansion
+  cartesian_to_spherical(xvir-mwd_centre[0], yvir-mwd_centre[1], zvir-mwd_centre[2], rtmp, phitmp, thetatmp);
+
+  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
+
+  MW->determine_fields_at_point_sph(tcoefsmw,
+                                    rtmp,thetatmp,phitmp,
+                                    tpotl0,tpotl,
+                                    fr,ft,fp,mwhharmonicflag);
+
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
+
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add MW force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+
+  r2tmp = sqrt((xvir-mwd_centre[0])*(xvir-mwd_centre[0]) + (yvir-mwd_centre[1])*(yvir-mwd_centre[1]));
+
+  // same procedure for the disc
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs,mwdsincoefs,
+                                     r2tmp,phitmp,zvir-mwd_centre[2],
+                                     tpotl0,tpotl,
+                                     fr,fp,fztmp,mwdharmonicflag);
+
+  cylindrical_forces_to_cartesian(rtmp, phitmp,
+                                  fr, fp,
+                                  fxtmp, fytmp);
+
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add MW force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+
+  // same procedure for LMC
+  cartesian_to_spherical(xvir-lmc_centre[0], yvir-lmc_centre[1], zvir-lmc_centre[2], rtmp, phitmp, thetatmp);
+
+  //cout << setw(14) << rtmp << setw(14) << phitmp << setw(14) << thetatmp << endl;
+
+  LMC->determine_fields_at_point_sph(tcoefslmc,
+                                     rtmp,thetatmp,phitmp,
+                                     tpotl0,tpotl,
+                                     fr,ft,fp,lmcharmonicflag);
+
+  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                fr, fp, ft,
+                                fxtmp, fytmp, fztmp);
+
+  // reset to physical units
+  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+
+  // add LMC force to total
+  fx += fxphys;
+  fy += fyphys;
+  fz += fzphys;
+
+  output(n,0) = fx;
+  output(n,1) = fy;
+  output(n,2) = fz;
+}
+
+  return output;
+
+}
+
 
 MatrixXd MWLMC::get_trajectories(double dt, bool virial)
 {
