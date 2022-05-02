@@ -40,7 +40,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwhharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("lmc_fields", &MWLMC::lmc_fields,
+        .def("lmc_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::lmc_fields),
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
@@ -49,7 +49,16 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("mwd_fields", &MWLMC::mwd_fields,
+       .def("lmc_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::lmc_fields),
+            py::arg("t"),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::arg("globalframe")     = false,
+            py::arg("lmcharmonicflag") = 127,
+            py::arg("verbose")         = false)
+
+        .def("mwd_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::mwd_fields),
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
@@ -58,7 +67,16 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("all_forces", &MWLMC::all_forces,
+        .def("mwd_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::mwd_fields),
+             py::arg("t"),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("globalframe")     = false,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("verbose")         = false)
+
+        .def("all_forces", py::overload_cast<double,double,double,double,bool,int,int,int,bool>(&MWLMC::all_forces),
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
@@ -68,6 +86,17 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
+
+       .def("all_forces", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,int,int,bool>(&MWLMC::all_forces),
+            py::arg("t"),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::arg("globalframe")     = true,
+            py::arg("mwhharmonicflag") = 127,
+            py::arg("mwdharmonicflag") = 127,
+            py::arg("lmcharmonicflag") = 127,
+            py::arg("verbose")         = false)
 
         .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
              py::arg("dt")     = native_timestep)
