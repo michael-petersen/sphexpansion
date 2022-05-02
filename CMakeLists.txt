@@ -26,7 +26,7 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64")
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # required compiler features
-#find_package(pybind11 REQUIRED)
+#find_package(pybind11)
 
 find_package(Eigen3 REQUIRED)
 add_subdirectory(extern/pybind11-2.9.2)
@@ -43,3 +43,14 @@ if(Eigen3_FOUND)
 endif()
 
 add_subdirectory(src)
+# add_subdirectory(examples)
+
+set(common_LINKLIB ${EIGEN3_LIBRARIES})
+
+# is this the best way to do this?
+include_directories(include)
+
+if(HAVEPYBIND11)
+  pybind11_add_module(mwlmc src/mwlmc.cc )
+endif()
+
