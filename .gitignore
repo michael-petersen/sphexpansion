@@ -31,3 +31,8 @@ data/disc.cache.run9mlde
 
 # Python
 *.ipynb_checkpoints*
+
+# Installation
+mwlmc.cpython-38-darwin.so
+mwlmc.egg-info/
+
