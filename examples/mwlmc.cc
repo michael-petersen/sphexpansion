@@ -63,15 +63,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("vinit"),
              py::arg("tbegin")          = -2.5,
              py::arg("tend")            = 0.0,
-<<<<<<< HEAD
              py::arg("dt")              = 0.002)
-=======
-             py::arg("dt")              = 0.002,
-             py::arg("mwhharmonicflag") = 127,
-             py::arg("mwdharmonicflag") = 127,
-             py::arg("lmcharmonicflag") = 127,
-             py::arg("discframe§")       = true)
->>>>>>> 6299b6099b32251fe9832d82eeb01445eace63cb
 
         .def("mworbit_parallel", &MWLMC::mworbit_parallel,
              py::arg("xinit"),
