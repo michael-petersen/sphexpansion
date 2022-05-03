@@ -28,9 +28,9 @@ using Eigen::MatrixXd;
 #include "cylexpansion.h"
 
 // small value
-#ifndef EPSVAL
-double EPS=std::numeric_limits<double>::min();
-#define EPSVAL
+#ifndef EEPSVAL
+double EEPS=1.e-4;
+#define EEPSVAL
 #endif
 
 
@@ -264,6 +264,9 @@ std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
   // compute spherical coordinates in the frame of the MW expansion
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
 
+  // block from evaluating at tiny r
+  if (rtmp < EEPS) rtmp = EEPS;
+
   // get all field values
   MW->determine_fields_at_point_sph(mwcoefs,
                                     rtmp,thetatmp,phitmp,
@@ -271,6 +274,10 @@ std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
                                     tpotl0,tpotl,
                                     fr,ft,fp,
                                     mwhharmonicflag);
+
+
+
+  //std::cout << setw(14) << fr << setw(14) << ft << setw(14) << fp << endl;
 
   // convert to cartesian
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
@@ -358,6 +365,9 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
 
   // compute spherical coordinates in the frame of the MW expansion
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  // block from evaluating at tiny r
+  if (rtmp < EEPS) rtmp = EEPS;
 
   // get all field values
   MW->determine_fields_at_point_sph(mwcoefs,

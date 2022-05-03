@@ -41,7 +41,14 @@ using Eigen::MatrixXd;
 // the coefficient stuff
 #include "sphere/sphcoefs.h"
 
+// set the default spherical harmonic evaluation flag
 int SPHHARMONICDEFAULT = 2047;
+
+#ifndef REPSVAL
+double REPS=1.e-7;
+#define REPSVAL
+#endif
+
 
 //using namespace std;
 using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
@@ -248,6 +255,9 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   if (theta<1.e-6) theta = 1.e-6;
   costh = cos(theta);
 
+  // block zero evaluation
+  if (r<REPS) r = REPS;
+
   fac1 = 0.25/M_PI;
 
   MatrixXd potd,dpot;
@@ -345,6 +355,9 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   // block here, some problem with a zero in theta here. TBD.
   if (theta<1.e-6) theta = 1.e-6;
   costh = cos(theta);
+
+  // block zero evaluation
+  if (r<REPS) r = REPS;
 
   //fac0 = 4.*M_PI;
   fac1 = 0.25/M_PI;
@@ -452,6 +465,9 @@ void SphExpansion::determine_fields_at_point_sph(MatrixXd& coefs,
   // block here, some problem with a zero in theta here. TBD.
   if (theta<1.e-6) theta = 1.e-6;
   costh = cos(theta);
+
+  // block zero evaluation
+  if (r<REPS) r = REPS;
 
   fac1 = 0.25/M_PI;
 

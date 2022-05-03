@@ -23,9 +23,9 @@ wishlist:
 #include <Eigen/Dense>
 using Eigen::ArrayXd;
 
-#ifndef EPSVAL
-double EPS=std::numeric_limits<double>::min();
-#define EPSVAL
+#ifndef REPSVAL
+double REPS=1.e-7;
+#define REPSVAL
 #endif
 
 
@@ -75,9 +75,13 @@ void cylindrical_forces_to_cartesian(double  r, double phi,
 
   // check the handedness of the coordinate system.
 
-  fx = (x*fr - y*fp)/r;
-
-  fy = (y*fr + x*fp)/r;
+  if (isnan(fr) | isnan(fp)) {
+		fx = 0;
+		fy = 0;
+	} else {
+    fx = (x*fr - y*fp)/r;
+		fy = (y*fr + x*fp)/r;
+	}
 
 }
 
@@ -141,7 +145,7 @@ void spherical_forces_to_cartesian_legacy(double r3, double phi, double theta,
 
   double x,y,z;
   spherical_to_cartesian(r3, phi, theta, x, y, z);
-  double r2 = sqrt(x*x + y*y);
+  double r2 = sqrt(x*x + y*y + REPS);
 
   fx = ( x*(r2*fr + z*ft) - y*r3*fp )/(r2*r3);
   fy = ( y*(r2*fr + z*ft) + x*r3*fp )/(r2*r3);
@@ -157,7 +161,7 @@ void spherical_forces_to_cartesian_legacy(ArrayXd r3, ArrayXd phi, ArrayXd theta
 
   ArrayXd x,y,z;
   spherical_to_cartesian(r3, phi, theta, x, y, z);
-  ArrayXd r2 = sqrt(x*x + y*y);
+  ArrayXd r2 = sqrt(x*x + y*y + REPS);
 
   fx = ( x*(r2*fr + z*ft) - y*r3*fp )/(r2*r3);
   fy = ( y*(r2*fr + z*ft) + x*r3*fp )/(r2*r3);
@@ -171,12 +175,22 @@ void spherical_forces_to_cartesian(double r3, double phi, double theta,
 {
 
   double x,y,z;
-  spherical_to_cartesian(r3, phi, theta, x, y, z);
-  double r2 = sqrt(x*x + y*y);
+	double r = std::max(r3,REPS);
+  spherical_to_cartesian(r, phi, theta, x, y, z);
+  double r2 = std::max(sqrt(x*x + y*y),REPS);
 
-  fx = - (( fr*(x/r3) - ft*(x*z/(r3*r3*r3))) + fp*(y/(r2*r2)));
-  fy = - (( fr*(y/r3) - ft*(y*z/(r3*r3*r3))) - fp*(x/(r2*r2)));
-  fz = - (  fr*(z/r3) + ft*( (r2*r2)/(r3*r3*r3)) );
+  // checking guards. to be removed once decided if REPS is conservative enough.
+	//std::cout << "r/R" << std::setw(14) << r2 << std::setw(14) << r3 << std::endl;
+
+  if (isnan(fr)) {
+		fx = 0.;
+		fy = 0.;
+		fz = 0.;
+	} else {
+    fx = - (( fr*(x/r) - ft*(x*z/(r*r*r))) + fp*(y/(r2*r2)));
+    fy = - (( fr*(y/r) - ft*(y*z/(r*r*r))) - fp*(x/(r2*r2)));
+    fz = - (  fr*(z/r) + ft*( (r2*r2)/(r*r*r)) );
+	}
 
 }
 
@@ -185,6 +199,7 @@ void spherical_forces_to_cartesian(ArrayXd r3, ArrayXd phi, ArrayXd theta,
 	                           			 ArrayXd& fx,ArrayXd& fy, ArrayXd& fz)
 {
 	// OVERLOADED
+	// @IMPROVE place transformation guards
   ArrayXd x,y,z;
   spherical_to_cartesian(r3, phi, theta, x, y, z);
   ArrayXd r2 = sqrt(x*x + y*y);
