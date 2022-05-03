@@ -60,9 +60,17 @@ def plot_forces(Ym, Zm, f, **kwargs):
     ax.set_aspect('equal')
     return fig, ax
   
-def plot_lmc_orbit(t, pos, ylabel='r', **kwargs):
+def plot_orbit_time(t, pos, ylabel='r', **kwargs):
     fig, ax = plt.subplots()
     plt.plot(t, pos, **kwargs)
     ax.set_xlabel('$t~$[Gyr]')
+    ax.set_ylabel('$%s~$[kpc]'%ylabel)
+    return fig, ax 
+  
+def plot_orbit(pos1, pos2, xlabel='x', ylabel='y', fig=None, **kwargs):
+    if fig is None:
+        fig, ax = plt.subplots()
+    plt.plot(pos1, pos2, **kwargs)
+    ax.set_xlabel('$%s~$[kpc]'%xlabel)
     ax.set_ylabel('$%s~$[kpc]'%ylabel)
     return fig, ax 
