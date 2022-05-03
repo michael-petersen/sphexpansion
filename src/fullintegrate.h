@@ -380,9 +380,8 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
    // translate all times and positions into exp virial units
 
   // translate all times and positions into exp virial units
-  double tvir,xvir,yvir,zvir;
+  double tvir,xvir,yvir,zvir,xtmp,ytmp,ztmp;
   physical_to_virial_time(t,tvir);
-  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
 
   // reset time to have the correct system zero (e.g. pericentre is T=0)
   tvir += reference_time;
@@ -396,7 +395,24 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
 
+  if (globalframe) {
 
+    // get the present-day MWD coordinates: the zero of the system
+    vector<double> zerocoords(3);
+    return_centre(reference_time, MWD->orient, zerocoords);
+
+    // shift the expansion centres to the pericentre coordinate system
+    xtmp = x - zerocoords[0];
+    ytmp = y - zerocoords[1];
+    ztmp = z - zerocoords[2];
+
+  } else {
+    xtmp = x;
+    ytmp = y;
+    ztmp = z;
+  }
+
+  physical_to_virial_length(xtmp,ytmp,ztmp, xvir,yvir,zvir);
 
   // compute spherical coordinates in the frame of the LMC expansion
   cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
@@ -442,9 +458,10 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
 
    */
    // translate all times and positions into exp virial units
+   vector<double> zerocoords(3);
 
   // translate all times and positions into exp virial units
-  double tvir,xvir,yvir,zvir;
+  double tvir,xvir,yvir,zvir,xtmp,ytmp,ztmp;
   physical_to_virial_time(t,tvir);
 
   // reset time to have the correct system zero (e.g. pericentre is T=0)
@@ -452,6 +469,11 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
 
   MatrixXd lmccoefs;
   LMC->select_coefficient_time(tvir, lmccoefs);
+
+  if (globalframe) {
+    // get the present-day MWD coordinates: the zero of the system
+    return_centre(reference_time, MWD->orient, zerocoords);
+  }
 
   double rtmp,phitmp,thetatmp,r2tmp;
   double dens0,denstmp,tpotl0,tpotl,fr,ft,fp;
@@ -467,36 +489,49 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
 
   for (int n=0;n<npositions;n++) {
 
-    physical_to_virial_length(x[n],y[n],z[n], xvir,yvir,zvir);
+    if (globalframe) {
+
+      // shift the expansion centres to the pericentre coordinate system
+      xtmp = x[n] - zerocoords[0];
+      ytmp = y[n] - zerocoords[1];
+      ztmp = z[n] - zerocoords[2];
+
+    } else {
+      xtmp = x[n];
+      ytmp = y[n];
+      ztmp = z[n];
+    }
+
+    physical_to_virial_length(xtmp,ytmp,ztmp, xvir,yvir,zvir);
 
 
-  // compute spherical coordinates in the frame of the LMC expansion
-  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+    // compute spherical coordinates in the frame of the LMC expansion
+    cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
 
-  // get all field values
-  LMC->determine_fields_at_point_sph(lmccoefs,
-                                     rtmp,thetatmp,phitmp,
-                                     dens0,denstmp,
-                                     tpotl0,tpotl,
-                                     fr,ft,fp,
-                                     lmcharmonicflag);
+    // get all field values
+    LMC->determine_fields_at_point_sph(lmccoefs,
+                                       rtmp,thetatmp,phitmp,
+                                       dens0,denstmp,
+                                       tpotl0,tpotl,
+                                       fr,ft,fp,
+                                       lmcharmonicflag);
 
-  // convert to cartesian
-  spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
-                                fr, fp, ft,
-                                fxtmp, fytmp, fztmp);
+    // convert to cartesian
+    spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
+                                  fr, fp, ft,
+                                  fxtmp, fytmp, fztmp);
 
-  // translate all quantities to physical units
-  virial_to_physical_density(denstmp,dphys);
-  virial_to_physical_potential(tpotl,pphys);
-  virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+    // translate all quantities to physical units
+    virial_to_physical_density(denstmp,dphys);
+    virial_to_physical_potential(tpotl,pphys);
+    virial_to_physical_force (fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
 
-  output(n,0) = fxphys;
-  output(n,1) = fyphys;
-  output(n,2) = fzphys;
-  output(n,3) = dphys;
-  output(n,4) = pphys;
-} // end npositions loop
+    output(n,0) = fxphys;
+    output(n,1) = fyphys;
+    output(n,2) = fzphys;
+    output(n,3) = dphys;
+    output(n,4) = pphys;
+  } // end npositions loop
 
 
   return output;
