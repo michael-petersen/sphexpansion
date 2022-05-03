@@ -24,25 +24,25 @@ PYBIND11_MODULE(mwlmc, m) {
 
     py::class_<MWLMC>(m, "MWLMC")
         .def(py::init<>())
-        .def("mwhalo_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::mwhalo_fields),
+        .def("mwhalo_fields", py::overload_cast<double,double,double,double,int,bool>(&MWLMC::mwhalo_fields),
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = false,
+             //py::arg("globalframe")     = false,
              py::arg("mwhharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("mwhalo_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::mwhalo_fields),
+        .def("mwhalo_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,int,bool>(&MWLMC::mwhalo_fields),
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = false,
+             //py::arg("globalframe")     = false,
              py::arg("mwhharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("lmc_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::lmc_fields),R"pbdoc(
+        .def("lmc_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,int,bool>(&MWLMC::lmc_fields),R"pbdoc(
                 Return all fields for the LMC halo (in the frame of the LMC).
 
                 Parameters
@@ -65,54 +65,54 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = false,
+             //py::arg("globalframe")     = false,
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-       .def("lmc_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::lmc_fields),
+       .def("lmc_fields", py::overload_cast<double,double,double,double,int,bool>(&MWLMC::lmc_fields),
             py::arg("t"),
             py::arg("x"),
             py::arg("y"),
             py::arg("z"),
-            py::arg("globalframe")     = false,
+            //py::arg("globalframe")     = false,
             py::arg("lmcharmonicflag") = 127,
             py::arg("verbose")         = false)
 
-        .def("mwd_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,bool>(&MWLMC::mwd_fields),"Return all fields for the MW disc.",
+        .def("mwd_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,int,bool>(&MWLMC::mwd_fields),"Return all fields for the MW disc.",
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = false,
+             //py::arg("globalframe")     = false,
              py::arg("mwdharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("mwd_fields", py::overload_cast<double,double,double,double,bool,int,bool>(&MWLMC::mwd_fields),"Return all fields for the MW disc.",
+        .def("mwd_fields", py::overload_cast<double,double,double,double,int,bool>(&MWLMC::mwd_fields),"Return all fields for the MW disc.",
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = false,
+             //py::arg("globalframe")     = false,
              py::arg("mwdharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-        .def("all_forces", py::overload_cast<double,double,double,double,bool,int,int,int,bool>(&MWLMC::all_forces), "Return total forces (in the frame of the MW disc).",
+        .def("all_forces", py::overload_cast<double,double,double,double,int,int,int,bool>(&MWLMC::all_forces), "Return total forces (in the frame of the MW disc).",
              py::arg("t"),
              py::arg("x"),
              py::arg("y"),
              py::arg("z"),
-             py::arg("globalframe")     = true,
+             //py::arg("globalframe")     = true,
              py::arg("mwhharmonicflag") = 127,
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("verbose")         = false)
 
-       .def("all_forces", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,bool,int,int,int,bool>(&MWLMC::all_forces),
+       .def("all_forces", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,int,int,int,bool>(&MWLMC::all_forces),
             py::arg("t"),
             py::arg("x"),
             py::arg("y"),
             py::arg("z"),
-            py::arg("globalframe")     = true,
+            //py::arg("globalframe")     = true,
             py::arg("mwhharmonicflag") = 127,
             py::arg("mwdharmonicflag") = 127,
             py::arg("lmcharmonicflag") = 127,

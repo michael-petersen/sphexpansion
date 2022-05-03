@@ -77,44 +77,44 @@ public:
 
   // return all fields for the MW halo (in the frame of the MW halo)
   std::vector<double> mwhalo_fields(double t, double x, double y, double z,
-                                    bool globalframe=false,
+                                    //bool globalframe=false,
                                     int mwhharmonicflag=127, bool verbose=false);
 
   MatrixXd mwhalo_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                    bool globalframe=false,
-                                    int mwhharmonicflag=127, bool verbose=false);
+                         //bool globalframe=false,
+                         int mwhharmonicflag=127, bool verbose=false);
 
   // return all fields for the LMC halo
   std::vector<double> lmc_fields(double t, double x, double y, double z,
-                                 bool globalframe=false,
+                                 //bool globalframe=false,
                                  int lmcarmonicflag=127, bool verbose=false);
 
   MatrixXd lmc_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                bool globalframe=false,
-                                int lmcarmonicflag=127, bool verbose=false);
+                      //bool globalframe=false,
+                      int lmcarmonicflag=127, bool verbose=false);
 
   // return all fields for the MW disc
   // NOTE: density does not work here. not enabled yet for cylindrical expansions.
   //       leave as an inspirational placeholder
   std::vector<double> mwd_fields(double t, double x, double y, double z,
-                                  bool globalframe=false,
-                                  int mwdharmonicflag=127, bool verbose=false);
+                                 //bool globalframe=false,
+                                 int mwdharmonicflag=127, bool verbose=false);
 
   MatrixXd mwd_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                  bool globalframe=false,
-                                  int mwdharmonicflag=127, bool verbose=false);
+                      //bool globalframe=false,
+                      int mwdharmonicflag=127, bool verbose=false);
 
   // return total forces
   // @IMPROVE: write all potential as well
   std::vector<double> all_forces(double t, double x, double y, double z,
-                                 bool globalframe=true,
+                                 //bool globalframe=true,
                                  int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
                                  bool verbose=false);
 
   MatrixXd all_forces(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                bool globalframe=true,
-                                int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
-                                bool verbose=false);
+                      //bool globalframe=true,
+                      int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+                      bool verbose=false);
 
 
   // compute an orbit integration in all three components
@@ -203,7 +203,7 @@ void MWLMC::print_orbit(MatrixXd orbit, string orbitfile)
 }
 
 std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
-                                         bool globalframe,
+                                         //bool globalframe,
                                          int mwhharmonicflag, bool verbose)
 {
   /*
@@ -211,27 +211,41 @@ std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
 
    */
 
+  // allocate workspace
    double tvir,xvir,yvir,zvir,xtmp,ytmp,ztmp;
-   vector<double> zerocoords(3);
 
+
+  // translate time to virial
+  physical_to_virial_time(t,tvir);
+
+  /*
+  vector<double> zerocoords(3),halozero(3);
    if (globalframe) {
 
-     // get the present-day MWD coordinates: the zero of the system
-     return_centre(reference_time, MWD->orient, zerocoords);
+     // get the zero of the disc: the coordinate centre
+     return_centre(tvir, MWD->orient, zerocoords);
+     // get the centre of the halo expansion
+     return_centre(tvir, MW->orient, halozero);
+     // we need to compute the requested position relative to the halo expansion.
+     //   take the input, in the disc frame, and put in the halo frame
 
-     // shift the expansion centres to the pericentre coordinate system
-     xtmp = x + zerocoords[0];
-     ytmp = y + zerocoords[1];
-     ztmp = z + zerocoords[2];
+     // shift the expansion centres to the disc coordinate system
+     xtmp = x - zerocoords[0];
+     ytmp = y - zerocoords[1];
+     ztmp = z - zerocoords[2];
 
    } else {
      xtmp = x;
      ytmp = y;
      ztmp = z;
    }
+   */
+
+   xtmp = x;
+   ytmp = y;
+   ztmp = z;
 
   // translate all times and positions into exp virial units
-  physical_to_virial_time(t,tvir);
   physical_to_virial_length(xtmp,ytmp,ztmp,xvir,yvir,zvir);
 
   // reset time to have the correct system zero (e.g. pericentre is T=0)
@@ -284,8 +298,8 @@ std::vector<double> MWLMC::mwhalo_fields(double t, double x, double y, double z,
 
 
 MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                         bool globalframe,
-                                         int mwhharmonicflag, bool verbose)
+                              //bool globalframe,
+                              int mwhharmonicflag, bool verbose)
 {
   /*
     always comes out in the frame of the expansion: translate to inertial before input, if desired
@@ -324,6 +338,7 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
 
    for (int n=0;n<npositions;n++) {
 
+/*
    if (globalframe) {
 
      // shift the expansion centres to the pericentre coordinate system
@@ -332,10 +347,11 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
      ztmp = z[n] - zerocoords[2];
 
    } else {
+     */
      xtmp = x[n];
      ytmp = y[n];
      ztmp = z[n];
-   }
+   //}
 
 
   physical_to_virial_length(xtmp,ytmp,ztmp,xvir,yvir,zvir);
@@ -376,7 +392,7 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
 
 
 std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
-                                      bool globalframe,
+                                      //bool globalframe,
                                       int lmcharmonicflag, bool verbose)
 {
   /*
@@ -401,6 +417,7 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
 
+/*
   if (globalframe) {
 
     // get the present-day MWD coordinates: the zero of the system
@@ -412,11 +429,11 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
     ytmp = y - zerocoords[1];
     ztmp = z - zerocoords[2];
 
-  } else {
+  } else {*/
     xtmp = x;
     ytmp = y;
     ztmp = z;
-  }
+  //}
 
   physical_to_virial_length(xtmp,ytmp,ztmp, xvir,yvir,zvir);
 
@@ -456,8 +473,8 @@ std::vector<double> MWLMC::lmc_fields(double t, double x, double y, double z,
 
 
 MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                      bool globalframe,
-                                      int lmcharmonicflag, bool verbose)
+                           //bool globalframe,
+                           int lmcharmonicflag, bool verbose)
 {
   /*
     always comes out in the frame of the expansion: translate to inertial before input, if desired
@@ -476,10 +493,12 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
   MatrixXd lmccoefs;
   LMC->select_coefficient_time(tvir, lmccoefs);
 
+/*
   if (globalframe) {
     // get the present-day MWD coordinates: the zero of the system
     return_centre(reference_time, MWD->orient, zerocoords);
   }
+  */
 
   double rtmp,phitmp,thetatmp,r2tmp;
   double dens0,denstmp,tpotl0,tpotl,fr,ft,fp;
@@ -494,7 +513,7 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
   output.resize(npositions,5);
 
   for (int n=0;n<npositions;n++) {
-
+/*
     if (globalframe) {
 
       // shift the expansion centres to the pericentre coordinate system
@@ -502,11 +521,11 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
       ytmp = y[n] - zerocoords[1];
       ztmp = z[n] - zerocoords[2];
 
-    } else {
+    } else {*/
       xtmp = x[n];
       ytmp = y[n];
       ztmp = z[n];
-    }
+  //  }
 
     physical_to_virial_length(xtmp,ytmp,ztmp, xvir,yvir,zvir);
 
@@ -548,7 +567,7 @@ MatrixXd MWLMC::lmc_fields(double t, std::vector<double> x, std::vector<double> 
 
 
 std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
-                                      bool globalframe,
+                                      //bool globalframe,
                                       int mwdharmonicflag,
                                       bool verbose)
 {
@@ -616,7 +635,7 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
 
 
 MatrixXd MWLMC::mwd_fields(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                      bool globalframe,
+                                      //bool globalframe,
                                       int mwdharmonicflag,
                                       bool verbose)
 {
@@ -690,7 +709,7 @@ MatrixXd MWLMC::mwd_fields(double t, std::vector<double> x, std::vector<double> 
 
 
 std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
-                                       bool globalframe,
+                                       //bool globalframe,
                                        int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
                                        bool verbose)
 {
@@ -730,7 +749,7 @@ std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
 
   // set up the output vector
   std::vector<double> output(3);
-
+/*
   if (globalframe) {
     // we want to be in the GLOBAL frame of the MW disc: add the zero of the coordinate frame
     physical_to_virial_length(x + zerocoords[0],
@@ -739,8 +758,9 @@ std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
                               xvir,yvir,zvir);
   } else {
     // we are in the inertial frame of the simulation: no adjustment needed
+    */
     physical_to_virial_length(x,y,z,xvir,yvir,zvir);
-  }
+  //}
 
   // get the initial coefficient values: the time here is in tvir units, so always start with 0
   MatrixXd tcoefsmw,tcoefslmc;
@@ -846,9 +866,9 @@ std::vector<double>  MWLMC::all_forces(double t, double x, double y, double z,
 
 
 MatrixXd  MWLMC::all_forces(double t, std::vector<double> x, std::vector<double> y, std::vector<double> z,
-                                       bool globalframe,
-                                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
-                                       bool verbose)
+                            //bool globalframe,
+                            int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                            bool verbose)
 {
   /*
 
