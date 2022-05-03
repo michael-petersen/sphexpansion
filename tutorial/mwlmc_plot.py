@@ -39,3 +39,30 @@ def plot_potential(Ym, Zm, pot, **kwargs):
     ax.axvline(0, c = 'grey', ls = '--', lw = 1, zorder = 100)
     ax.set_aspect('equal')
     return fig, ax
+  
+  
+def plot_forces(Ym, Zm, f, **kwargs):
+    fig, ax = plt.subplots()
+    pc = ax.pcolormesh(Ym, Zm, 
+                       f, 
+                       shading = 'nearest',
+                       rasterized = True, 
+                       **kwargs)
+
+
+    cbar = fig.colorbar(pc, ax=ax)
+
+    cbar.set_label(r'$f_z [\mathrm{km} \mathrm{s}^{-2}]$')
+    ax.set_xlabel('y [kpc]')
+    ax.set_ylabel('z [kpc]')
+    ax.axhline(0, c = 'grey', ls = '--', lw = 1, zorder = 100)
+    ax.axvline(0, c = 'grey', ls = '--', lw = 1, zorder = 100)
+    ax.set_aspect('equal')
+    return fig, ax
+  
+def plot_lmc_orbit(t, pos, ylabel='r', **kwargs):
+    fig, ax = plt.subplots()
+    plt.plot(t, pos, **kwargs)
+    ax.set_xlabel('$t~$[Gyr]')
+    ax.set_ylabel('$%s~$[kpc]'%ylabel)
+    return fig, ax 
