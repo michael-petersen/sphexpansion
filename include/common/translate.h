@@ -57,7 +57,7 @@ double virial_to_physical_time_return(double tvir)
 
 void virial_to_physical_potential(double pvir, double& pphys)
 {
-  pphys = mw_mass_scale * mw_force_scale * pvir;
+  pphys = mw_potential_scale * pvir;
 }
 
 void virial_to_physical_force(double  fxvir, double   fyvir, double   fzvir,
@@ -119,7 +119,7 @@ double physical_to_virial_time_return(double tphys)
 
 void physical_to_virial_potential(double pphys, double& pvir)
 {
-  pvir  = pphys / mw_mass_scale / mw_force_scale;
+  pvir  = pphys / mw_potential_scale;
 }
 
 void physical_to_virial_force(double  fxphys, double fyphys, double fzphys,
