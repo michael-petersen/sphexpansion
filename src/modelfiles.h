@@ -31,11 +31,14 @@ double rotation_peak           = 1.4 ;                                  // peak 
 
 // derived quantities
 double astronomicalG           = 0.0000043009125;                       // gravitational constant, (km/s)^2 * kpc / Msun
+double gravitationalG          = 6.6743e-11; // in m^3 kg^(-1) s^(-2)
 double mw_vel_scale            = solar_circular_velocity/rotation_peak; // velocity scale of the MW, km/s/Vvir
 double mw_time_scale           = mw_virial_radius/mw_vel_scale;         // time scale for the MW, kpc/km/s
 double mw_force_scale          = mw_vel_scale/mw_time_scale;            // in km/s/s
 double mw_mass_scale           = mw_vel_scale * mw_vel_scale *
-                                 mw_virial_radius / astronomicalG;       // mass units of the simulation, Msun
+                                 mw_virial_radius / astronomicalG;      // mass units of the simulation, Msun
+double mw_potential_scale      = mw_vel_scale*mw_vel_scale;             // in km^2/s^2
+//double mw_potential_scale      = astronomicalG*mw_mass_scale/mw_virial_radius;             // in km^2/s^2
 
 // The MW halo tables
 string sph_cache_name_mw   = model_datadir+"SLGridSph.mw."+runtag;
