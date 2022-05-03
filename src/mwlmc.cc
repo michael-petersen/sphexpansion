@@ -43,6 +43,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("verbose")         = false)
 
         .def("lmc_fields", py::overload_cast<double,std::vector<double>,std::vector<double>,std::vector<double>,int,bool>(&MWLMC::lmc_fields),R"pbdoc(
+
                 Return all fields for the LMC halo (in the frame of the LMC).
 
                 Parameters
@@ -118,8 +119,9 @@ PYBIND11_MODULE(mwlmc, m) {
             py::arg("lmcharmonicflag") = 127,
             py::arg("verbose")         = false)
 
-        .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
-             "Get the LMC trajectory (relative to the MW disc centre).",
+        .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory, R"pbdoc(
+             Get the LMC trajectory (relative to the MW disc centre).
+             )pbdoc",
              py::arg("dt")     = native_timestep)
 
         .def("mworbit",  py::overload_cast<vector<double>,vector<double>,double,double,double>(&MWLMC::mworbit),

@@ -33,6 +33,7 @@ data/disc.cache.run9mlde
 
 # Python
 *.ipynb_checkpoints*
+*__pycache__*
 
 # Installation
 mwlmc.cpython-38-darwin.so
