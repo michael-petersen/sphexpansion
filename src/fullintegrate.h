@@ -1063,7 +1063,7 @@ MatrixXd MWLMC::get_lmc_trajectory(double dt)
     std::vector<double> trajectorytmp = get_lmc_centre_virial(reference_time-n*dt,false);
 
     // translate back to physical units
-    virial_to_physical_time(reference_time-(n*dt),tphys);
+    virial_to_physical_time(-(n*dt),tphys);
 
     // time unit is relative to present day (t=0), so add an offset
     trajectory(n,0) = tphys;
