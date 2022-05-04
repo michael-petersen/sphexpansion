@@ -38,6 +38,7 @@ data/disc.cache.run9mlde
 # Installation
 mwlmc.cpython-38-darwin.so
 mwlmc.egg-info/
+.eggs/*
 
 # Git
 *.orig
