@@ -14,7 +14,7 @@ git clone --recursive https://github.com/sophialilleengen/mwlmc.git
 pip install -e ./mwlmc 
 ```
 
-You may need to install `eigen` (v3), a header-only C++ library. As a header only library, it is sufficient to download the tarball, unpack, and copy the `Eigen/` directory to `/usr/local/include` (which is already part of the search path for clang). You may also use `brew install eigen` if using a Mac with homebrew. If using macports, the command is `sudo port install eigen3`.
+You may need to install [`eigen` (v3), a header-only C++ library](https://eigen.tuxfamily.org/dox/GettingStarted.html). As a header only library, it is sufficient to download the tarball, unpack, and copy the `Eigen/` directory to `/usr/local/include` (which is already part of the search path for clang). You may also use `brew install eigen` if using a Mac with homebrew. If using macports, the command is `sudo port install eigen3`.
 
 You may also need to install `cmake`. Using homebrew, try `brew install cmake`. If using macports, the corresponding command is `sudo port install cmake`.
 
