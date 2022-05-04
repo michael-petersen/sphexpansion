@@ -379,7 +379,7 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
                                     fr,ft,fp,
                                     mwhharmonicflag);
 
-
+  if (verbose) {
   std::cout << std::setw(14) << rtmp
             << std::setw(14) << thetatmp
             << std::setw(14) << phitmp
@@ -390,6 +390,7 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
             << std::setw(14) << ft
             //<< std::setw(14) << fp
             << std::endl;
+          }
 
   // convert to cartesian
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
