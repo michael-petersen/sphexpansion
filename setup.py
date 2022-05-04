@@ -117,11 +117,7 @@ class CMakeBuild(build_ext):
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="mwlmc",
     version="0.1.0",
     ext_modules=[CMakeExtension("mwlmc")],
     cmdclass={"build_ext": CMakeBuild},
-    # zip_safe=False,
-    # extras_require={"test": ["pytest>=6.0"]},
-    # python_requires=">=3.6",
 )
