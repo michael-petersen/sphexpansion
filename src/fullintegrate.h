@@ -143,17 +143,19 @@ public:
                    double dt=0.002,
                    int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
                    double rewind_time=2.5,
-                   bool discframe = true);
+                   bool discframe = true,
+                   bool verbose = false);
 
    std::vector< MatrixXd > rewind(MatrixXd xinit,
                                   MatrixXd vinit,
                                   double dt=0.002,
                                   int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
                                   double rewind_time=2.5,
-                                  bool discframe = true);
+                                  bool discframe = true,
+                                  bool verbose = false);
 
   // get the LMC trajectory (relative to the MW disc centre)
-  MatrixXd get_lmc_trajectory(double dt=native_timestep);
+  MatrixXd get_lmc_trajectory(double rewindtime=2.5,double dt=native_timestep);
 
   // print an orbit array
   void print_orbit(MatrixXd orbit, string orbitfile);
@@ -376,6 +378,18 @@ MatrixXd MWLMC::mwhalo_fields(double t, std::vector<double> x, std::vector<doubl
                                     tpotl0,tpotl,
                                     fr,ft,fp,
                                     mwhharmonicflag);
+
+
+  std::cout << std::setw(14) << rtmp
+            << std::setw(14) << thetatmp
+            << std::setw(14) << phitmp
+            << std::setw(14) << xvir
+            << std::setw(14) << yvir
+            << std::setw(14) << zvir
+            //<< std::setw(14) << fr
+            << std::setw(14) << ft
+            //<< std::setw(14) << fp
+            << std::endl;
 
   // convert to cartesian
   spherical_forces_to_cartesian(rtmp, phitmp, thetatmp,
@@ -1057,27 +1071,35 @@ MatrixXd MWLMC::get_trajectories(double dt, bool virial)
 
 }
 
-MatrixXd MWLMC::get_lmc_trajectory(double dt)
+MatrixXd MWLMC::get_lmc_trajectory(double rewindtime, double dt)
 {
   // get the trajectories with the specified time sampling (returns native time sampling if not specified)
-  int nint = reference_time/dt;
+
+  double dtvir,rewindtimevir,tphys,xphys;
+
+  // convert times to virial for under the hood operation
+  physical_to_virial_time(dt,dtvir);
+  physical_to_virial_time(rewindtime,rewindtimevir);
+
+  // calculate the number of steps to take
+  int nint = rewindtimevir/dtvir;
 
   MatrixXd trajectory;
   trajectory.resize(nint,4);
 
-  double tphys,xphys;
 
   for (int n=0;n<nint;n++)
   {
     // always start in native time, as we know the simulation bounds
-    std::vector<double> trajectorytmp = get_lmc_centre_virial(reference_time-n*dt,false);
+    std::vector<double> trajectorytmp = get_lmc_centre_virial(reference_time-n*dtvir,false);
 
-    // translate back to physical units
-    virial_to_physical_time(-(n*dt),tphys);
+    // translate time back to physical units
+    virial_to_physical_time(-(n*dtvir),tphys);
 
-    // time unit is relative to present day (t=0), so add an offset
+    // assign time
     trajectory(n,0) = tphys;
 
+    // translate lengths back to physical units
     for (int j=0;j<3;j++) {
       trajectory(n,j+1) = virial_to_physical_length(trajectorytmp[j]);
     }
@@ -1618,7 +1640,8 @@ MatrixXd MWLMC::rewind(vector<double> xinit,
                        double dt,
                        int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
                        double rewind_time,
-                       bool discframe)
+                       bool discframe,
+                       bool verbose)
 {
  /*
  rewind
@@ -1638,14 +1661,16 @@ MatrixXd MWLMC::rewind(vector<double> xinit,
   return_centre(reference_time, MWD->orient, initcoords);
   return_vel_centre(reference_time, MWD->orient, initvelcoords);
 
-  std::cout << setw(14) << reference_time
-            << setw(14) << virial_to_physical_length(initcoords[0])
-            << setw(14) << virial_to_physical_length(initcoords[1])
-            << setw(14) << virial_to_physical_length(initcoords[2]) << std::endl;
-  std::cout << setw(14) << "(u,v,w)"
-            << setw(14) << virial_to_physical_velocity(initvelcoords[0])
-            << setw(14) << virial_to_physical_velocity(initvelcoords[1])
-            << setw(14) << virial_to_physical_velocity(initvelcoords[2]) << std::endl;
+  if (verbose) {
+    std::cout << setw(14) << reference_time
+              << setw(14) << virial_to_physical_length(initcoords[0])
+              << setw(14) << virial_to_physical_length(initcoords[1])
+              << setw(14) << virial_to_physical_length(initcoords[2]) << std::endl;
+    std::cout << setw(14) << "(u,v,w)"
+              << setw(14) << virial_to_physical_velocity(initvelcoords[0])
+              << setw(14) << virial_to_physical_velocity(initvelcoords[1])
+              << setw(14) << virial_to_physical_velocity(initvelcoords[2]) << std::endl;
+  }
 
   // step 2: set beginning times and timesteps
   double tvirbegin  = reference_time;
@@ -1775,7 +1800,8 @@ std::vector< MatrixXd > MWLMC::rewind(MatrixXd xinit,
                                       double dt,
                                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
                                       double rewind_time,
-                                      bool discframe)
+                                      bool discframe,
+                                      bool verbose)
 {
  /*
  rewind
@@ -1791,14 +1817,16 @@ std::vector< MatrixXd > MWLMC::rewind(MatrixXd xinit,
   return_centre(reference_time, MWD->orient, zerocoords);
   return_vel_centre(reference_time, MWD->orient, zerovelcoords);
 
-  std::cout << setw(14) << reference_time
-            << setw(14) << virial_to_physical_length(zerocoords[0])
-            << setw(14) << virial_to_physical_length(zerocoords[1])
-            << setw(14) << virial_to_physical_length(zerocoords[2]) << std::endl;
-  std::cout << setw(14) << "(u,v,w)"
-            << setw(14) << virial_to_physical_velocity(zerovelcoords[0])
-            << setw(14) << virial_to_physical_velocity(zerovelcoords[1])
-            << setw(14) << virial_to_physical_velocity(zerovelcoords[2]) << std::endl;
+  if (verbose) {
+    std::cout << setw(14) << reference_time
+              << setw(14) << virial_to_physical_length(zerocoords[0])
+              << setw(14) << virial_to_physical_length(zerocoords[1])
+              << setw(14) << virial_to_physical_length(zerocoords[2]) << std::endl;
+    std::cout << setw(14) << "(u,v,w)"
+              << setw(14) << virial_to_physical_velocity(zerovelcoords[0])
+              << setw(14) << virial_to_physical_velocity(zerovelcoords[1])
+              << setw(14) << virial_to_physical_velocity(zerovelcoords[2]) << std::endl;
+ }
 
  double fx,fy,fz,tvir;
 
@@ -1831,6 +1859,7 @@ std::vector< MatrixXd > MWLMC::rewind(MatrixXd xinit,
    orbit[n](3,0) = -vinit(n,0);
    orbit[n](4,0) = -vinit(n,1);
    orbit[n](5,0) = -vinit(n,2);
+   orbit[n](9,0) = tphysbegin;
  }
 
  //now step forward one, using leapfrog (drift-kick-drift) integrator
