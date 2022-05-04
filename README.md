@@ -8,7 +8,7 @@ This repository provides an interface to a simulation of the Milky Way and Large
 
 The main functionalities are explained in the tutorials:
  - Running [orbits](tutorial/orbits_tutorial.ipynb) in the simulation with options for different potential setups and 2 examples of dwarf galaxies;
- - Accessing the simulation [fields](tutorials/fields_tutorial.ipynb) (i.e. densities, potentials, and forces) for different potential setups.
+ - Accessing the simulation [fields](tutorial/fields_tutorial.ipynb) (i.e. densities, potentials, and forces) for different potential setups.
 
 **Due to GitHub file size constraints, we are unable to host the full resolution MW disc potential. We have provided a lower-resolution version in this repository. Therefore, computations in the inner Milky Way have modestly lower fidelity. If your use case is interested in the stellar disc, please email the authors for a full resolution disc basis.** To illustrate the fidelity, an example of a Sun-like orbit in the deforming potential vs a rigid Milky Way is given in the orbit tutorial.
 
