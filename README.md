@@ -1,10 +1,12 @@
 # mwlmc
 ### Milky Way - Large Magellanic Cloud simulation from Lilleengen et al. (2022)
 
-This repository provides interfaces a model Milky Way and Large Magellanic Cloud interaction.
+This repository provides an interface to a simulation of the Milky Way and Large Magellanic Cloud interaction.
 
 ------------------
-(user interface to be described here)
+### Documentation
+
+The main functionalities are explained in the tutorials: [orbits](tutorial/orbits_tutorial.ipynb) and [fields](tutorials/fields_tutorial.ipynb).
 
 ------------------
 
