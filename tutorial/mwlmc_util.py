@@ -17,8 +17,19 @@ def get_harmonic_flag(l_array):
     flag = int(sum([2**(l-1) for l in l_array]))
     return flag
   
-  
 def print_field_info(*args):
+    ''' 
+    Prints information on the fields.
+    
+    Parameters
+    ----------
+    fx, fy, fz : float
+       Forces in x, y and z-direction.
+    rho : float
+       Density 
+    Phi : float
+       Potential
+    '''    
     fx, fy, fz, dens, pot = args
     print(r'f_x = %.2f [km/s^2]' % fx)
     print(r'f_y = %.2f [km/s^2]' % fy)
@@ -26,6 +37,46 @@ def print_field_info(*args):
     print(r'rho = %.2e [Msun/pc^3]' % dens)
     print(r'Phi = %8e [(km/s)^2]' % pot)
     return None
+  
+def make_random_obs(*obs, N=10, seed=265):
+    ''' 
+    Returns random draws from observations.
+    
+    Parameters
+    ----------
+    ra, dec : float 
+       Ra and dec in deg.
+    dhel : float
+       Distance in kpc.
+    pmra, pmdec : float
+       Proper motions in mas/yr.
+    vhel : float
+       Heliocentric radial velocity in km/s.
+    edhel : float
+       Error of distance in kpc.
+    epmra, epmdec : float
+       Error of proper motions in mas/yr.
+    evhel : float
+       Error of radial velocity in km/s.
+    N : int (default = 10)
+       Number of random realisations of observables.
+    seed : int (default = 265)
+       Seed for the rng.
+    
+    Returns
+    -------
+    ra, dec, dhel, pmra, pmdec, vhel : array-like float
+       
+    '''        
+    rng = np.random.default_rng(seed)
+    ra, dec, dhel, pmra, pmdec, vhel, edhel, epmra, epmdec, evhel = obs
+    ra = np.full(N, ra)
+    dec = np.full(N, dec)
+    dhel = rng.normal(dhel, scale=edhel, size=N)
+    pmra = rng.normal(pmra, scale=epmra, size=N)
+    pmdec = rng.normal(pmdec, scale=epmdec, size=N)
+    vhel = rng.normal(vhel, scale=evhel, size=N)
+    return ra, dec, dhel, pmra, pmdec, vhel
   
 ###### Coordinate transformations
 k = 4.74047
