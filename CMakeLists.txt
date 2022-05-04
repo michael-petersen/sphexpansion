@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(
-  SPHEXPANSION
-  VERSION 0.2.4
-  HOMEPAGE_URL https://github.com/michael-petersen/sphexpansion
+  MWLMC
+  VERSION 1.0.0
+  HOMEPAGE_URL https://github.com/sophialilleengen/mwlmc
   LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
