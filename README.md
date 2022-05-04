@@ -8,7 +8,7 @@ This repository provides an interface to a simulation of the Milky Way and Large
 
 The main functionalities are explained in the tutorials: 
  - Running [orbits](tutorial/orbits_tutorial.ipynb) in the simulation with options for different potential setups and 2 examples of dwarf galaxies;
- - Accessing the simulation [fields](tutorials/fields_tutorial.ipynb) (i.e. densities, potentials, and forces) for different potential setups.
+ - Accessing the simulation [fields](tutorial/fields_tutorial.ipynb) (i.e. densities, potentials, and forces) for different potential setups.
 
 **This simulation focuses on the effects of the interaction of the Milky Way and LMC on their haloes. Due to the evolving disc, computations in the inner Milky Way might not be reliable.** An example of a Sun-like orbit in the deforming potential vs a rigid Milky Way is given in the orbit tutorial.
 
