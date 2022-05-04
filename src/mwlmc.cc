@@ -120,6 +120,7 @@ PYBIND11_MODULE(mwlmc, m) {
 
         .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,
              "Get the LMC trajectory (relative to the MW disc centre).",
+             py::arg("rewindtime") = 2.5,
              py::arg("dt")     = native_timestep)
 
         .def("mworbit",  py::overload_cast<vector<double>,vector<double>,double,double,double>(&MWLMC::mworbit),
@@ -138,7 +139,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("tend")            = 0.0,
              py::arg("dt")              = 0.002)
 
-        .def("rewind", py::overload_cast<vector<double>,vector<double>,double,int,int,int,double,bool>(&MWLMC::rewind),
+        .def("rewind", py::overload_cast<vector<double>,vector<double>,double,int,int,int,double,bool,bool>(&MWLMC::rewind),
              py::arg("xinit"),
              py::arg("vinit"),
              py::arg("dt")              = 0.002,
@@ -146,9 +147,10 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("rewindtime")      = 2.5,
-             py::arg("discframe")       = true)
+             py::arg("discframe")       = true,
+             py::arg("verbose")         = false)
 
-        .def("rewind", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,bool>(&MWLMC::rewind),
+        .def("rewind", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,bool,bool>(&MWLMC::rewind),
                 R"pbdoc(Compute an orbit rewind in all three components.
 
                 Parameters
@@ -167,7 +169,8 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("rewindtime")      = 2.5,
-             py::arg("discframe")       = true)
+             py::arg("discframe")       = true,
+             py::arg("verbose")         = false)
 
         .def("print_orbit", &MWLMC::print_orbit, "print an orbit array");
 
