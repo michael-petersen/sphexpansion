@@ -105,10 +105,10 @@ void cylindrical_forces_to_cartesian(ArrayXd  r, ArrayXd phi,
 void cartesian_to_spherical(double  x, double    y, double      z,
 			    									double& r, double& phi, double& theta)
 {
-	//std::cout << "converting" << std::setw(14) << x << std::setw(14) << y << std::setw(14) << z << std::endl;
+
   r     = std::max(sqrt(x*x + y*y + z*z),EPS);
 
-	phi   = atan2(y,x+EPS);
+	phi   = atan2(y+EPS,x+EPS);
 
   // switches for z axis
 	if (r<1.e-10) {
@@ -118,7 +118,7 @@ void cartesian_to_spherical(double  x, double    y, double      z,
 			theta = M_PI_2;
 		}
 	} else {
-    theta = acos( z/(r+EPS) );
+    theta = acos( z/r );
   }
 }
 
@@ -193,10 +193,10 @@ void spherical_forces_to_cartesian(double r3, double phi, double theta,
   double x,y,z;
 	double r = std::max(r3,EPS);
   spherical_to_cartesian(r, phi, theta, x, y, z);
-  double r2 = std::max(sqrt(x*x + y*y),EPS);
+  double r2 = std::max(sqrt(x*x + y*y + EPS),EPS);
 
   // checking guards. to be removed once decided if EPS is conservative enough.
-	//std::cout << "r/R" << std::setw(14) << r2 << std::setw(14) << r3 << std::endl;
+	//std::cout << "R2/R3" << std::setw(14) << r2 << std::setw(14) << r << std::endl;
 
   if (isnan(fr)) {
 		fx = 0.;

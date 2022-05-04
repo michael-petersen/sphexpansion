@@ -149,7 +149,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("rewindtime")      = 2.5,
-             py::arg("discframe")       = true,
+             py::arg("discframe")       = false,
              py::arg("verbose")         = false)
 
         .def("rewind", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,bool,bool>(&MWLMC::rewind),
@@ -171,7 +171,7 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("mwdharmonicflag") = 127,
              py::arg("lmcharmonicflag") = 127,
              py::arg("rewindtime")      = 2.5,
-             py::arg("discframe")       = true,
+             py::arg("discframe")       = false,
              py::arg("verbose")         = false)
 
         .def("print_orbit", &MWLMC::print_orbit, "print an orbit array");
