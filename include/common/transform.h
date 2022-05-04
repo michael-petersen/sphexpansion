@@ -105,7 +105,7 @@ void cylindrical_forces_to_cartesian(ArrayXd  r, ArrayXd phi,
 void cartesian_to_spherical(double  x, double    y, double      z,
 			    									double& r, double& phi, double& theta)
 {
-	std::cout << "converting" << std::setw(14) << x << std::setw(14) << y << std::setw(14) << z << std::endl;
+	//std::cout << "converting" << std::setw(14) << x << std::setw(14) << y << std::setw(14) << z << std::endl;
   r     = std::max(sqrt(x*x + y*y + z*z),EPS);
 
 	phi   = atan2(y,x+EPS);
