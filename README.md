@@ -6,7 +6,9 @@ This repository provides an interface to a simulation of the Milky Way and Large
 ------------------
 ### Documentation
 
-The main functionalities are explained in the tutorials: [orbits](tutorial/orbits_tutorial.ipynb) and [fields](tutorials/fields_tutorial.ipynb).
+The main functionalities are explained in the tutorials: 
+ - Running [orbits](tutorial/orbits_tutorial.ipynb) in the simulation with options for different potential setups and 2 examples of dwarf galaxies
+ - Accessing the simulation [fields](tutorials/fields_tutorial.ipynb) (i.e. densities, potentials, and forces) for different potential setups.
 
 ------------------
 
