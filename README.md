@@ -41,6 +41,19 @@ If you make use of this code, please cite the following papers
         pages = {6201-6217},
           doi = {10.1093/mnras/stab3639}
 }
+
+@ARTICLE{Lilleengen2022,
+       author = {{Lilleengen}, Sophia and {Petersen}, Michael S. and {Erkal}, Denis and {Pe{\~n}arrubia}, Jorge and {Koposov}, Sergey E. and {Li}, Ting S. and {Cullinane}, Lara R. and {Ji}, Alexander P. and {Kuehn}, Kyler and {Lewis}, Geraint F. and {Mackey}, Dougal and {Pace}, Andrew B. and {Shipp}, Nora and {Zucker}, Daniel B. and {Bland-Hawthorn}, Joss and {Hilmi}, Tariq},
+        title = "{The effect of the deforming dark matter haloes of the Milky Way and the Large Magellanic Cloud on the Orphan-Chenab stream}",
+      journal = {arXiv e-prints},
+     keywords = {Astrophysics - Astrophysics of Galaxies},
+         year = 2022,
+        month = may,
+          eid = {arXiv:2205.01688},
+        pages = {arXiv:2205.01688},
+archivePrefix = {arXiv},
+       eprint = {2205.01688}
+}
 ```
 
 and consider citing this paper
