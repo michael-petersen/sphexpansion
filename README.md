@@ -1,5 +1,5 @@
 # mwlmc
-### Milky Way - Large Magellanic Cloud simulation from Lilleengen et al. (2022)
+### Milky Way - Large Magellanic Cloud simulation from [Lilleengen et al. (2022)](https://arxiv.org/abs/2205.01688)
 
 This repository provides an interface to a simulation of the Milky Way and Large Magellanic Cloud (LMC) interaction.
 
