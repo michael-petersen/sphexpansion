@@ -104,6 +104,14 @@ void interpolate_centre(double desired_time,
       centre[1] = orient.ycen[0] + dtime*orient.zerotimevelocities[1];
       centre[2] = orient.zcen[0] + dtime*orient.zerotimevelocities[2];
 
+    } else {
+    // check against the old commits
+    double x1 = (orient.time[indx+1] - desired_time)/dt;
+    double x2 = (desired_time - orient.time[indx])/dt;
+
+    centre[0] = (x1*orient.xcen[indx] + x2*orient.xcen[indx+1]);
+    centre[1] = (x1*orient.ycen[indx] + x2*orient.ycen[indx+1]);
+    centre[2] = (x1*orient.zcen[indx] + x2*orient.zcen[indx+1]);
   }
 
 }
