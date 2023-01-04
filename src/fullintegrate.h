@@ -1924,7 +1924,7 @@ MatrixXd MWLMC::rewind(vector<double> xinit,
      return_vel_centre(tvirnow, MWD->orient, discvelcoords);
      for (j=0; j<3; j++) {
        orbit(j,n)   = orbit(j,n) - virial_to_physical_length(disccoords[j]);
-       orbit(j+3,n) = orbit(j,n) - virial_to_physical_velocity(discvelcoords[j]);
+       orbit(j+3,n) = orbit(j+3,n) - virial_to_physical_velocity(discvelcoords[j]);
      }
    }
  }
@@ -2085,7 +2085,7 @@ std::vector< MatrixXd > MWLMC::rewind(MatrixXd xinit,
      for (int n=0;n<norbits;n++) {
        for (j=0; j<3; j++) {
          orbit[n](j,ni)   = orbit[n](j,ni) - virial_to_physical_length(zerocoords[j]) + virial_to_physical_length(initcoords[j]);
-         orbit[n](j+3,ni) = orbit[n](j,ni) - virial_to_physical_velocity(zerovelcoords[j]) + virial_to_physical_length(initvel[j]);
+         orbit[n](j+3,ni) = orbit[n](j+3,ni) - virial_to_physical_velocity(zerovelcoords[j]) + virial_to_physical_length(initvel[j]);
        }
      }
    }
