@@ -1083,7 +1083,11 @@ MatrixXd  MWLMC::all_forces(double t, std::vector<double> x, std::vector<double>
 
     physical_to_virial_length(x[n],y[n],z[n], xvir,yvir,zvir);
 
-
+  // zero out forces
+  fx = 0;
+  fy = 0;
+  fz = 0;
+    
   // compute spherical coordinates in the frame of the MW expansion
   cartesian_to_spherical(xvir-mwd_centre[0], yvir-mwd_centre[1], zvir-mwd_centre[2], rtmp, phitmp, thetatmp);
 
