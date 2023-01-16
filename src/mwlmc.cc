@@ -221,6 +221,20 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("t"),
              py::arg("verbose")         = false)
 
+       .def("expansion_centre_velocities", py::overload_cast<double,bool>(&MWLMC::get_expansion_centre_velocities_physical),R"pbdoc(
+                Get the expansion centres at a specific moment in simulation time
+
+                Parameters
+                ----------
+                t : float
+
+                Returns
+                -------
+                tx,ty,tz,mwhx,mwhy,mwhz,lmcx,lmcy,lmcz,mwdx,mwdy,mwdz : array of expansion centres
+            )pbdoc",
+            py::arg("t"),
+            py::arg("verbose")         = false)
+
         .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,R"pbdoc(
              Get the LMC trajectory (relative to the MW disc centre).
                 Parameters

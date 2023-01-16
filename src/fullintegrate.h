@@ -57,6 +57,7 @@ private:
 
   // get centres of the expansions with VIRIAL time input
   std::vector<double> get_expansion_centres_virial(double tvir, bool verbose=false);
+  std::vector<double> get_expansion_centre_velocities_virial(double tvir, bool verbose=false);
 
   std::vector<double> get_lmc_centre_virial(double tvir, bool verbose);
 
@@ -115,6 +116,7 @@ public:
 
   // get centres of the expansions with PHYSICAL time input
   std::vector<double> get_expansion_centres_physical(double t, bool verbose=false);
+  std::vector<double> get_expansion_centre_velocities_physical(double t, bool verbose=false);
 
   // compute an orbit integration in all three components
   // this uses PHYSICAL units by nature
@@ -1284,24 +1286,7 @@ std::vector<double> MWLMC::get_expansion_centres_physical(double t, bool verbose
   // reset time to have the correct system zero (e.g. pericentre is T=0)
   tvir += reference_time;
 
-  // initialise temporary centre vectors
-  vector<double> zerocoords(3),mw_centre(3),lmc_centre(3),mwd_centre(3);
-
-  // get the present-day MWD coordinates: the zero of the total
-  return_centre(tvir, MWD->orient, zerocoords);
-
-  if (verbose) std::cout << "Coordinate zero:" << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << std::endl;
-
-  // get the centres of the expansions at the specified times in exp reference space
-  return_centre(tvir,  MW->orient,  mw_centre);
-  return_centre(tvir, LMC->orient, lmc_centre);
-  return_centre(tvir, MWD->orient, mwd_centre);
-
-  // fill return vector
-  for (int i=0;i<3;i++) centres[i  ] = zerocoords[i];
-  for (int i=0;i<3;i++) centres[i+3] = mw_centre[i];
-  for (int i=0;i<3;i++) centres[i+6] = lmc_centre[i];
-  for (int i=0;i<3;i++) centres[i+9] = mwd_centre[i];
+  centres = get_expansion_centres_virial(tvir, verbose);
 
   // recast to physical distances
   for (int i=0;i<12;i++) centres[i] = virial_to_physical_length(centres[i]);
@@ -1346,6 +1331,75 @@ std::vector<double> MWLMC::get_expansion_centres_virial(double tvir, bool verbos
   for (int i=0;i<3;i++) centres[i+9] = mwd_centre[i];
 
   return centres;
+
+}
+
+
+
+std::vector<double> MWLMC::get_expansion_centre_velocities_physical(double t, bool verbose)
+{
+  // check for a valid time
+  if (t > 0.0) {
+    std::cout << "Cannot select a time after the present day! Setting to present day..." << std::endl;
+    t = 0.0;
+  }
+
+  // make one big return container
+  std::vector<double> vcentres(12);
+
+  // translate all times and positions into exp virial units
+  double tvir;
+  physical_to_virial_time(t,tvir);
+
+  // reset time to have the correct system zero (e.g. pericentre is T=0)
+  tvir += reference_time;
+
+  vcentres = get_expansion_centre_velocities_virial(tvir, verbose);
+
+  // recast to physical distances
+  for (int i=0;i<12;i++) vcentres[i] = virial_to_physical_length(vcentres[i]);
+
+  return vcentres;
+
+}
+
+
+
+std::vector<double> MWLMC::get_expansion_centre_velocities_virial(double tvir, bool verbose)
+{
+  // check for a valid time
+  if (tvir > reference_time) {
+    std::cout << "Cannot select a time after the present day! Setting to present day..." << std::endl;
+    tvir = reference_time;
+  }
+
+  // make one big return container
+  std::vector<double> vcentres(12);
+
+  // initialise temporary centre vectors
+  vector<double> zerovcoords(3),mw_vcentre(3),lmc_vcentre(3),mwd_vcentre(3);
+
+  // get the present-day MWD coordinates: the zero of the total
+  return_vel_centre(tvir, MWD->orient, zerovcoords);
+
+  if (verbose) std::cout << "Coordinate zero:" << setw(14) << zerovcoords[0] << setw(14) << zerovcoords[1] << setw(14) << zerovcoords[2] << std::endl;
+
+  // get the centres of the expansions at the specified times in exp reference space
+  return_vel_centre(tvir,  MW->orient,  mw_vcentre);
+  return_vel_centre(tvir, LMC->orient, lmc_vcentre);
+  return_vel_centre(tvir, MWD->orient, mwd_vcentre);
+
+  int indx;
+  double dt;
+  find_time_index(tvir, LMC->orient, indx, dt);
+
+  // fill return vector
+  for (int i=0;i<3;i++) vcentres[i  ] = zerovcoords[i];
+  for (int i=0;i<3;i++) vcentres[i+3] = mw_vcentre[i];
+  for (int i=0;i<3;i++) vcentres[i+6] = lmc_vcentre[i];
+  for (int i=0;i<3;i++) vcentres[i+9] = mwd_vcentre[i];
+
+  return vcentres;
 
 }
 
