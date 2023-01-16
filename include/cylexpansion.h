@@ -53,7 +53,7 @@ class CylExpansion
 {
 private:
 
-  CylCoefs coeftable;
+  // basis parameters may remain private
   CylForce forcetable;
   CylCache cachetable;
 
@@ -63,6 +63,9 @@ private:
 
 
 public:
+
+  // expose the coefficient table for possible editing
+  CylCoefs coeftable;
 
   // the constructor
   CylExpansion(string cyl_cache_name,

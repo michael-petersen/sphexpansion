@@ -55,9 +55,6 @@ private:
                        int mwhharmonicflag, int mwdharmonicflag,
                        bool verbose=false);
 
-  // get centres of the expansions with PHYSICAL time input
-  std::vector<double> get_expansion_centres_physical(double t, bool verbose=false);
-
   // get centres of the expansions with VIRIAL time input
   std::vector<double> get_expansion_centres_virial(double tvir, bool verbose=false);
 
@@ -116,6 +113,8 @@ public:
                       int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
                       bool verbose=false);
 
+  // get centres of the expansions with PHYSICAL time input
+  std::vector<double> get_expansion_centres_physical(double t, bool verbose=false);
 
   // compute an orbit integration in all three components
   // this uses PHYSICAL units by nature
@@ -1303,6 +1302,9 @@ std::vector<double> MWLMC::get_expansion_centres_physical(double t, bool verbose
   for (int i=0;i<3;i++) centres[i+3] = mw_centre[i];
   for (int i=0;i<3;i++) centres[i+6] = lmc_centre[i];
   for (int i=0;i<3;i++) centres[i+9] = mwd_centre[i];
+
+  // recast to physical distances
+  for (int i=0;i<12;i++) centres[i] = virial_to_physical_length(centres[i]);
 
   return centres;
 

@@ -207,6 +207,20 @@ PYBIND11_MODULE(mwlmc, m) {
             py::arg("lmcharmonicflag") = 127,
             py::arg("verbose")         = false)
 
+        .def("expansion_centres", py::overload_cast<double,bool>(&MWLMC::get_expansion_centres_physical),R"pbdoc(
+                 Get the expansion centres at a specific moment in simulation time
+
+                 Parameters
+                 ----------
+                 t : float
+
+                 Returns
+                 -------
+                 tx,ty,tz,mwhx,mwhy,mwhz,lmcx,lmcy,lmcz,mwdx,mwdy,mwdz : array of expansion centres
+             )pbdoc",
+             py::arg("t"),
+             py::arg("verbose")         = false)
+
         .def("get_lmc_trajectory", &MWLMC::get_lmc_trajectory,R"pbdoc(
              Get the LMC trajectory (relative to the MW disc centre).
                 Parameters
@@ -224,7 +238,7 @@ PYBIND11_MODULE(mwlmc, m) {
 
         .def("mworbit",  py::overload_cast<vector<double>,vector<double>,double,double,double>(&MWLMC::mworbit), R"pbdoc(
              Compute an orbit integration using only the initial Milky Way potential.
-             
+
              Parameters
              ----------
              xinit : array-like float
@@ -232,10 +246,10 @@ PYBIND11_MODULE(mwlmc, m) {
              tbegin : float = -2.5
              tend : float = 0.
              dt : float = 0.002
-             
+
              Returns
              -------
-             x, y, z : array-like float 
+             x, y, z : array-like float
              vx, vy, vz :array-like float
              fx, fy, fz :array-like float
              t :array-like float
@@ -248,7 +262,7 @@ PYBIND11_MODULE(mwlmc, m) {
 
         .def("mworbit", py::overload_cast<MatrixXd,MatrixXd,double,double,double>(&MWLMC::mworbit), R"pbdoc(
              Compute an orbit integration using only the initial Milky Way potential.
-             
+
              Parameters
              ----------
              xinit : array-like float
@@ -256,10 +270,10 @@ PYBIND11_MODULE(mwlmc, m) {
              tbegin : float = -2.5
              tend : float = 0.
              dt : float = 0.002
-             
+
              Returns
              -------
-             x, y, z : array-like float 
+             x, y, z : array-like float
              vx, vy, vz : array-like float
              fx, fy, fz : array-like float
              t : array-like float
@@ -272,7 +286,7 @@ PYBIND11_MODULE(mwlmc, m) {
 
         .def("rewind", py::overload_cast<vector<double>,vector<double>,double,int,int,int,double,bool,bool>(&MWLMC::rewind),R"pbdoc(
              Compute an orbit rewind.
-             
+
              Parameters
              ----------
              xinit : array-like float
@@ -280,12 +294,12 @@ PYBIND11_MODULE(mwlmc, m) {
              dt : float = 0.002
              mwhharmonicflag : int = 127
              mwdharmonicflag : int = 127
-             lmcharmonicflag : int = 127  
+             lmcharmonicflag : int = 127
              rewindtime : float = 2.5
-             
+
              Returns
              -------
-             x, y, z : array-like float 
+             x, y, z : array-like float
              vx, vy, vz : array-like float
              fx, fy, fz : array-like float
              t : array-like float
@@ -302,7 +316,7 @@ PYBIND11_MODULE(mwlmc, m) {
 
         .def("rewind", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,bool,bool>(&MWLMC::rewind), R"pbdoc(
              Compute an orbit rewind.
-             
+
              Parameters
              ----------
              xinit : array-like float
@@ -310,12 +324,12 @@ PYBIND11_MODULE(mwlmc, m) {
              dt : float = 0.002
              mwhharmonicflag : int = 127
              mwdharmonicflag : int = 127
-             lmcharmonicflag : int = 127  
+             lmcharmonicflag : int = 127
              rewindtime : float = 2.5
-             
+
              Returns
              -------
-             x, y, z : array-like float 
+             x, y, z : array-like float
              vx, vy, vz : array-like float
              fx, fy, fz : array-like float
              t : array-like float

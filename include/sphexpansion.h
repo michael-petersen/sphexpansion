@@ -59,7 +59,6 @@ private:
 
   // doesn't need to be exposed to the outside world
   SphModel modeltable;
-  SphCoefs coeftable;
 
   void initialise(string sph_cache_name,
       string model_file,
@@ -67,6 +66,10 @@ private:
       string orient_file);
 
 public:
+
+  // expose the coefficients for possible editing
+  SphCoefs coeftable;
+
   // the constructor
   SphExpansion(string sph_cache_name,
          string model_file,
