@@ -21,12 +21,14 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # using Visual Studio C++
 endif()
 
-set(CMAKE_OSX_ARCHITECTURES "x86_64")
+#set(CMAKE_OSX_ARCHITECTURES "x86_64")
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # required compiler features
 #find_package(pybind11)
+
+find_package(Python COMPONENTS Interpreter Development)
 
 find_package(Eigen3 REQUIRED)
 add_subdirectory(extern/pybind11-2.9.2)
