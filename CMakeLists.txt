@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(
   SPHEXPANSION
-  VERSION 0.2.1
+  VERSION 0.2.2
   HOMEPAGE_URL https://github.com/michael-petersen/sphexpansion
   LANGUAGES CXX)
 
@@ -21,13 +21,20 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # using Visual Studio C++
 endif()
 
-set(CMAKE_OSX_ARCHITECTURES "x86_64")
+# this may or may not be needed, depending on if you are using anaconda (needed)
+# or if you are on an M1/2 Mac using native python installs (not needed)
+#set(CMAKE_OSX_ARCHITECTURES "x86_64")
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+# check which python this actually picks up!
+find_package(Python COMPONENTS Interpreter Development)
+
 
 # required compiler features
 find_package(Eigen3 REQUIRED)
 add_subdirectory(extern/pybind11)
+add_subdirectory(extern/yaml-cpp)
 
 
 if(pybind11_FOUND)
