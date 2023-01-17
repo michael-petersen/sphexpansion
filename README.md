@@ -1,5 +1,5 @@
 # mwlmc
-### Milky Way - Large Magellanic Cloud simulation from Lilleengen et al. (2022)
+### Milky Way - Large Magellanic Cloud simulation from [Lilleengen et al. (2022)](https://arxiv.org/abs/2205.01688)
 
 This repository provides an interface to a simulation of the Milky Way and Large Magellanic Cloud (LMC) interaction.
 
@@ -40,6 +40,24 @@ If you make use of this code, please cite the following papers
        number = {4},
         pages = {6201-6217},
           doi = {10.1093/mnras/stab3639}
+}
+
+@ARTICLE{Lilleengen2023,
+       author = {{Lilleengen}, Sophia and {Petersen}, Michael S. and {Erkal}, Denis and {Pe{\~n}arrubia}, Jorge and {Koposov}, Sergey E. and {Li}, Ting S. and {Cullinane}, Lara R. and {Ji}, Alexander P. and {Kuehn}, Kyler and {Lewis}, Geraint F. and {Mackey}, Dougal and {Pace}, Andrew B. and {Shipp}, Nora and {Zucker}, Daniel B. and {Bland-Hawthorn}, Joss and {Hilmi}, Tariq and {S5 Collaboration}},
+        title = "{The effect of the deforming dark matter haloes of the Milky Way and the Large Magellanic Cloud on the Orphan-Chenab stream}",
+      journal = {\mnras},
+     keywords = {Galaxy: evolution, Galaxy: halo, Galaxy: kinematics and dynamics, Galaxy: structure, (galaxies:) Magellanic Clouds, Astrophysics - Astrophysics of Galaxies},
+         year = 2023,
+        month = jan,
+       volume = {518},
+       number = {1},
+        pages = {774-790},
+          doi = {10.1093/mnras/stac3108},
+archivePrefix = {arXiv},
+       eprint = {2205.01688},
+ primaryClass = {astro-ph.GA},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2023MNRAS.518..774L},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 ```
 
