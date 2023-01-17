@@ -160,6 +160,11 @@ public:
 
   // print an orbit array
   void print_orbit(MatrixXd orbit, string orbitfile);
+
+  // reset coefficients to cache values
+  void reset_mw_coefficients();
+  void reset_all_coefficients();
+
 };
 
 
@@ -1292,6 +1297,22 @@ std::vector<double> MWLMC::get_expansion_centres_physical(double t, bool verbose
   for (int i=0;i<12;i++) centres[i] = virial_to_physical_length(centres[i]);
 
   return centres;
+
+}
+
+void MWLMC::reset_mw_coefficients()
+{
+
+  MW->reset_coefficients();
+
+}
+
+void MWLMC::reset_all_coefficients()
+{
+
+  MW->reset_coefficients();
+  LMC->reset_coefficients();
+  MWD->reset_coefficients();
 
 }
 

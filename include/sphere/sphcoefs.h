@@ -28,6 +28,9 @@ using Eigen::MatrixXd;
 
 struct SphCoefs
 {
+
+  string cachename;    // name of the file that is read in for the cache
+
   int LMAX;            // the number of azimuthal harmonics
   int NMAX;            // the number of radial terms
   int NUMT;            // the number of timesteps
@@ -49,6 +52,8 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
         cout << "sphcoefs::read_coef_file: Unable to open file!\n";
         exit(1);
   }
+
+  coeftable.cachename = coef_file.c_str();
 
   // first thing in is NUMT,LMAX,NMAX
   in.read((char *)&coeftable.NUMT, sizeof(int));
@@ -88,6 +93,8 @@ void read_coef_file (string& coef_file, SphCoefs& coeftable) {
   cout << "success!!" << "\n";
 
 }
+
+//void install_coefficients()
 
 
 

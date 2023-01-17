@@ -7,6 +7,7 @@ MSP  4 Feb 2021 add dipole and quadrupole capability
 MSP 25 May 2021 add ltrunc option; add self-gravitating coefficient calculation
 MSP 28 Sep 2021 adjust radial order (nmax) truncation
 MSP  9 Apr 2022 converted to Eigen
+MSP 17 Jan 2023 expose coefficient tables for editing
 
 */
 
@@ -59,6 +60,7 @@ private:
 
   // doesn't need to be exposed to the outside world
   SphModel modeltable;
+  SphCache cachetable; // does this actually have to be exposed?
 
   void initialise(string sph_cache_name,
       string model_file,
@@ -66,19 +68,22 @@ private:
       string orient_file);
 
 public:
-
-  // expose the coefficients for possible editing
-  SphCoefs coeftable;
-
   // the constructor
   SphExpansion(string sph_cache_name,
          string model_file,
          string coef_file,
          string orient_file="");
 
+  // expose the coefficients for editing
+  SphCoefs coeftable;
+
   // expose the important expansion data
-  SphCache cachetable; // does this actually have to be exposed?
   SphOrient orient;
+
+  string sph_cache_name;
+  string model_file;
+  string coef_file;
+  string orient_file;
 
   // expose the basic parameters of the expansion
   int LMAX; // maximum azimuthal order in expansion
@@ -137,13 +142,34 @@ public:
              MatrixXd& coefs_at_time, int ntrunc=-1, int ltrunc=0);
 
 
+  // reset coefficients to the read-in values
+  void reset_coefficients();
+
+
 };
+
+/*
+std::tuple<vector<double>,std::vector<MatrixXd>> SphExpansion::output_coefficients()
+{
+
+
+  return make_tuple()
+}
+*/
+
+
+
 
 SphExpansion::SphExpansion(string sph_cache_name,
          string model_file,
          string coef_file,
          string orient_file)
 {
+  SphExpansion::sph_cache_name = sph_cache_name;
+  SphExpansion::model_file     = model_file;
+  SphExpansion::coef_file      = coef_file;
+  SphExpansion::orient_file    = orient_file;
+  
   initialise(sph_cache_name, model_file, coef_file, orient_file);
 }
 
@@ -191,6 +217,18 @@ void SphExpansion::initialise(string sph_cache_name,
 
 }
 
+void SphExpansion::reset_coefficients()
+{
+  /*
+  reset coefficients back to those read in from the file
+  */
+  try {
+    read_coef_file (SphExpansion::coef_file, SphExpansion::coeftable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
+}
 
 
 void SphExpansion::get_pot_coefs(int l, int indx, int nmax, MatrixXd& coefs, MatrixXd& potd, MatrixXd& dpot, double *p, double *dp)

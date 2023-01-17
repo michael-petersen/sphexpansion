@@ -19,8 +19,8 @@ using Eigen::MatrixXd;
 namespace py = pybind11;
 
 PYBIND11_MODULE(mwlmc, m) {
-    // py::options options;
-    // options.disable_function_signatures();
+
+    //PYBIND11_NUMPY_DTYPE(SphCoefs, LMAX, NMAX, NUMT, t, coefs);
 
     py::class_<MWLMC>(m, "MWLMC")
         .def(py::init<>())
@@ -358,6 +358,10 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("discframe")       = true,
              py::arg("verbose")         = false)
 
-        .def("print_orbit", &MWLMC::print_orbit, "print an orbit array");
+        .def("print_orbit", &MWLMC::print_orbit, "print an orbit array")
+
+        .def("reset_mw_coefficients", &MWLMC::reset_mw_coefficients, "reset MW coefficients")
+        .def("reset_all_coefficients", &MWLMC::reset_all_coefficients, "reset all coefficients");
+
 
 }

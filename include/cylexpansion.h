@@ -64,19 +64,25 @@ private:
 
 public:
 
-  // expose the coefficient table for possible editing
-  CylCoefs coeftable;
-
   // the constructor
   CylExpansion(string cyl_cache_name,
                string coef_file,
                string orient_file);
 
+  // expose filenames from caches
+  string cyl_cache_name;
+  string coef_file;
+  string orient_file;
+
+  // expose the coefficient table for possible editing
+  CylCoefs coeftable;
+
   // expose the important expansion data: use the spherical code, it works here!
   SphOrient orient;
 
   // the base cylindrical class
-  // behaviour for flags is now overridden by harmonicflag, which uses basis.check_flags as a binary bit flag to determine which orders to set. 2047 (default) will enable all values at l<=10
+  // behaviour for flags is now overridden by harmonicflag, which uses basis.check_flags as a binary bit flag to determine which orders to set.
+  //   2047 (default) will enable all values at l<=10
   void determine_fields_at_point_cyl(MatrixXd& coscoefs,
                                      MatrixXd& sincoefs,
                                      double r, double phi, double z,
@@ -96,12 +102,18 @@ public:
 
   void get_table_forces(double r, double z, CylForce& forcetable);
 
+  void reset_coefficients();
+
 }; // end class definition
 
 CylExpansion::CylExpansion(string cyl_cache_name,
                            string coef_file,
                            string orient_file)
 {
+  CylExpansion::cyl_cache_name = cyl_cache_name;
+  CylExpansion::coef_file      = coef_file;
+  CylExpansion::orient_file    = orient_file;
+
   initialise(cyl_cache_name, coef_file, orient_file);
 }
 
@@ -133,6 +145,16 @@ void CylExpansion::initialise(string cyl_cache_name,
 
 }
 
+
+void CylExpansion::reset_coefficients()
+{
+  try {
+    read_coef_file(CylExpansion::coef_file, CylExpansion::coeftable);
+  } catch (const char* msg) {
+    cerr << msg << endl;
+    exit(1);
+  }
+}
 
 
 
