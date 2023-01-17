@@ -104,6 +104,11 @@ public:
 
   void reset_coefficients();
 
+  std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> return_coefficients();
+
+  void install_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau);
+
+
 }; // end class definition
 
 CylExpansion::CylExpansion(string cyl_cache_name,
@@ -220,6 +225,24 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
   } // end MMAX loop
 
 
+}
+
+
+std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> CylExpansion::return_coefficients()
+{
+  /*
+  reset coefficients back to those read in from the file
+  */
+  return make_tuple(coeftable.coscoefs,coeftable.sincoefs);
+}
+
+void CylExpansion::install_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau)
+{
+  /*
+  install external coefficients (presumably after some operations)
+  */
+  coeftable.coscoefs = costableau;
+  coeftable.sincoefs = sintableau;
 }
 
 void CylExpansion::return_forces(MatrixXd coscoefs,

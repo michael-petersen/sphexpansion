@@ -360,8 +360,18 @@ PYBIND11_MODULE(mwlmc, m) {
 
         .def("print_orbit", &MWLMC::print_orbit, "print an orbit array")
 
-        .def("reset_mw_coefficients", &MWLMC::reset_mw_coefficients, "reset MW coefficients")
-        .def("reset_all_coefficients", &MWLMC::reset_all_coefficients, "reset all coefficients");
+        // no specific resets exposed as of now. could be exposed if this is a common use case.
+        //.def("reset_mw_coefficients", &MWLMC::reset_mw_coefficients, "reset MW coefficients")
+        .def("reset_all_coefficients", &MWLMC::reset_all_coefficients, "reset all coefficients")
 
+        .def("return_mw_coefficients", &MWLMC::return_mw_coefficients, "return MW halo coefficients")
+        .def("return_lmc_coefficients", &MWLMC::return_lmc_coefficients, "return LMC coefficients")
+        .def("return_disc_coefficients", &MWLMC::return_disc_coefficients, "return MW disc coefficients")
+
+
+        // these could possibly be extended to take their own time arrays (which would mean interpolation is possible, finer changes, etc)
+        .def("install_mw_coefficients", py::overload_cast<vector<MatrixXd>>(&MWLMC::install_mw_coefficients), "install MW halo coefficients")
+        .def("install_lmc_coefficients", py::overload_cast<vector<MatrixXd>>(&MWLMC::install_lmc_coefficients), "install LMC coefficients")
+        .def("install_disc_coefficients", py::overload_cast<vector<MatrixXd>,vector<MatrixXd>>(&MWLMC::install_disc_coefficients), "install MW disc coefficients");
 
 }

@@ -165,6 +165,15 @@ public:
   void reset_mw_coefficients();
   void reset_all_coefficients();
 
+  std::vector<MatrixXd> return_mw_coefficients();
+  void install_mw_coefficients(std::vector<MatrixXd> tableau);
+
+  std::vector<MatrixXd> return_lmc_coefficients();
+  void install_lmc_coefficients(std::vector<MatrixXd> tableau);
+
+  std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> return_disc_coefficients();
+  void install_disc_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau);
+
 };
 
 
@@ -1314,6 +1323,36 @@ void MWLMC::reset_all_coefficients()
   LMC->reset_coefficients();
   MWD->reset_coefficients();
 
+}
+
+std::vector<MatrixXd>  MWLMC::return_mw_coefficients()
+{
+  return MW->return_coefficients();
+}
+
+void MWLMC::install_mw_coefficients(std::vector<MatrixXd> tableau)
+{
+  MW->install_coefficients(tableau);
+}
+
+std::vector<MatrixXd>  MWLMC::return_lmc_coefficients()
+{
+  return LMC->return_coefficients();
+}
+
+void MWLMC::install_lmc_coefficients(std::vector<MatrixXd> tableau)
+{
+  LMC->install_coefficients(tableau);
+}
+
+std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>>  MWLMC::return_disc_coefficients()
+{
+  return MWD->return_coefficients();
+}
+
+void MWLMC::install_disc_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau)
+{
+  MWD->install_coefficients(costableau, sintableau);
 }
 
 
