@@ -165,15 +165,15 @@ public:
   void reset_mw_coefficients();
   void reset_all_coefficients();
 
-  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_mw_function_weights(double r, double theta, double phi);
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_mw_function_weights(double x, double y, double z);
   std::vector<MatrixXd> return_mw_coefficients();
   void install_mw_coefficients(std::vector<MatrixXd> tableau);
 
-  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_lmc_function_weights(double r, double theta, double phi);
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_lmc_function_weights(double x, double y, double z);
   std::vector<MatrixXd> return_lmc_coefficients();
   void install_lmc_coefficients(std::vector<MatrixXd> tableau);
 
-  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_disc_function_weights(double r, double phi, double z);
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_disc_function_weights(double x, double y, double z);
   std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> return_disc_coefficients();
   void install_disc_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau);
 
@@ -715,7 +715,7 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
 
   // get coefficients
   MatrixXd mwdcoscoefs,mwdsincoefs;
-  MWD->select_coefficient_time(0.0, mwdcoscoefs, mwdsincoefs);
+  MWD->select_coefficient_time(tvir, mwdcoscoefs, mwdsincoefs);
 
   double rtmp,phitmp,thetatmp,r2tmp;
   double tpotl0,tpotl,fr,ft,fp;
@@ -782,7 +782,7 @@ MatrixXd MWLMC::mwd_fields(double t, std::vector<double> x, std::vector<double> 
 
   // get coefficients
   MatrixXd mwdcoscoefs,mwdsincoefs;
-  MWD->select_coefficient_time(0.0, mwdcoscoefs, mwdsincoefs);
+  MWD->select_coefficient_time(tvir, mwdcoscoefs, mwdsincoefs);
 
   double rtmp,phitmp,thetatmp,r2tmp;
   double tpotl0,tpotl,fr,ft,fp;
@@ -1332,9 +1332,36 @@ void MWLMC::reset_all_coefficients()
 
 }
 
-std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_mw_function_weights(double r, double theta, double phi)
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_mw_function_weights(double x, double y, double z)
 {
-  return MW->determine_weights_at_point_sph(r,theta,phi);
+
+  // call translator to virial units
+  double xvir,yvir,zvir;
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // translate to spherical coordinates
+  double rtmp,phitmp,thetatmp;
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> X;
+  X = MW->determine_weights_at_point_sph(rtmp,thetatmp,phitmp);
+
+  MatrixXd pot,fr,ft,fp;
+  pot  = std::get<0>(X);
+  fr   = std::get<1>(X);
+  ft   = std::get<2>(X);
+  fp   = std::get<3>(X);
+
+  // convert forces
+  MatrixXd fxtmp,fytmp,fztmp;
+  spherical_forces_to_cartesian(rtmp,phitmp,thetatmp,fr,fp,ft,fxtmp,fytmp,fztmp);
+
+  // rescale potential and forces to physical units
+  MatrixXd potphys,fxphys,fyphys,fzphys;
+  virial_to_physical_force(fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+  virial_to_physical_potential(pot, potphys);
+
+  return make_tuple(potphys,fxphys,fyphys,fzphys);
 }
 
 std::vector<MatrixXd>  MWLMC::return_mw_coefficients()
@@ -1347,9 +1374,37 @@ void MWLMC::install_mw_coefficients(std::vector<MatrixXd> tableau)
   MW->install_coefficients(tableau);
 }
 
-std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_lmc_function_weights(double r, double theta, double phi)
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_lmc_function_weights(double x, double y, double z)
 {
-  return LMC->determine_weights_at_point_sph(r,theta,phi);
+
+  // call translator to virial units
+  double xvir,yvir,zvir;
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // translate to spherical coordinates
+  double rtmp,phitmp,thetatmp;
+  cartesian_to_spherical(xvir, yvir, zvir, rtmp, phitmp, thetatmp);
+
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> X;
+  X = LMC->determine_weights_at_point_sph(rtmp,thetatmp,phitmp);
+
+  MatrixXd pot,fr,ft,fp;
+  pot  = std::get<0>(X);
+  fr   = std::get<1>(X);
+  ft   = std::get<2>(X);
+  fp   = std::get<3>(X);
+
+  // convert forces
+  MatrixXd fxtmp,fytmp,fztmp;
+  spherical_forces_to_cartesian(rtmp,phitmp,thetatmp,fr,fp,ft,fxtmp,fytmp,fztmp);
+
+  // rescale potential and forces to physical units
+  MatrixXd potphys,fxphys,fyphys,fzphys;
+  virial_to_physical_force(fxtmp,fytmp,fztmp,fxphys,fyphys,fzphys);
+  virial_to_physical_potential(pot, potphys);
+
+  return make_tuple(potphys,fxphys,fyphys,fzphys);
+
 }
 
 std::vector<MatrixXd>  MWLMC::return_lmc_coefficients()
@@ -1362,9 +1417,53 @@ void MWLMC::install_lmc_coefficients(std::vector<MatrixXd> tableau)
   LMC->install_coefficients(tableau);
 }
 
-std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_disc_function_weights(double r, double phi, double z)
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_disc_function_weights(double x, double y, double z)
 {
-  return MWD->determine_weights_at_point_cyl(r,phi,z);
+
+  // call translator to virial units
+  double xvir,yvir,zvir;
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
+
+  // compute spherical coordinates in the frame of the expansion
+  double r2tmp,phitmp;
+  cartesian_to_cylindrical(xvir,yvir,r2tmp,phitmp);
+  // offset to the correct expansion centre (if these are coming in inertial space? or should the user have to do that?)
+
+  // call out for weights
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> X;
+  X = MWD->determine_weights_at_point_cyl(r2tmp,phitmp,z);
+
+  // unpack
+  MatrixXd potc,frc,fpc,fzc,pots,frs,fps,fzs;
+  potc = std::get<0>(X);
+  frc  = std::get<1>(X);
+  fpc  = std::get<2>(X);
+  fzc  = std::get<3>(X);
+  pots = std::get<4>(X);
+  frs  = std::get<5>(X);
+  fps  = std::get<6>(X);
+  fzs  = std::get<7>(X);
+
+  // convert forces
+  MatrixXd fxtmpc,fytmpc,fxtmps,fytmps;
+  cylindrical_forces_to_cartesian(r2tmp, phitmp,
+                                  frc, fpc,
+                                  fxtmpc, fytmpc);
+
+  cylindrical_forces_to_cartesian(r2tmp, phitmp,
+                                  frs, fps,
+                                  fxtmps, fytmps);
+
+  // rescale potential and forces to physical units
+  MatrixXd potcphys,fxphysc,fyphysc,fzphysc,potsphys,fxphyss,fyphyss,fzphyss;
+  virial_to_physical_force(fxtmpc,fytmpc,fzc,fxphysc,fyphysc,fzphysc);
+  virial_to_physical_force(fxtmps,fytmps,fzs,fxphyss,fyphyss,fzphyss);
+  virial_to_physical_potential(potc, potcphys);
+  virial_to_physical_potential(pots, potsphys);
+
+  // return
+  return make_tuple(potcphys,fxphysc,fyphysc,fzphysc,potsphys,fxphyss,fyphyss,fzphyss);
+
 }
 
 std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>>  MWLMC::return_disc_coefficients()

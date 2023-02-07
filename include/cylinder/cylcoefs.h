@@ -250,8 +250,8 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
       }
 
       if (m) {
-	for (int ir=0; ir<coeftable.NORDER; ir++) {
-          in.read((char *)&coeftable.coscoefs[tt](m,ir), sizeof(double));
+	       for (int ir=0; ir<coeftable.NORDER; ir++) {
+          in.read((char *)&coeftable.sincoefs[tt](m,ir), sizeof(double));
         }
       }
 

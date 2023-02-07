@@ -31,7 +31,7 @@ PYBIND11_MODULE(mwlmc, m) {
                 ----------
                 t : float
                 x, y, z : float
-                lmcharmonicflag : int = 127
+                mwhharmonicflag : int = 127
 
                 Returns
                 -------
@@ -303,44 +303,44 @@ PYBIND11_MODULE(mwlmc, m) {
 
              Parameters
              ----------
-             r,theta,phi : floats
+             x,y,z : floats
 
              Returns
              -------
-             potential,fr,ftheta,fphi : array-like float, shaped (l^2,n)
+             potential,fx,fy,fz : array-like float, shaped ((l+1)^2,n)
              )pbdoc",
-             py::arg("r"),
-             py::arg("theta"),
-             py::arg("phi"))
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"))
 
         .def("return_lmc_weights", py::overload_cast<double,double,double>(&MWLMC::get_lmc_function_weights), R"pbdoc(
              Return function weights for the LMC.
 
              Parameters
              ----------
-             r,theta,phi : floats
+             x,y,z : floats
 
              Returns
              -------
-             potential,fr,ftheta,fphi : array-like float, shaped (l^2,n)
+             potential,fx,fy,fz : array-like float, shaped ((l+1)^2,n)
              )pbdoc",
-             py::arg("r"),
-             py::arg("theta"),
-             py::arg("phi"))
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"))
 
         .def("return_disc_weights", py::overload_cast<double,double,double>(&MWLMC::get_disc_function_weights), R"pbdoc(
              Return function weights for the LMC.
 
              Parameters
              ----------
-             r,phi,z : floats
+             x,y,z: floats
 
              Returns
              -------
-             potential,fr,ftheta,fphi : array-like float, shaped (l^2,n)
+             potential,fr,ftheta,fphi : array-like float, shaped (m+1,n)
              )pbdoc",
-             py::arg("r"),
-             py::arg("phi"),
+             py::arg("x"),
+             py::arg("y"),
              py::arg("z"))
 
         .def("rewind", py::overload_cast<vector<double>,vector<double>,double,int,int,int,double,bool,bool>(&MWLMC::rewind),R"pbdoc(

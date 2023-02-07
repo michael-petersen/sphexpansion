@@ -69,6 +69,7 @@ void cylindrical_to_cartesian(ArrayXd  r, ArrayXd  phi,
   y = r * sin(phi);
 }
 
+
 void cylindrical_forces_to_cartesian(double  r, double phi,
 				     												 double fr, double fp,
 	                             			 double& fx, double& fy)
@@ -95,6 +96,19 @@ void cylindrical_forces_to_cartesian(ArrayXd  r, ArrayXd phi,
 {
   // OVERLOADED
   ArrayXd x,y;
+  cylindrical_to_cartesian(r, phi, x, y);
+
+  fx = (x*fr - y*fp)/r;
+  fy = (y*fr + x*fp)/r;
+
+}
+
+void cylindrical_forces_to_cartesian(double   r, double phi,
+				     												 MatrixXd fr, MatrixXd fp,
+	                             			 MatrixXd& fx,MatrixXd& fy)
+{
+  // OVERLOADED
+  double x,y;
   cylindrical_to_cartesian(r, phi, x, y);
 
   fx = (x*fr - y*fp)/r;
@@ -219,6 +233,21 @@ void spherical_forces_to_cartesian(ArrayXd r3, ArrayXd phi, ArrayXd theta,
   ArrayXd x,y,z;
   spherical_to_cartesian(r3, phi, theta, x, y, z);
   ArrayXd r2 = sqrt(x*x + y*y);
+
+  fx = - (( fr*(x/r3) - ft*(x*z/(r3*r3*r3))) + fp*(y/(r2*r2)));
+  fy = - (( fr*(y/r3) - ft*(y*z/(r3*r3*r3))) - fp*(x/(r2*r2)));
+  fz = - (  fr*(z/r3) + ft*( (r2*r2)/(r3*r3*r3)) );
+
+}
+
+void spherical_forces_to_cartesian(double r3, double phi, double theta,
+				   												 MatrixXd fr, MatrixXd fp,  MatrixXd ft,
+	                           			 MatrixXd& fx,MatrixXd& fy, MatrixXd& fz)
+{
+	// semiOVERLOADED
+  double x,y,z;
+  spherical_to_cartesian(r3, phi, theta, x, y, z);
+  double r2 = sqrt(x*x + y*y);
 
   fx = - (( fr*(x/r3) - ft*(x*z/(r3*r3*r3))) + fp*(y/(r2*r2)));
   fy = - (( fr*(y/r3) - ft*(y*z/(r3*r3*r3))) - fp*(x/(r2*r2)));

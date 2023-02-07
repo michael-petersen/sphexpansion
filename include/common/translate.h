@@ -60,8 +60,21 @@ void virial_to_physical_potential(double pvir, double& pphys)
   pphys = mw_potential_scale * pvir;
 }
 
+void virial_to_physical_potential(MatrixXd pvir, MatrixXd& pphys)
+{
+  pphys = mw_potential_scale * pvir;
+}
+
 void virial_to_physical_force(double  fxvir, double   fyvir, double   fzvir,
-			      double& fxphys, double& fyphys, double& fzphys)
+			                        double& fxphys, double& fyphys, double& fzphys)
+{
+  fxphys = mw_force_scale * fxvir;
+  fyphys = mw_force_scale * fyvir;
+  fzphys = mw_force_scale * fzvir;
+}
+
+void virial_to_physical_force(MatrixXd  fxvir, MatrixXd   fyvir, MatrixXd   fzvir,
+			                        MatrixXd& fxphys, MatrixXd& fyphys, MatrixXd& fzphys)
 {
   fxphys = mw_force_scale * fxvir;
   fyphys = mw_force_scale * fyvir;
@@ -123,8 +136,17 @@ void physical_to_virial_potential(double pphys, double& pvir)
 }
 
 void physical_to_virial_force(double  fxphys, double fyphys, double fzphys,
-			      double& fxvir, double& fyvir, double& fzvir)
+			                        double& fxvir, double& fyvir, double& fzvir)
 {
+  fxvir = fxphys/mw_force_scale;
+  fyvir = fyphys/mw_force_scale;
+  fzvir = fzphys/mw_force_scale;
+}
+
+void physical_to_virial_force(MatrixXd  fxphys, MatrixXd fyphys, MatrixXd fzphys,
+			                        MatrixXd& fxvir, MatrixXd& fyvir, MatrixXd& fzvir)
+{
+  // OVERLOADED
   fxvir = fxphys/mw_force_scale;
   fyvir = fyphys/mw_force_scale;
   fzvir = fzphys/mw_force_scale;
