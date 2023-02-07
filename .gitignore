@@ -20,8 +20,11 @@ src/density_map.cc
 src/rotcurve.cc
 src/test_capabilities.py
 src/Makefile
-examples/obj/*
 
+
+examples/obj/*
+examples/CMakeLists.txt
+examples/rotcurve.cc
 
 # not-fully-implemented features
 include/accumulate.h

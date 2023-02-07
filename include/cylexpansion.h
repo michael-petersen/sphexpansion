@@ -100,6 +100,10 @@ public:
                                MatrixXd& coscoefs_at_time,
                                MatrixXd& sincoefs_at_time);
 
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> determine_weights_at_point_cyl(MatrixXd& coscoefs,
+                                      MatrixXd& sincoefs,
+                                      double r, double phi, double z);
+
   void get_table_forces(double r, double z, CylForce& forcetable);
 
   void reset_coefficients();
@@ -159,6 +163,70 @@ void CylExpansion::reset_coefficients()
     cerr << msg << endl;
     exit(1);
   }
+}
+
+
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd>
+CylExpansion::determine_weights_at_point_cyl(MatrixXd& coscoefs,
+                                                 MatrixXd& sincoefs,
+                                                 double r, double phi, double z)
+{
+  /*
+  @IMPROVE: no density call available here.
+
+  */
+
+  MatrixXd potlc,frc,fzc,fpc,potls,frs,fzs,fps;
+  potlc.resize(coscoefs.rows(),coscoefs.cols());
+  frc.resize(coscoefs.rows(),coscoefs.cols());
+  fzc.resize(coscoefs.rows(),coscoefs.cols());
+  fpc.resize(coscoefs.rows(),coscoefs.cols());
+  potls.resize(sincoefs.rows(),sincoefs.cols());
+  frs.resize(sincoefs.rows(),sincoefs.cols());
+  fzs.resize(sincoefs.rows(),sincoefs.cols());
+  fps.resize(sincoefs.rows(),sincoefs.cols());
+
+  double ccos,ssin,fac;
+
+  get_table_forces(r, z, forcetable);
+
+  for (int m=0; m<=cachetable.MMAX; m++) {
+
+    // check harmonic flag before proceeding
+
+    ccos = cos(phi*m);
+    ssin = sin(phi*m);
+
+    for (int n=0; n<cachetable.NORDER; n++) {
+
+      fac = ccos;
+
+      potlc(m,n) = fac * forcetable.potC(m,n);
+      frc(m,n)   = fac * forcetable.rforceC(m,n);
+      fzc(m,n)   = fac * forcetable.zforceC(m,n);
+
+      fac = ssin;
+
+      fpc(m,n)   = fac * m * forcetable.potC(m,n);
+
+      if (m) { // sine terms
+
+        fac = ssin;
+
+        potls(m,n) = fac * forcetable.potS(m,n);
+
+        frs(m,n)   = fac * forcetable.rforceS(m,n);
+        fzs(m,n)   = fac * forcetable.zforceS(m,n);
+
+        fac = -ccos;
+
+        fps(m,n)    = fac * m * forcetable.potS(m,n);
+
+      } // end sine loop
+    } // end NORDER loop
+  } // end MMAX loop
+
+  return make_tuple(potlc,frc,fzc,fpc,potls,frs,fzs,fps);
 }
 
 

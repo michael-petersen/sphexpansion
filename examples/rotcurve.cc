@@ -30,6 +30,8 @@ using Eigen::MatrixXd;
 // expansion includes
 #include "sphexpansion.h"
 
+// expansion includes
+#include "cylexpansion.h"
 
 
 void make_rotation_curve(SphExpansion* S,
@@ -94,29 +96,69 @@ int main () {
   cout << "Initialising LMC ... " << endl;
   SphExpansion* LMC = new SphExpansion(sph_cache_name_lmc, model_file_lmc, coef_file_lmc, orient_file_lmc);
 
+  cout << "Initialising MW disc ... " << endl;
+  CylExpansion* MWD = new CylExpansion(cyl_cache_name_mw, cyl_coef_name_mw, cyl_orient_name_mw);
 
   bool onlymonopole = false;
   MatrixXd mwcoefs,lmccoefs;
   MW->select_coefficient_time(0.0, mwcoefs);
   LMC->select_coefficient_time(0.0, lmccoefs);
 
+  MatrixXd mwdcoscoefs,mwdsincoefs;
+  MWD->select_coefficient_time(0.0, mwdcoscoefs, mwdsincoefs);
+
   double p0,p1,pr,pt,pp;
-  MW->determine_fields_at_point_sph(mwcoefs, 0.1,1.570796,1.570796,p0,p1,pr,pt,pp,0);
-  cout << "p0=" << setw(14) << pp << endl;
+  MW->determine_fields_at_point_sph(mwcoefs, 0.1,1.570796,0.01,p0,p1,pr,pt,pp);//,0);
+  cout << "p0=" << setw(14) << p1 << endl;
 
   // try returning the whole array
   MatrixXd p1m,prm,ptm,ppm;
-  p1m.resize(mwcoefs.rows(),mwcoefs.cols());
-  prm.resize(mwcoefs.rows(),mwcoefs.cols());
-  ptm.resize(mwcoefs.rows(),mwcoefs.cols());
-  ppm.resize(mwcoefs.rows(),mwcoefs.cols());
-  MW->determine_weights_at_point_sph(mwcoefs, 0.1,1.570796,1.570796,p1m,prm,ptm,ppm);
-  cout << "coef0=" << setw(14) << mwcoefs(0,0) << " weight0=" << setw(14) << p1m(0,0) << endl;
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd>  X;
+
+  X = MW->determine_weights_at_point_sph(mwcoefs, 0.1,1.570796,0.01);
+  p1m = std::get<0>(X);
+  prm = std::get<1>(X);
+  ptm = std::get<2>(X);
+  ppm = std::get<3>(X);
+  //cout << "coef0=" << setw(14) << mwcoefs(0,0) << " weight0=" << setw(14) << p1m(0,0) << endl;
 
   double p1tot=0.0;
-  for (int n=0;n<mwcoefs.cols();n++) p1tot += mwcoefs(0,n)*ppm(0,n);
+  for (int z=0;z<mwcoefs.rows();z++) {
+    for (int n=0;n<mwcoefs.cols();n++) {
+      p1tot += mwcoefs(z,n)*p1m(z,n);
+    }
+  }
 
   cout << "total0=" << setw(14) << p1tot << endl;
+
+
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs, mwdsincoefs, 0.1,1.570796,0.01,p0,p1,pr,pt,pp,0);//,0);
+  cout << "D p0=" << setw(14) << p1 << endl;
+
+  MatrixXd p1mc,prmc,ptmc,ppmc,p1ms,prms,ptms,ppms;
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd>  Y;
+
+  Y = MWD->determine_weights_at_point_cyl(mwdcoscoefs, mwdsincoefs, 0.1,1.570796,0.01);
+  p1mc = std::get<0>(Y);
+  prmc = std::get<1>(Y);
+  ptmc = std::get<2>(Y);
+  ppmc = std::get<3>(Y);
+  p1ms = std::get<4>(Y);
+  prms = std::get<5>(Y);
+  ptms = std::get<6>(Y);
+  ppms = std::get<7>(Y);
+  cout << "D coef0=" << setw(14) << mwdcoscoefs(0,0) << " weight0=" << setw(14) << p1mc(0,0) << endl;
+
+  double p1totc=0.0;
+  int z = 0;
+  //for (int z=0;z<mwcoefs.rows();z++) {
+    for (int n=0;n<mwcoefs.cols();n++) {
+      p1totc += mwdcoscoefs(z,n)*p1mc(z,n);
+    }
+  //}
+
+  cout << "D total0=" << setw(14) << p1totc << endl;
+
 
 
   vector<double> velcentre(3),centre(3);

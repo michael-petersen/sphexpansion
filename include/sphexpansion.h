@@ -52,7 +52,7 @@ double REPS=1.e-7;
 
 
 //using namespace std;
-using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream;
+using std::cout, std::cerr, std::endl, std::setw, std::vector, std::ifstream, std::ios, std::string, std::ofstream, std::istringstream, std::make_tuple;
 
 class SphExpansion
 {
@@ -124,10 +124,10 @@ public:
              int harmonicflag=SPHHARMONICDEFAULT);
 
   // return the function weights at a given point
-  void determine_weights_at_point_sph(MatrixXd& coefs,
-             double r, double theta, double phi,
-             MatrixXd& potl,
-             MatrixXd& potr, MatrixXd& pott, MatrixXd& potp);
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> determine_weights_at_point_sph(MatrixXd& coefs,
+             double r, double theta, double phi);//,
+             //MatrixXd& potl,
+             //MatrixXd& potr, MatrixXd& pott, MatrixXd& potp);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd& coefs,
@@ -296,15 +296,23 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, Ma
 }
 
 
-void SphExpansion::determine_weights_at_point_sph(MatrixXd& coefs,
-                                                  double r, double theta, double phi,
-                                                  MatrixXd& potl,
-                                                  MatrixXd& potr, MatrixXd& pott, MatrixXd& potp)
- {
+//void SphExpansion::determine_weights_at_point_sph(MatrixXd& coefs,
+//                                                  double r, double theta, double phi,
+//                                                  MatrixXd& potl,
+//                                                  MatrixXd& potr, MatrixXd& pott, MatrixXd& potp)
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> SphExpansion::determine_weights_at_point_sph(MatrixXd& coefs,
+                                                  double r, double theta, double phi)
+{
    /*
    return just the function weights at a position
 
    */
+
+   MatrixXd potl,potr,pott,potp;
+   potl.resize(coefs.rows(),coefs.cols());
+   potr.resize(coefs.rows(),coefs.cols());
+   pott.resize(coefs.rows(),coefs.cols());
+   potp.resize(coefs.rows(),coefs.cols());
 
    int numl = cachetable.LMAX;
 
@@ -370,6 +378,12 @@ void SphExpansion::determine_weights_at_point_sph(MatrixXd& coefs,
        }
      }
    }
+   potl *= -1;
+   potr *= -1;
+   pott *= -1;
+   potp *= -1;
+
+   return make_tuple(potl,potr,pott,potp);
 }
 
 
