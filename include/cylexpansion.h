@@ -74,6 +74,9 @@ public:
   string coef_file;
   string orient_file;
 
+  int MMAX; // maximum harmonic order of the expansion
+  int NORDER; // maximum radial order of the expansion
+
   // expose the coefficient table for possible editing
   CylCoefs coeftable;
 
@@ -100,9 +103,7 @@ public:
                                MatrixXd& coscoefs_at_time,
                                MatrixXd& sincoefs_at_time);
 
-  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> determine_weights_at_point_cyl(MatrixXd& coscoefs,
-                                      MatrixXd& sincoefs,
-                                      double r, double phi, double z);
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> determine_weights_at_point_cyl(double r, double phi, double z);
 
   void get_table_forces(double r, double z, CylForce& forcetable);
 
@@ -152,6 +153,9 @@ void CylExpansion::initialise(string cyl_cache_name,
     exit(1);
   }
 
+  MMAX = cachetable.MMAX;
+  NORDER = cachetable.NORDER;
+
 }
 
 
@@ -167,9 +171,7 @@ void CylExpansion::reset_coefficients()
 
 
 std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd>
-CylExpansion::determine_weights_at_point_cyl(MatrixXd& coscoefs,
-                                                 MatrixXd& sincoefs,
-                                                 double r, double phi, double z)
+CylExpansion::determine_weights_at_point_cyl(double r, double phi, double z)
 {
   /*
   @IMPROVE: no density call available here.
@@ -177,14 +179,16 @@ CylExpansion::determine_weights_at_point_cyl(MatrixXd& coscoefs,
   */
 
   MatrixXd potlc,frc,fzc,fpc,potls,frs,fzs,fps;
-  potlc.resize(coscoefs.rows(),coscoefs.cols());
-  frc.resize(coscoefs.rows(),coscoefs.cols());
-  fzc.resize(coscoefs.rows(),coscoefs.cols());
-  fpc.resize(coscoefs.rows(),coscoefs.cols());
-  potls.resize(sincoefs.rows(),sincoefs.cols());
-  frs.resize(sincoefs.rows(),sincoefs.cols());
-  fzs.resize(sincoefs.rows(),sincoefs.cols());
-  fps.resize(sincoefs.rows(),sincoefs.cols());
+
+  potlc.resize(MMAX+1,NORDER);
+  frc.resize(MMAX+1,NORDER);
+  fzc.resize(MMAX+1,NORDER);
+  fpc.resize(MMAX+1,NORDER);
+
+  potls.resize(MMAX+1,NORDER);
+  frs.resize(MMAX+1,NORDER);
+  fzs.resize(MMAX+1,NORDER);
+  fps.resize(MMAX+1,NORDER);
 
   double ccos,ssin,fac;
 

@@ -115,7 +115,7 @@ int main () {
   MatrixXd p1m,prm,ptm,ppm;
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd>  X;
 
-  X = MW->determine_weights_at_point_sph(mwcoefs, 0.1,1.570796,0.01);
+  X = MW->determine_weights_at_point_sph(0.1,1.570796,0.01);
   p1m = std::get<0>(X);
   prm = std::get<1>(X);
   ptm = std::get<2>(X);
@@ -132,13 +132,13 @@ int main () {
   cout << "total0=" << setw(14) << p1tot << endl;
 
 
-  MWD->determine_fields_at_point_cyl(mwdcoscoefs, mwdsincoefs, 0.1,1.570796,0.01,p0,p1,pr,pt,pp,0);//,0);
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs, mwdsincoefs, 0.1,1.570796,0.01,p0,p1,pr,pt,pp);//,0);
   cout << "D p0=" << setw(14) << p1 << endl;
 
   MatrixXd p1mc,prmc,ptmc,ppmc,p1ms,prms,ptms,ppms;
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd>  Y;
 
-  Y = MWD->determine_weights_at_point_cyl(mwdcoscoefs, mwdsincoefs, 0.1,1.570796,0.01);
+  Y = MWD->determine_weights_at_point_cyl(0.1,1.570796,0.01);
   p1mc = std::get<0>(Y);
   prmc = std::get<1>(Y);
   ptmc = std::get<2>(Y);
@@ -150,12 +150,12 @@ int main () {
   cout << "D coef0=" << setw(14) << mwdcoscoefs(0,0) << " weight0=" << setw(14) << p1mc(0,0) << endl;
 
   double p1totc=0.0;
-  int z = 0;
-  //for (int z=0;z<mwcoefs.rows();z++) {
-    for (int n=0;n<mwcoefs.cols();n++) {
+  for (int z=0;z<mwdcoscoefs.rows();z++) {
+    for (int n=0;n<mwdcoscoefs.cols();n++) {
       p1totc += mwdcoscoefs(z,n)*p1mc(z,n);
+      p1totc += mwdsincoefs(z,n)*p1ms(z,n);
     }
-  //}
+  }
 
   cout << "D total0=" << setw(14) << p1totc << endl;
 

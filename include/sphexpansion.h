@@ -124,10 +124,7 @@ public:
              int harmonicflag=SPHHARMONICDEFAULT);
 
   // return the function weights at a given point
-  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> determine_weights_at_point_sph(MatrixXd& coefs,
-             double r, double theta, double phi);//,
-             //MatrixXd& potl,
-             //MatrixXd& potr, MatrixXd& pott, MatrixXd& potp);
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> determine_weights_at_point_sph(double r, double theta, double phi);
 
   // cartesian forces wrapper function
   void return_forces(MatrixXd& coefs,
@@ -300,8 +297,7 @@ void SphExpansion::get_dens_coefs(int l, int indx, int nmax, MatrixXd& coefs, Ma
 //                                                  double r, double theta, double phi,
 //                                                  MatrixXd& potl,
 //                                                  MatrixXd& potr, MatrixXd& pott, MatrixXd& potp)
-std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> SphExpansion::determine_weights_at_point_sph(MatrixXd& coefs,
-                                                  double r, double theta, double phi)
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> SphExpansion::determine_weights_at_point_sph(double r, double theta, double phi)
 {
    /*
    return just the function weights at a position
@@ -309,10 +305,10 @@ std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> SphExpansion::determine_weights_
    */
 
    MatrixXd potl,potr,pott,potp;
-   potl.resize(coefs.rows(),coefs.cols());
-   potr.resize(coefs.rows(),coefs.cols());
-   pott.resize(coefs.rows(),coefs.cols());
-   potp.resize(coefs.rows(),coefs.cols());
+   potl.resize((LMAX+1)*(LMAX+1),NMAX);
+   potr.resize((LMAX+1)*(LMAX+1),NMAX);
+   pott.resize((LMAX+1)*(LMAX+1),NMAX);
+   potp.resize((LMAX+1)*(LMAX+1),NMAX);
 
    int numl = cachetable.LMAX;
 
