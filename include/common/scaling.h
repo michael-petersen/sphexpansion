@@ -75,12 +75,16 @@ double d_xi_to_r_cyl(double xi, int cmapr, double ascale)
 
 double r_to_xi(double r, int cmap, double scale)
 {
+  /*
+  mapping from r to radial coordinate xi
+
+  */
   if ( cmap == 1 ) {
 
     if (r<0.0) {
       printf("radius < 0!");
       return 0.0;
-	} else {
+	  } else {
       return (r/scale-1.0)/(r/scale+1.0);
     }
 

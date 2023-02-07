@@ -156,6 +156,11 @@ void init_table(SphModel& sphmodel, SphCache& cachetable)
 
 void get_pot(double& r, SphCache& cachetable, MatrixXd& pottable)
 {
+  /*
+  double r : radius position to query functions
+  cachetable: table with values for interpolating
+  pottable: table that wil lbe filled in with potential values
+  */
   pottable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   double xi;
@@ -177,7 +182,7 @@ void get_pot(double& r, SphCache& cachetable, MatrixXd& pottable)
     for (int n=0; n<cachetable.NMAX; n++) {
 
       pottable(l,n) = (x1*cachetable.eftable[l](n,indx) + x2*cachetable.eftable[l](n,indx+1))/
-	sqrt(cachetable.evtable(l,n)) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
+	       sqrt(cachetable.evtable(l,n)) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
 
     }
   }
@@ -185,32 +190,41 @@ void get_pot(double& r, SphCache& cachetable, MatrixXd& pottable)
 
 
 void get_force(double& r, SphCache& cachetable, MatrixXd& forcetable) {
+  /*
+  double r : radius position to query functions
+  cachetable: table with values for interpolating
+  pottable: table that wil lbe filled in with potential values
 
-  // see the equivalent call, get_force in SLGridMP2.cc
+  see the equivalent call, get_force in SLGridMP2.cc
 
-  // must have already run init_table
+  must have already run init_table
+  */
+
 
   forcetable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   double xi;
   xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
 
-  if (cachetable.CMAP==1) {
-        if (xi<-1.0) xi=-1.0;
-        if (xi>=1.0) xi=1.0-1.0e-08;
-  }
+  // how can this happen?
+  //if (cachetable.CMAP==1) {
+  //      if (xi<-1.0) xi=-1.0;
+  //      if (xi>=1.0) xi=1.0-1.0e-08;
+  //}
 
   int indx = (int)( (xi-cachetable.xmin)/cachetable.dxi );
+
+  // bounds checks
   if (indx<1) indx = 1;
   if (indx>cachetable.NUMR-2) indx = cachetable.NUMR - 2;
 
   double p = (xi - cachetable.xi[indx])/cachetable.dxi;
 
-				// Use three point formula
+	// Use three point formula
 
-				// Point -1: indx-1
-				// Point  0: indx
-				// Point  1: indx+1
+	// Point -1: indx-1
+	// Point  0: indx
+	// Point  1: indx+1
 
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {

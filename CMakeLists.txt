@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(
   MWLMC
-  VERSION 1.0.0
+  VERSION 1.1.0
   HOMEPAGE_URL https://github.com/sophialilleengen/mwlmc
   LANGUAGES CXX)
 
@@ -45,7 +45,7 @@ if(Eigen3_FOUND)
 endif()
 
 # add_subdirectory(src)
-# add_subdirectory(examples)
+add_subdirectory(examples)
 
 set(common_LINKLIB ${EIGEN3_LIBRARIES})
 
