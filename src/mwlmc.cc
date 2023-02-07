@@ -298,6 +298,51 @@ PYBIND11_MODULE(mwlmc, m) {
              py::arg("tend")            = 0.0,
              py::arg("dt")              = 0.002)
 
+        .def("return_mw_weights", py::overload_cast<double,double,double>(&MWLMC::get_mw_function_weights), R"pbdoc(
+             Return function weights for the Milky Way halo.
+
+             Parameters
+             ----------
+             r,theta,phi : floats
+
+             Returns
+             -------
+             potential,fr,ftheta,fphi : array-like float, shaped (l^2,n)
+             )pbdoc",
+             py::arg("r"),
+             py::arg("theta"),
+             py::arg("phi"))
+
+        .def("return_lmc_weights", py::overload_cast<double,double,double>(&MWLMC::get_lmc_function_weights), R"pbdoc(
+             Return function weights for the LMC.
+
+             Parameters
+             ----------
+             r,theta,phi : floats
+
+             Returns
+             -------
+             potential,fr,ftheta,fphi : array-like float, shaped (l^2,n)
+             )pbdoc",
+             py::arg("r"),
+             py::arg("theta"),
+             py::arg("phi"))
+
+        .def("return_disc_weights", py::overload_cast<double,double,double>(&MWLMC::get_disc_function_weights), R"pbdoc(
+             Return function weights for the LMC.
+
+             Parameters
+             ----------
+             r,phi,z : floats
+
+             Returns
+             -------
+             potential,fr,ftheta,fphi : array-like float, shaped (l^2,n)
+             )pbdoc",
+             py::arg("r"),
+             py::arg("phi"),
+             py::arg("z"))
+
         .def("rewind", py::overload_cast<vector<double>,vector<double>,double,int,int,int,double,bool,bool>(&MWLMC::rewind),R"pbdoc(
              Compute an orbit rewind.
 
@@ -363,6 +408,8 @@ PYBIND11_MODULE(mwlmc, m) {
         // no specific resets exposed as of now. could be exposed if this is a common use case.
         //.def("reset_mw_coefficients", &MWLMC::reset_mw_coefficients, "reset MW coefficients")
         .def("reset_all_coefficients", &MWLMC::reset_all_coefficients, "reset all coefficients")
+
+
 
         .def("return_mw_coefficients", &MWLMC::return_mw_coefficients, "return MW halo coefficients")
         .def("return_lmc_coefficients", &MWLMC::return_lmc_coefficients, "return LMC coefficients")

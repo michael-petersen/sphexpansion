@@ -165,12 +165,15 @@ public:
   void reset_mw_coefficients();
   void reset_all_coefficients();
 
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_mw_function_weights(double r, double theta, double phi);
   std::vector<MatrixXd> return_mw_coefficients();
   void install_mw_coefficients(std::vector<MatrixXd> tableau);
 
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_lmc_function_weights(double r, double theta, double phi);
   std::vector<MatrixXd> return_lmc_coefficients();
   void install_lmc_coefficients(std::vector<MatrixXd> tableau);
 
+  std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_disc_function_weights(double r, double phi, double z);
   std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> return_disc_coefficients();
   void install_disc_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau);
 
@@ -1102,7 +1105,7 @@ MatrixXd  MWLMC::all_forces(double t, std::vector<double> x, std::vector<double>
   fx = 0;
   fy = 0;
   fz = 0;
-    
+
   // compute spherical coordinates in the frame of the MW expansion
   cartesian_to_spherical(xvir-mwd_centre[0], yvir-mwd_centre[1], zvir-mwd_centre[2], rtmp, phitmp, thetatmp);
 
@@ -1329,6 +1332,11 @@ void MWLMC::reset_all_coefficients()
 
 }
 
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_mw_function_weights(double r, double theta, double phi)
+{
+  return MW->determine_weights_at_point_sph(r,theta,phi);
+}
+
 std::vector<MatrixXd>  MWLMC::return_mw_coefficients()
 {
   return MW->return_coefficients();
@@ -1339,6 +1347,11 @@ void MWLMC::install_mw_coefficients(std::vector<MatrixXd> tableau)
   MW->install_coefficients(tableau);
 }
 
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_lmc_function_weights(double r, double theta, double phi)
+{
+  return LMC->determine_weights_at_point_sph(r,theta,phi);
+}
+
 std::vector<MatrixXd>  MWLMC::return_lmc_coefficients()
 {
   return LMC->return_coefficients();
@@ -1347,6 +1360,11 @@ std::vector<MatrixXd>  MWLMC::return_lmc_coefficients()
 void MWLMC::install_lmc_coefficients(std::vector<MatrixXd> tableau)
 {
   LMC->install_coefficients(tableau);
+}
+
+std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_disc_function_weights(double r, double phi, double z)
+{
+  return MWD->determine_weights_at_point_cyl(r,phi,z);
 }
 
 std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>>  MWLMC::return_disc_coefficients()
