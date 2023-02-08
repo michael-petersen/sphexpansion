@@ -45,7 +45,7 @@ if(Eigen3_FOUND)
 endif()
 
 # add_subdirectory(src)
-add_subdirectory(examples)
+# add_subdirectory(examples)
 
 set(common_LINKLIB ${EIGEN3_LIBRARIES})
 
