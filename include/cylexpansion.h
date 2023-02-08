@@ -196,8 +196,6 @@ CylExpansion::determine_weights_at_point_cyl(double r, double phi, double z)
 
   for (int m=0; m<=cachetable.MMAX; m++) {
 
-    // check harmonic flag before proceeding
-
     ccos = cos(phi*m);
     ssin = sin(phi*m);
 
@@ -230,7 +228,7 @@ CylExpansion::determine_weights_at_point_cyl(double r, double phi, double z)
     } // end NORDER loop
   } // end MMAX loop
 
-  return make_tuple(potlc,frc,fzc,fpc,potls,frs,fzs,fps);
+  return make_tuple(potlc,frc,fpc,fzc,potls,frs,fps,fzs);
 }
 
 
@@ -368,6 +366,11 @@ void CylExpansion::select_coefficient_time(double desired_time,
    @IMPROVE: could add harmonic flag here to speed up calculation if not using higher orders
    */
 
+   // allocate space
+   // does this resizing hurt us? we should only ever actually have to do it once.
+   coscoefs_at_time.resize(coeftable.MMAX+1,coeftable.NORDER);
+   sincoefs_at_time.resize(coeftable.MMAX+1,coeftable.NORDER);
+
   // starting at the first indx, stop when we get to the matching time
   int indx = 0;
   while (coeftable.t[indx]<=desired_time) {
@@ -380,11 +383,20 @@ void CylExpansion::select_coefficient_time(double desired_time,
   // guard against wanton extrapolation: should this stop the model?
   // indx<0 is not possible in this construction
   // if (indx<0) cerr << "select_coefficient_time: time prior to simulation start selected. setting to earliest step." << endl;
-  if (indx>coeftable.NUMT-2) std::cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << std::endl;
 
-  if (indx<0) indx = 0;
-  if (indx>coeftable.NUMT-2) indx = coeftable.NUMT - 2;
+  if (indx<0) {
+    // case where time is requested before the beginning of the simulation
+    std::cerr << "select_coefficient_time: time after to simulation beginning selected. setting to first step." << std::endl;
+    indx = 0;
+    coscoefs_at_time = coeftable.coscoefs[indx];
+    sincoefs_at_time = coeftable.sincoefs[indx];
 
+  } else if (indx>coeftable.NUMT-2) {
+    std::cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << std::endl;
+    indx = coeftable.NUMT - 2;
+    coscoefs_at_time = coeftable.coscoefs[indx];
+    sincoefs_at_time = coeftable.sincoefs[indx];
+  } else {
   // check the local spacing on coeftable.t (can be globally nonuniform)
   double dt = coeftable.t[indx+1] - coeftable.t[indx];
 
@@ -395,10 +407,7 @@ void CylExpansion::select_coefficient_time(double desired_time,
   double x1 = (coeftable.t[indx+1] - desired_time)/dt;
   double x2 = (desired_time - coeftable.t[indx])/dt;
 
-  // does this resizing hurt us? we should only ever actually have to do it once.
-  coscoefs_at_time.resize(coeftable.MMAX+1,coeftable.NORDER);
-  sincoefs_at_time.resize(coeftable.MMAX+1,coeftable.NORDER);
-
+  // populate with simple linear interpolation
   coscoefs_at_time = (x1*coeftable.coscoefs[indx] + x2*coeftable.coscoefs[indx+1]);
   sincoefs_at_time = (x1*coeftable.sincoefs[indx] + x2*coeftable.sincoefs[indx+1]);
   //for (int m=0; m<=coeftable.MMAX; m++){
@@ -408,6 +417,7 @@ void CylExpansion::select_coefficient_time(double desired_time,
   //    if (m) sincoefs_at_time(m,n) = (x1*coeftable.sincoefs[indx](m,n) + x2*coeftable.sincoefs[indx+1](m,n));
   //  }
   //}
+}
 
 }
 

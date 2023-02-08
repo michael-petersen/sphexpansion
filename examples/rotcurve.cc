@@ -131,35 +131,71 @@ int main () {
 
   cout << "total0=" << setw(14) << p1tot << endl;
 
-
-  MWD->determine_fields_at_point_cyl(mwdcoscoefs, mwdsincoefs, 0.1,1.570796,0.01,p0,p1,pr,pt,pp);//,0);
+	double frd,fpd,fzd;
+	double rin,pin,zin;
+	rin = 0.0212766;
+	pin = 0.0;
+	zin = 0.0;
+  MWD->determine_fields_at_point_cyl(mwdcoscoefs, mwdsincoefs, rin,pin,zin,p0,p1,frd,fpd,fzd);//,0);
   cout << "D p0=" << setw(14) << p1 << endl;
 
-  MatrixXd p1mc,prmc,ptmc,ppmc,p1ms,prms,ptms,ppms;
+  MatrixXd p1mc,prmc,ppmc,pzmc,p1ms,prms,ppms,pzms;
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd>  Y;
 
-  Y = MWD->determine_weights_at_point_cyl(0.1,1.570796,0.01);
+  Y = MWD->determine_weights_at_point_cyl(rin,pin,zin);
   p1mc = std::get<0>(Y);
   prmc = std::get<1>(Y);
-  ptmc = std::get<2>(Y);
-  ppmc = std::get<3>(Y);
+  ppmc = std::get<2>(Y);
+  pzmc = std::get<3>(Y);
   p1ms = std::get<4>(Y);
   prms = std::get<5>(Y);
-  ptms = std::get<6>(Y);
-  ppms = std::get<7>(Y);
+  ppms = std::get<6>(Y);
+  pzms = std::get<7>(Y);
   cout << "D coef0=" << setw(14) << mwdcoscoefs(0,0) << " weight0=" << setw(14) << p1mc(0,0) << endl;
 
-  double p1totc=0.0;
+  double ptotc=0.0;
   for (int z=0;z<mwdcoscoefs.rows();z++) {
     for (int n=0;n<mwdcoscoefs.cols();n++) {
-      p1totc += mwdcoscoefs(z,n)*p1mc(z,n);
-      p1totc += mwdsincoefs(z,n)*p1ms(z,n);
+      ptotc += mwdcoscoefs(z,n)*p1mc(z,n);
+      ptotc += mwdsincoefs(z,n)*p1ms(z,n);
+    }
+  }
+	cout << "D total0=" << setw(14) << ptotc << endl;
+
+/*
+  // try a Cartesian check
+	double fxtmp,fytmp;
+	cylindrical_forces_to_cartesian(rin, pin,frd, fpd,fxtmp, fytmp);
+
+	double ptotc=0.0;
+  for (int z=0;z<mwdcoscoefs.rows();z++) {
+    for (int n=0;n<mwdcoscoefs.cols();n++) {
+      ptotc += mwdcoscoefs(z,n)*p1mc(z,n);
+      ptotc += mwdsincoefs(z,n)*p1ms(z,n);
     }
   }
 
-  cout << "D total0=" << setw(14) << p1totc << endl;
+	cout << "cartesianX sum=" << setw(14) << p1tot << endl;
+  cout << "cartesianX exp=" << setw(14) << ptotc << endl;
+*/
 
+	double x,y,z;
+	x = 6.0;
+	y = 0.0;
+	z = 0.0;
+	// call translator to virial units
+  double xvir,yvir,zvir;
+  physical_to_virial_length(x,y,z, xvir,yvir,zvir);
 
+  // compute spherical coordinates in the frame of the expansion
+  double r2tmp,phitmp;
+  cartesian_to_cylindrical(xvir,yvir,r2tmp,phitmp);
+
+	cout << setw(14) << r2tmp << setw(14) << phitmp << setw(14) << zvir << endl;
+
+	double potcphys;
+  virial_to_physical_potential(ptotc, potcphys);
+	cout << "potential check" << potcphys << endl;
 
   vector<double> velcentre(3),centre(3);
   return_vel_centre(0.0, LMC->orient, velcentre);

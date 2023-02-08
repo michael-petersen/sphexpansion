@@ -716,8 +716,9 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
   // get coefficients
   MatrixXd mwdcoscoefs,mwdsincoefs;
   MWD->select_coefficient_time(tvir, mwdcoscoefs, mwdsincoefs);
+  //MWD->select_coefficient_time(0.0, mwdcoscoefs, mwdsincoefs);
 
-  double rtmp,phitmp,thetatmp,r2tmp;
+  double phitmp,r2tmp;
   double tpotl0,tpotl,fr,ft,fp;
   double fxtmp,fytmp,fztmp;
 
@@ -726,8 +727,6 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
   double denstmp = 0;
 
   double xphys,yphys,zphys,fxphys,fyphys,fzphys,pphys,dphys;
-
-
 
   // compute spherical coordinates in the frame of the MW expansion
   cartesian_to_cylindrical(xvir, yvir, r2tmp, phitmp);
@@ -738,7 +737,7 @@ std::vector<double> MWLMC::mwd_fields(double t, double x, double y, double z,
                                      tpotl0,tpotl,
                                      fr,fp,fztmp,mwdharmonicflag);
 
-  cylindrical_forces_to_cartesian(rtmp, phitmp,
+  cylindrical_forces_to_cartesian(r2tmp, phitmp,
                                   fr, fp,
                                   fxtmp, fytmp);
 
@@ -784,7 +783,7 @@ MatrixXd MWLMC::mwd_fields(double t, std::vector<double> x, std::vector<double> 
   MatrixXd mwdcoscoefs,mwdsincoefs;
   MWD->select_coefficient_time(tvir, mwdcoscoefs, mwdsincoefs);
 
-  double rtmp,phitmp,thetatmp,r2tmp;
+  double phitmp,r2tmp;
   double tpotl0,tpotl,fr,ft,fp;
   double fxtmp,fytmp,fztmp;
 
@@ -813,7 +812,7 @@ MatrixXd MWLMC::mwd_fields(double t, std::vector<double> x, std::vector<double> 
                                      tpotl0,tpotl,
                                      fr,fp,fztmp,mwdharmonicflag);
 
-  cylindrical_forces_to_cartesian(rtmp, phitmp,
+  cylindrical_forces_to_cartesian(r2tmp, phitmp,
                                   fr, fp,
                                   fxtmp, fytmp);
 
@@ -1431,7 +1430,7 @@ std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,Matrix
 
   // call out for weights
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> X;
-  X = MWD->determine_weights_at_point_cyl(r2tmp,phitmp,z);
+  X = MWD->determine_weights_at_point_cyl(r2tmp,phitmp,zvir);
 
   // unpack
   MatrixXd potc,frc,fpc,fzc,pots,frs,fps,fzs;

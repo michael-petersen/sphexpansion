@@ -337,7 +337,8 @@ PYBIND11_MODULE(mwlmc, m) {
 
              Returns
              -------
-             potential,fr,ftheta,fphi : array-like float, shaped (m+1,n)
+             potential,fx,fy,fz,potential,fx,fy,fz : array-like float, shaped (m+1,n)
+             (first set is cosine, second set is sine)
              )pbdoc",
              py::arg("x"),
              py::arg("y"),

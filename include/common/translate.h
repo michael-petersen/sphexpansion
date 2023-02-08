@@ -35,6 +35,7 @@ double mw_vel_scale            = 1.;
 double mw_time_scale           = 1.;
 double mw_force_scale          = 1.;
 double mw_mass_scale           = 1.;
+double mw_potential_scale      = 1.;
 #endif
 
 
