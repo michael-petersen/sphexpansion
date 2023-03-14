@@ -1,6 +1,9 @@
 .DS_Store
 TODO.md
 
+# specific install information for MSP
+InstallInstructions.txt
+
 # deprecated code
 build/*
 .legacy*

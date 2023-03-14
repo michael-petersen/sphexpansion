@@ -265,5 +265,54 @@ void read_coef_file (string& coef_file, CylCoefs& coeftable) {
 }
 
 
+void read_simple_coef_file (string& coef_file, CylCoefs& coeftable) {
+
+  cout << "cylcoefs::read_simple_coef_file: reading coefficients from file . . . ";
+
+  ifstream in(coef_file.c_str());
+
+  // read in main header: numt, mmax, nmax
+  // for each step, read in tnow, nmax per m order
+
+  in.seekg(0);
+
+  // first thing in is NUMT,LMAX,NORDER
+  in.read((char *)&coeftable.NUMT, sizeof(int));
+  in.read((char *)&coeftable.MMAX, sizeof(int));
+  in.read((char *)&coeftable.NORDER, sizeof(int));
+
+  // resize the coefs array appropriately
+  coeftable.coscoefs.resize(coeftable.NUMT);
+  coeftable.sincoefs.resize(coeftable.NUMT);
+  coeftable.t.resize(coeftable.NUMT);
+
+  // now cycle through each time
+  for (int tt=0;tt<coeftable.NUMT;tt++) {
+
+    coeftable.coscoefs[tt].resize(coeftable.MMAX+1,coeftable.NORDER);
+    coeftable.sincoefs[tt].resize(coeftable.MMAX+1,coeftable.NORDER);
+
+    // read the current time
+    in.read((char *)&coeftable.t[tt], sizeof(double));
+
+    for (int m=0; m<=coeftable.MMAX; m++) {
+
+      for (int ir=0; ir<coeftable.NORDER; ir++) {
+        in.read((char *)&coeftable.coscoefs[tt](m,ir), sizeof(double));
+      }
+
+      if (m) {
+	       for (int ir=0; ir<coeftable.NORDER; ir++) {
+          in.read((char *)&coeftable.sincoefs[tt](m,ir), sizeof(double));
+        }
+      }
+
+    } // MMAX loop
+  } // NUMT loop
+
+  cout << "success!!" << endl;
+
+}
+
 
 #endif

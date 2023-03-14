@@ -140,8 +140,14 @@ void CylExpansion::initialise(string cyl_cache_name,
   }
 
   try {
+#if LILLEENGEN2023 == 1
     read_coef_file(coef_file, CylExpansion::coeftable);
-    //read_simple_coef_file(coef_file, CylExpansion::coeftable);
+#endif
+
+#if ERKAL2019 == 1
+    read_simple_coef_file(coef_file, CylExpansion::coeftable);
+#endif
+
   } catch (const char* msg) {
     cerr << msg << endl;
     exit(1);
@@ -303,7 +309,7 @@ std::tuple<std::vector<double>,std::vector<MatrixXd>,std::vector<MatrixXd>> CylE
 {
   /*
   reset coefficients back to those read in from the file
-  */  
+  */
   return make_tuple(coeftable.t,coeftable.coscoefs,coeftable.sincoefs);
 }
 

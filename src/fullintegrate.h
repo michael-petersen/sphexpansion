@@ -19,7 +19,9 @@ MSP 21 Apr 2022 cleaned version v0.2.3
 using Eigen::MatrixXd;
 
 // set model parameters
-#include "modelfilesLilleengen2023.h"
+#include "modelfilesLilleengen2023.h"     // this file reproduces the Lilleengen+ 2023 results
+//#include "modelfilesLilleengen2023m0.h"   // this file is a test version of the Lilleengen+ 2023 model, with m=0 restriction in the disc
+//#include "modelfilesErkal2019.h"            // this file is a model re-scaled to try and match the Erkal+ 2019 model more closely
 
 // the spherical expansion headers
 #include "sphexpansion.h"
