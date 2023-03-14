@@ -53,6 +53,7 @@ void virial_to_physical_time(double tvir, double& tphys)
 
 double virial_to_physical_time_return(double tvir)
 {
+  // this could be overloaded if we turned these into Eigen arrays...
   return mw_time_scale * tvir;
 }
 

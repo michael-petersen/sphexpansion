@@ -109,7 +109,7 @@ public:
 
   void reset_coefficients();
 
-  std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> return_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>,std::vector<MatrixXd>> return_coefficients();
 
   void install_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau);
 
@@ -141,6 +141,7 @@ void CylExpansion::initialise(string cyl_cache_name,
 
   try {
     read_coef_file(coef_file, CylExpansion::coeftable);
+    //read_simple_coef_file(coef_file, CylExpansion::coeftable);
   } catch (const char* msg) {
     cerr << msg << endl;
     exit(1);
@@ -298,12 +299,12 @@ void CylExpansion::determine_fields_at_point_cyl(MatrixXd& coscoefs,
 }
 
 
-std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> CylExpansion::return_coefficients()
+std::tuple<std::vector<double>,std::vector<MatrixXd>,std::vector<MatrixXd>> CylExpansion::return_coefficients()
 {
   /*
   reset coefficients back to those read in from the file
-  */
-  return make_tuple(coeftable.coscoefs,coeftable.sincoefs);
+  */  
+  return make_tuple(coeftable.t,coeftable.coscoefs,coeftable.sincoefs);
 }
 
 void CylExpansion::install_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau)

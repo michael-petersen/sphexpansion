@@ -19,7 +19,7 @@ MSP 21 Apr 2022 cleaned version v0.2.3
 using Eigen::MatrixXd;
 
 // set model parameters
-#include "modelfiles.h"
+#include "modelfilesLilleengen2023.h"
 
 // the spherical expansion headers
 #include "sphexpansion.h"
@@ -166,15 +166,15 @@ public:
   void reset_all_coefficients();
 
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_mw_function_weights(double x, double y, double z);
-  std::vector<MatrixXd> return_mw_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>> return_mw_coefficients();
   void install_mw_coefficients(std::vector<MatrixXd> tableau);
 
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_lmc_function_weights(double x, double y, double z);
-  std::vector<MatrixXd> return_lmc_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>> return_lmc_coefficients();
   void install_lmc_coefficients(std::vector<MatrixXd> tableau);
 
   std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd> get_disc_function_weights(double x, double y, double z);
-  std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>> return_disc_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>,std::vector<MatrixXd>> return_disc_coefficients();
   void install_disc_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau);
 
 };
@@ -1363,9 +1363,22 @@ std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_mw_function_weights(d
   return make_tuple(potphys,fxphys,fyphys,fzphys);
 }
 
-std::vector<MatrixXd>  MWLMC::return_mw_coefficients()
+std::tuple<std::vector<double>,std::vector<MatrixXd>> MWLMC::return_mw_coefficients()
 {
-  return MW->return_coefficients();
+
+  std::tuple<std::vector<double>,std::vector<MatrixXd>> X;
+  X = MW->return_coefficients();
+  std::vector<double>   virialtimes = std::get<0>(X);
+  std::vector<MatrixXd> coeftableau = std::get<1>(X);
+
+  // convert the virial times to physical times
+  std::vector<double> physicaltimes;
+  physicaltimes.resize(virialtimes.size());
+  for (int i=0;i<virialtimes.size();i++) {
+    physicaltimes[i] = virial_to_physical_time_return(virialtimes[i] - reference_time);
+  }
+
+  return make_tuple(physicaltimes,coeftableau);
 }
 
 void MWLMC::install_mw_coefficients(std::vector<MatrixXd> tableau)
@@ -1406,9 +1419,22 @@ std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd> MWLMC::get_lmc_function_weights(
 
 }
 
-std::vector<MatrixXd>  MWLMC::return_lmc_coefficients()
+std::tuple<std::vector<double>,std::vector<MatrixXd>>  MWLMC::return_lmc_coefficients()
 {
-  return LMC->return_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>> X;
+  X = LMC->return_coefficients();
+  std::vector<double> virialtimes   = std::get<0>(X);
+  std::vector<MatrixXd> coeftableau = std::get<1>(X);
+
+  // convert the virial times to physical times
+  std::vector<double> physicaltimes;
+  physicaltimes.resize(virialtimes.size());
+  for (int i=0;i<virialtimes.size();i++) {
+    physicaltimes[i] = virial_to_physical_time_return(virialtimes[i] - reference_time);
+  }
+
+  return make_tuple(physicaltimes,coeftableau);
+
 }
 
 void MWLMC::install_lmc_coefficients(std::vector<MatrixXd> tableau)
@@ -1465,9 +1491,22 @@ std::tuple<MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,MatrixXd,Matrix
 
 }
 
-std::tuple<std::vector<MatrixXd>,std::vector<MatrixXd>>  MWLMC::return_disc_coefficients()
+std::tuple<std::vector<double>,std::vector<MatrixXd>,std::vector<MatrixXd>>  MWLMC::return_disc_coefficients()
 {
-  return MWD->return_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>,std::vector<MatrixXd>> X;
+  X = MWD->return_coefficients();
+  std::vector<double> virialtimes  = std::get<0>(X);
+  std::vector<MatrixXd> costableau = std::get<1>(X);
+  std::vector<MatrixXd> sintableau = std::get<2>(X);
+
+  // convert the virial times to physical times
+  std::vector<double> physicaltimes;
+  physicaltimes.resize(virialtimes.size());
+  for (int i=0;i<virialtimes.size();i++) {
+    physicaltimes[i] = virial_to_physical_time_return(virialtimes[i] - reference_time);
+  }
+
+  return make_tuple(physicaltimes,costableau,sintableau);
 }
 
 void MWLMC::install_disc_coefficients(std::vector<MatrixXd> costableau, std::vector<MatrixXd> sintableau)

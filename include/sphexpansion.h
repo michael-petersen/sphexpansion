@@ -148,7 +148,7 @@ public:
   // reset coefficients to the read-in values
   void reset_coefficients();
 
-  std::vector<MatrixXd> return_coefficients();
+  std::tuple<std::vector<double>,std::vector<MatrixXd>> return_coefficients();
 
   void install_coefficients(std::vector<MatrixXd> tableau);
 
@@ -236,12 +236,12 @@ void SphExpansion::reset_coefficients()
   }
 }
 
-std::vector<MatrixXd> SphExpansion::return_coefficients()
+std::tuple<std::vector<double>,std::vector<MatrixXd>> SphExpansion::return_coefficients()
 {
   /*
   reset coefficients back to those read in from the file
   */
-  return coeftable.coefs;
+  return make_tuple(coeftable.t,coeftable.coefs);
 }
 
 void SphExpansion::install_coefficients(std::vector<MatrixXd> tableau)
