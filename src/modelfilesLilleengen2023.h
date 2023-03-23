@@ -47,7 +47,7 @@ string coef_file_mw        = model_datadir+"simpleoutcoef.nfac.mw."+runtag;
 string orient_file_mw      = model_datadir+"mw.orient."+runtag+".smth";
 
 // The MW disc tables
-string cyl_cache_name_mw   = model_datadir+"disc.cache.compact."+runtag;
+string cyl_cache_name_mw   = model_datadir+"disc.cache."+runtag;
 string cyl_coef_name_mw    = model_datadir+"outcoef.disc."+runtag;
 string cyl_orient_name_mw  = model_datadir+"disc.orient."+runtag+".smth";
 
