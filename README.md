@@ -89,5 +89,5 @@ mwlmc is free software made available under the MIT License. For details see the
 
 ### Authors
 
-Mike Petersen -  @michael-petersen - petersen@iap.fr \
+Mike Petersen -  @michael-petersen - michael.petersen@roe.ac.uk \
 Sophia Lilleengen - @sophialilleengen - sophia.lilleengen@durham.ac.uk
