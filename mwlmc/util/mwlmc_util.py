@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ['get_harmonic_flag', 'print_field_info', 'make_random_obs', 'radecpms_to_xyzv']
+
 def get_harmonic_flag(l_array):
     ''' 
     Returns the harmonic flag given harmonic moments. The monopole is always on.

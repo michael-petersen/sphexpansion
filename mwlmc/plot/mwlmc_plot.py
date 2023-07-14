@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
+__all__ = ['plot_density', 'plot_potential', 'plot_forces', 'plot_orbit_time', 'plot_orbit']
+
 def plot_density(Ym, Zm, dens, **kwargs):
     fig, ax = plt.subplots()
     pc = ax.pcolormesh(Ym, Zm, 
