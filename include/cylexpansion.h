@@ -393,13 +393,13 @@ void CylExpansion::select_coefficient_time(double desired_time,
 
   if (indx<0) {
     // case where time is requested before the beginning of the simulation
-    std::cerr << "select_coefficient_time: time after to simulation beginning selected. setting to first step." << std::endl;
+    // std::cerr << "select_coefficient_time: time after to simulation beginning selected. setting to first step." << std::endl;
     indx = 0;
     coscoefs_at_time = coeftable.coscoefs[indx];
     sincoefs_at_time = coeftable.sincoefs[indx];
 
   } else if (indx>coeftable.NUMT-2) {
-    std::cerr << "select_coefficient_time: time after to simulation end selected. setting to latest step." << std::endl;
+    std::cerr << "select_coefficient_time: time after the simulation end selected. setting to latest step." << std::endl;
     indx = coeftable.NUMT - 2;
     coscoefs_at_time = coeftable.coscoefs[indx];
     sincoefs_at_time = coeftable.sincoefs[indx];

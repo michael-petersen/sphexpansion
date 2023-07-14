@@ -18,7 +18,7 @@ using Eigen::MatrixXd;
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(mwlmc, m) {
+PYBIND11_MODULE(model, m) {
 
     //PYBIND11_NUMPY_DTYPE(SphCoefs, LMAX, NMAX, NUMT, t, coefs);
 
