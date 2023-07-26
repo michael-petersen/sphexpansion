@@ -53,5 +53,5 @@ set(common_LINKLIB ${EIGEN3_LIBRARIES})
 include_directories(include)
 
 if(HAVEPYBIND11)
-  pybind11_add_module(mwlmc src/mwlmc.cc )
+  pybind11_add_module(model src/mwlmc.cc )
 endif()

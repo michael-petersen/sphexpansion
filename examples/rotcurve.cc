@@ -4,7 +4,7 @@ tests for the initial MW and LMC
 - integrate a circular orbit
 
 compile string:
-clang++ --std=c++17 -I/opt/local/include -L/opt/local/lib -I../include/ rotcurve.cc -o obj/rotcurve
+clang++ --std=c++17 -I/opt/local/include -I/opt/local/include/eigen3 -L/opt/local/lib -I../include/ rotcurve.cc -o rotcurve.out
 
 MSP 24 Apr 2020 first version
 MSP 29 Sep 2020 use as a test for density
@@ -25,7 +25,7 @@ MSP 16 Apr 2022 point to stable example files
 using Eigen::MatrixXd;
 
 // set model parameters
-#include "modelfiles.h"
+#include "../src/modelfilesErkal2019.h"
 
 // expansion includes
 #include "sphexpansion.h"
@@ -101,10 +101,13 @@ int main () {
 
   bool onlymonopole = false;
   MatrixXd mwcoefs,lmccoefs;
-  MW->select_coefficient_time(0.0, mwcoefs);
-  LMC->select_coefficient_time(0.0, lmccoefs);
+  MW->select_coefficient_time(reference_time, mwcoefs);
+  // MW->select_coefficient_time(0.0, mwcoefs);
+  LMC->select_coefficient_time(reference_time, lmccoefs);
+  // LMC->select_coefficient_time(0.0, lmccoefs);
 
   MatrixXd mwdcoscoefs,mwdsincoefs;
+  // MWD->select_coefficient_time(reference_time, mwdcoscoefs, mwdsincoefs);
   MWD->select_coefficient_time(0.0, mwdcoscoefs, mwdsincoefs);
 
   double p0,p1,pr,pt,pp;
@@ -224,22 +227,24 @@ int main () {
 
 
 
+  // string rotationfile="tests/MWrotation_initial.txt";
   string rotationfile="tests/MWrotation.txt";
-
   make_rotation_curve(MW,
 		      mwcoefs,
-		      0.1,
-		      120.,
-		      50,
+		      1.,
+		      150.2,
+		      746,
 		      rotationfile, true);
 
+  // rotationfile="tests/LMCrotation_initial.txt";
   rotationfile="tests/LMCrotation.txt";
-
   make_rotation_curve(LMC,
 		      lmccoefs,
-		      0.1,
-		      120.,
-		      50,
+		      1.,
+		      150.2,
+		      746,
 		      rotationfile, true);
 
 }
+
+
