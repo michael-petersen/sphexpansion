@@ -152,97 +152,17 @@ void init_table(SphModel& sphmodel, SphCache& cachetable)
 }
 
 
-
-
-void get_pot(double& r, SphCache& cachetable, MatrixXd& pottable)
+void get_pot_force_density(double& r, SphCache& cachetable, MatrixXd& pottable, MatrixXd& forcetable, MatrixXd& densitytable)
 {
   /*
   double r : radius position to query functions
   cachetable: table with values for interpolating
   pottable: table that wil lbe filled in with potential values
+  forcetable: table that will be filled in with force values
+  densitytable: table that will be filled in with density values
   */
   pottable.resize(cachetable.LMAX+1,cachetable.NMAX);
-
-  double xi;
-  xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-
-  if (cachetable.CMAP==1) {
-        if (xi<-1.0) xi=-1.0;
-        if (xi>=1.0) xi=1.0-1.0e-08;
-  }
-
-  int indx = (int)( (xi-cachetable.xmin)/cachetable.dxi );
-  if (indx<0) indx = 0;
-  if (indx>cachetable.NUMR-2) indx = cachetable.NUMR - 2;
-
-  double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
-  double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
-
-  for (int l=0; l<=cachetable.LMAX; l++) {
-    for (int n=0; n<cachetable.NMAX; n++) {
-
-      pottable(l,n) = (x1*cachetable.eftable[l](n,indx) + x2*cachetable.eftable[l](n,indx+1))/
-	       sqrt(cachetable.evtable(l,n)) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
-
-    }
-  }
-}
-
-
-void get_force(double& r, SphCache& cachetable, MatrixXd& forcetable) {
-  /*
-  double r : radius position to query functions
-  cachetable: table with values for interpolating
-  pottable: table that wil lbe filled in with potential values
-
-  see the equivalent call, get_force in SLGridMP2.cc
-
-  must have already run init_table
-  */
-
-
   forcetable.resize(cachetable.LMAX+1,cachetable.NMAX);
-
-  double xi;
-  xi = r_to_xi(r, cachetable.CMAP, cachetable.SCL);
-
-  // how can this happen?
-  //if (cachetable.CMAP==1) {
-  //      if (xi<-1.0) xi=-1.0;
-  //      if (xi>=1.0) xi=1.0-1.0e-08;
-  //}
-
-  int indx = (int)( (xi-cachetable.xmin)/cachetable.dxi );
-
-  // bounds checks
-  if (indx<1) indx = 1;
-  if (indx>cachetable.NUMR-2) indx = cachetable.NUMR - 2;
-
-  double p = (xi - cachetable.xi[indx])/cachetable.dxi;
-
-	// Use three point formula
-
-	// Point -1: indx-1
-	// Point  0: indx
-	// Point  1: indx+1
-
-  for (int l=0; l<=cachetable.LMAX; l++) {
-    for (int n=0; n<cachetable.NMAX; n++) {
-      forcetable(l,n) = d_xi_to_r(xi,cachetable.CMAP,cachetable.SCL)/cachetable.dxi * (
-			     (p - 0.5)*cachetable.eftable[l](n,indx-1)*cachetable.p0[indx-1]
-			     -2.0*p*cachetable.eftable[l](n,indx)*cachetable.p0[indx]
-			     + (p + 0.5)*cachetable.eftable[l](n,indx+1)*cachetable.p0[indx+1]
-         ) / sqrt(cachetable.evtable(l,n));
-    }
-  }
-
-}
-
-void get_density(double& r, SphCache& cachetable, MatrixXd& densitytable)
-{
-
-  // see equivalent call in SLGridMP2.cc
-
   densitytable.resize(cachetable.LMAX+1,cachetable.NMAX);
 
   double xi;
@@ -259,12 +179,23 @@ void get_density(double& r, SphCache& cachetable, MatrixXd& densitytable)
 
   double x1 = (cachetable.xi[indx+1] - xi)/cachetable.dxi;
   double x2 = (xi - cachetable.xi[indx])/cachetable.dxi;
-
-  //cout << cachetable.d0[indx] << endl;
-
+  //double p = (xi - cachetable.xi[indx])/cachetable.dxi;
 
   for (int l=0; l<=cachetable.LMAX; l++) {
     for (int n=0; n<cachetable.NMAX; n++) {
+
+      pottable(l,n) = (x1*cachetable.eftable[l](n,indx) + x2*cachetable.eftable[l](n,indx+1))/
+         sqrt(cachetable.evtable(l,n)) * (x1*cachetable.p0[indx] + x2*cachetable.p0[indx+1]);
+
+      // Use three point formula
+      // Point -1: indx-1
+      // Point  0: indx
+      // Point  1: indx+1
+      forcetable(l,n) = d_xi_to_r(xi,cachetable.CMAP,cachetable.SCL)/cachetable.dxi * (
+			     (x2 - 0.5)*cachetable.eftable[l](n,indx-1)*cachetable.p0[indx-1]
+			     -2.0*x2*cachetable.eftable[l](n,indx)*cachetable.p0[indx]
+			     + (x2 + 0.5)*cachetable.eftable[l](n,indx+1)*cachetable.p0[indx+1]
+         ) / sqrt(cachetable.evtable(l,n));  
 
       // negative for normalisation
       densitytable(l,n) = -(x1*cachetable.eftable[l](n,indx) + x2*cachetable.eftable[l](n,indx+1)) *
@@ -278,16 +209,14 @@ void get_density(double& r, SphCache& cachetable, MatrixXd& densitytable)
 void get_dpotl(double r, SphCache& cachetable, MatrixXd& potd, MatrixXd& dpot)
 {
   // r comes in as the actual radius, NOT xi
-  get_pot  (r, cachetable, potd);
-  get_force(r, cachetable, dpot);
+  MatrixXd dummydens;
+  get_pot_force_density(r, cachetable, potd, dpot, dummydens);
 }
 
 void get_dpotl_density(double r, SphCache& cachetable, MatrixXd& potd, MatrixXd& dpot, MatrixXd& dend)
 {
   // r comes in as the actual radius, NOT xi
-  get_pot  (r, cachetable, potd);
-  get_force(r, cachetable, dpot);
-  get_density(r, cachetable, dend);
+  get_pot_force_density(r, cachetable, potd, dpot, dend);
 }
 
 #endif

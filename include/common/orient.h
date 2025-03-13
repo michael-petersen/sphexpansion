@@ -43,7 +43,7 @@ struct SphOrient
 {
 
   bool inertial=true;   // stick with inertial centre (default true)?
-  bool eventime=true;   // check spacing of orient timing (assume equal)
+  bool eventime=false;   // check spacing of orient timing (assume equal)
 
   int NUMT;             // the number of timesteps
   vector<double> time;  // the time vector, len NUMT

@@ -6,6 +6,7 @@ InstallInstructions.txt
 
 # deprecated code
 build/*
+buildnew/*
 .legacy*
 
 # non-public examples
