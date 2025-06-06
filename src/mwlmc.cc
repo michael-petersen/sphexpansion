@@ -404,7 +404,71 @@ PYBIND11_MODULE(model, m) {
              py::arg("discframe")       = false,
              py::arg("verbose")         = false)
 
-        .def("print_orbit", &MWLMC::print_orbit, "print an orbit array")
+     .def("forward", py::overload_cast<vector<double>,vector<double>,double,int,int,int,double,double,bool,bool>(&MWLMC::forward),R"pbdoc(
+             Compute an orbit forward.
+
+             Parameters
+             ----------
+             xinit : array-like float
+             vinit : array-like float
+             dt : float = 0.002
+             mwhharmonicflag : int = 127
+             mwdharmonicflag : int = 127
+             lmcharmonicflag : int = 127
+             starttime : float = -1.0
+             endtime : float = 0.0
+
+             Returns
+             -------
+             x, y, z : array-like float
+             vx, vy, vz : array-like float
+             fx, fy, fz : array-like float
+             t : array-like float
+             )pbdoc",
+             py::arg("xinit"),
+             py::arg("vinit"),
+             py::arg("dt")              = 0.002,
+             py::arg("mwhharmonicflag") = 127,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("lmcharmonicflag") = 127,
+             py::arg("starttime")       = -1.0,
+             py::arg("endtime")         = 0.0,
+             py::arg("discframe")       = false,
+             py::arg("verbose")         = false)
+
+     .def("forward", py::overload_cast<MatrixXd,MatrixXd,double,int,int,int,double,double,bool,bool>(&MWLMC::forward),R"pbdoc(
+             Compute a group of orbits forward.
+
+             Parameters
+             ----------
+             xinit : array-like float
+             vinit : array-like float
+             dt : float = 0.002
+             mwhharmonicflag : int = 127
+             mwdharmonicflag : int = 127
+             lmcharmonicflag : int = 127
+             starttime : float = -1.0
+             endtime : float = 0.0
+
+             Returns
+             -------
+             x, y, z : array-like float
+             vx, vy, vz : array-like float
+             fx, fy, fz : array-like float
+             t : array-like float
+             )pbdoc",
+             py::arg("xinit"),
+             py::arg("vinit"),
+             py::arg("dt")              = 0.002,
+             py::arg("mwhharmonicflag") = 127,
+             py::arg("mwdharmonicflag") = 127,
+             py::arg("lmcharmonicflag") = 127,
+             py::arg("starttime")       = -1.0,
+             py::arg("endtime")         = 0.0,
+             py::arg("discframe")       = false,
+             py::arg("verbose")         = false)
+             
+     .def("print_orbit", &MWLMC::print_orbit, "print an orbit array")
 
         // no specific resets exposed as of now. could be exposed if this is a common use case.
         //.def("reset_mw_coefficients", &MWLMC::reset_mw_coefficients, "reset MW coefficients")

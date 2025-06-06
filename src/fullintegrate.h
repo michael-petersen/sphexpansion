@@ -160,6 +160,25 @@ public:
                                   bool discframe = true,
                                   bool verbose = false);
 
+
+   MatrixXd forward(vector<double> xinit,
+                   vector<double> vinit,
+                   double dt=0.002,
+                   int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+                   double start_time=-1.0,
+                   double end_time=0.0,
+                   bool discframe = true,
+                   bool verbose = false);
+
+   std::vector< MatrixXd > forward(MatrixXd xinit,
+                   MatrixXd vinit,
+                   double dt=0.002,
+                   int mwhharmonicflag=127, int mwdharmonicflag=127, int lmcharmonicflag=127,
+                   double start_time=-1.0,
+                   double end_time=0.0,
+                   bool discframe = true,
+                   bool verbose = false);
+
   // get the LMC trajectory (relative to the MW disc centre)
   MatrixXd get_lmc_trajectory(double rewindtime=2.5,double dt=native_timestep);
 
@@ -2374,6 +2393,357 @@ std::vector< MatrixXd > MWLMC::rewind(MatrixXd xinit,
  return orbit;
 
 }
+
+
+
+
+MatrixXd MWLMC::forward(vector<double> xinit,
+                       vector<double> vinit,
+                       double dt,
+                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                       double start_time,
+                       double end_time,
+                       bool discframe,
+                       bool verbose)
+{
+ /*
+ forward
+ -------------
+ for a given position and velocity, run the orbit forward by a specified amount of time
+
+ takes physical units
+
+  */
+
+  // step 0: allocate workspace
+  double fx,fy,fz,tvir;
+
+  // check if start time is positive: it needs to be defined negative!
+  if (start_time > 0) {
+    std::cerr << "forward: start_time must be negative. Exiting." << std::endl;
+    exit(-1);
+  }
+
+  // also check end time: if greater than zero, set to zero
+  if (end_time > 0) {
+    end_time = 0.;
+    // and warn user
+    std::cerr << "forward: end_time must be negative. Setting to 0." << std::endl;
+  }
+
+  // also check that the end time is greater than the start time
+  if (end_time < start_time) {
+    std::cerr << "forward: end_time must be greater than start_time. Exiting." << std::endl;
+    exit(-1);
+  }
+
+  // number of integration steps to take
+  int nint = (int)((end_time-start_time)/dt);
+
+  // step 1: get the coordinate frame of the MW disc: the absolute frame of the system
+  vector<double> disccoords(3),discvelcoords(3);
+  vector<double> initcoords(3),initvelcoords(3);
+  return_centre(reference_time+physical_to_virial_time_return(start_time), MWD->orient, initcoords);
+  return_vel_centre(reference_time+physical_to_virial_time_return(start_time), MWD->orient, initvelcoords);
+
+  if (verbose) {
+    std::cout << setw(14) << reference_time+physical_to_virial_time_return(start_time)
+              << setw(14) << virial_to_physical_length(initcoords[0])
+              << setw(14) << virial_to_physical_length(initcoords[1])
+              << setw(14) << virial_to_physical_length(initcoords[2]) << std::endl;
+    std::cout << setw(14) << "(u,v,w)"
+              << setw(14) << virial_to_physical_velocity(initvelcoords[0])
+              << setw(14) << virial_to_physical_velocity(initvelcoords[1])
+              << setw(14) << virial_to_physical_velocity(initvelcoords[2]) << std::endl;
+    std::cout << "start_time = " << start_time << std::endl;
+    std::cout << "end_time = " << end_time << std::endl;
+    std::cout << "dt = " << dt << std::endl;
+    std::cout << "nint = " << nint << std::endl;
+  }
+
+  // step 2: set beginning times and timesteps
+  double tvirbegin  = reference_time+physical_to_virial_time_return(start_time);
+  double dtvir      = physical_to_virial_time_return(dt);
+  double tphysbegin = 0.;
+  double dtphys     = dt;
+
+
+  // make the output frame
+  MatrixXd orbit;
+  orbit.resize(10,nint);
+
+  // initialise positions and (inverted) velocities for backwards integration
+  // these are all in physical units
+  orbit(0,0) =  xinit[0]+virial_to_physical_length(initcoords[0]);
+  orbit(1,0) =  xinit[1]+virial_to_physical_length(initcoords[1]);
+  orbit(2,0) =  xinit[2]+virial_to_physical_length(initcoords[2]);
+  orbit(3,0) =  vinit[0];
+  orbit(4,0) =  vinit[1];
+  orbit(5,0) =  vinit[2];
+  //6-8 are forces, set below...
+  orbit(9,0) = tphysbegin;
+
+  //now step forward one, using leapfrog (drift-kick-drift) integrator
+  //    https://en.wikipedia.org/wiki/Leapfrog_integration
+  //
+  int step = 1;
+
+  // get the initial coefficient values: the time here is in tvir units, so always start with 0
+  MatrixXd tcoefsmw,tcoefslmc, mwcoscoefs,mwsincoefs;
+  MW->select_coefficient_time(tvirbegin, tcoefsmw);
+  LMC->select_coefficient_time(tvirbegin, tcoefslmc);
+  MWD->select_coefficient_time(tvirbegin, mwcoscoefs, mwsincoefs);
+
+  // return forces for the initial step.
+  all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                  tphysbegin, orbit(0,0),orbit(1,0),orbit(2,0),
+                  fx, fy, fz,
+                  mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+
+  orbit(6,0) = fx;
+  orbit(7,0) = fy;
+  orbit(8,0) = fz;
+
+  int j;
+  double tvirnow, tphysnow;
+
+  for (step=1; step<nint; step++) {
+
+    // 'advance' timestep: this is in virial units by definition.
+    tvirnow  = tvirbegin  + dtvir*step;
+    tphysnow = tphysbegin + dtphys*step;
+    orbit(9,step) = tphysnow; // record the time
+
+    MW->select_coefficient_time(tvirnow, tcoefsmw);
+    LMC->select_coefficient_time(tvirnow, tcoefslmc);
+    MWD->select_coefficient_time(tvirnow, mwcoscoefs, mwsincoefs);
+
+    // 'advance' positions
+    for (j=0; j<3; j++) {
+      orbit(j,step) = orbit(j,step-1)   + (orbit(j+3,step-1)*dt  )  + (0.5*orbit(j+6,step-1)  * (dt*dt));
+    }
+
+    // this call goes out in PHYSICAL units
+    all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                     // need to shift the time by one unit to get the proper centre
+                     tphysnow + dtphys, orbit(0,step),orbit(1,step),orbit(2,step),
+                     fx, fy, fz,
+                     mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+
+
+   orbit(6,step) = fx;
+   orbit(7,step) = fy;
+   orbit(8,step) = fz;
+
+   // advance velocities
+   for (j=3; j<6; j++) {
+     orbit(j,step) = orbit(j,step-1) + (0.5*(orbit(j+3,step-1)+orbit(j+3,step))  * dt );
+   }
+
+ }
+
+
+ // convert to physical units again...
+ if (discframe) {
+   for (int n=0; n<nint; n++) {
+     tvirnow  = tvirbegin + dtvir*n;
+     // get the present-day MWD coordinates: the zero of the total
+     return_centre(tvirnow, MWD->orient, disccoords);
+     //std::cout << setw(14) << tvirnow  << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << std::endl;
+     return_vel_centre(tvirnow, MWD->orient, discvelcoords);
+     for (j=0; j<3; j++) {
+       orbit(j,n)   = orbit(j,n) - virial_to_physical_length(disccoords[j]);
+       orbit(j+3,n) = orbit(j+3,n) - virial_to_physical_velocity(discvelcoords[j]);
+     }
+   }
+ }
+
+ return orbit;
+
+}
+
+
+
+
+std::vector< MatrixXd > MWLMC::forward(MatrixXd xinit,
+                                       MatrixXd vinit,
+                                       double dt,
+                                       int mwhharmonicflag, int mwdharmonicflag, int lmcharmonicflag,
+                                       double start_time,
+                                       double end_time,
+                                       bool discframe,
+                                       bool verbose)
+{
+ /*
+ forward
+ -------------
+ for a given position and velocity, run the orbit forward by a specified amount of time
+
+ takes physical units
+
+  */
+
+  // step 0: allocate workspace
+  double fx,fy,fz,tvir;
+
+  // check if start time is positive: it needs to be defined negative!
+  if (start_time > 0) {
+    std::cerr << "forward: start_time must be negative. Exiting." << std::endl;
+    exit(-1);
+  }
+
+  // also check end time: if greater than zero, set to zero
+  if (end_time > 0) {
+    end_time = 0.;
+    // and warn user
+    std::cerr << "forward: end_time must be negative. Setting to 0." << std::endl;
+  }
+
+  // also check that the end time is greater than the start time
+  if (end_time < start_time) {
+    std::cerr << "forward: end_time must be greater than start_time. Exiting." << std::endl;
+    exit(-1);
+  }
+
+  // number of integration steps to take
+  int nint = (int)((end_time-start_time)/dt);
+
+  // step 1: get the coordinate frame of the MW disc: the absolute frame of the system
+  vector<double> disccoords(3),discvelcoords(3);
+  vector<double> initcoords(3),initvelcoords(3);
+  return_centre(reference_time+physical_to_virial_time_return(start_time), MWD->orient, initcoords);
+  return_vel_centre(reference_time+physical_to_virial_time_return(start_time), MWD->orient, initvelcoords);
+
+  if (verbose) {
+    std::cout << setw(14) << reference_time+physical_to_virial_time_return(start_time)
+              << setw(14) << virial_to_physical_length(initcoords[0])
+              << setw(14) << virial_to_physical_length(initcoords[1])
+              << setw(14) << virial_to_physical_length(initcoords[2]) << std::endl;
+    std::cout << setw(14) << "(u,v,w)"
+              << setw(14) << virial_to_physical_velocity(initvelcoords[0])
+              << setw(14) << virial_to_physical_velocity(initvelcoords[1])
+              << setw(14) << virial_to_physical_velocity(initvelcoords[2]) << std::endl;
+    std::cout << "start_time = " << start_time << std::endl;
+    std::cout << "end_time = " << end_time << std::endl;
+    std::cout << "dt = " << dt << std::endl;
+    std::cout << "nint = " << nint << std::endl;
+  }
+
+  // step 2: set beginning times and timesteps
+  double tvirbegin  = reference_time+physical_to_virial_time_return(start_time);
+  double dtvir      = physical_to_virial_time_return(dt);
+  double tphysbegin = 0.;
+  double dtphys     = dt;
+
+
+  // make the output frame
+  int norbits = xinit.rows();
+  std::vector< MatrixXd > orbit;
+  orbit.resize(norbits);
+
+  // initialise positions and (inverted) velocities for backwards integration
+  // include the forces for now
+  for (int n=0;n<norbits;n++) {
+    orbit[n].resize(10,nint);
+    orbit[n](0,0) =  xinit(n,0)+virial_to_physical_length(initcoords[0]);
+    orbit[n](1,0) =  xinit(n,1)+virial_to_physical_length(initcoords[1]);
+    orbit[n](2,0) =  xinit(n,2)+virial_to_physical_length(initcoords[2]);
+    orbit[n](3,0) =  vinit(n,0);
+    orbit[n](4,0) =  vinit(n,1);
+    orbit[n](5,0) =  vinit(n,2);
+    orbit[n](9,0) =  tphysbegin;
+  }
+
+  //now step forward one, using leapfrog (drift-kick-drift) integrator
+  //    https://en.wikipedia.org/wiki/Leapfrog_integration
+  //
+  int step = 1;
+
+  // get the initial coefficient values: the time here is in tvir units, so always start with 0
+  MatrixXd tcoefsmw,tcoefslmc, mwcoscoefs,mwsincoefs;
+  MW->select_coefficient_time(tvirbegin, tcoefsmw);
+  LMC->select_coefficient_time(tvirbegin, tcoefslmc);
+  MWD->select_coefficient_time(tvirbegin, mwcoscoefs, mwsincoefs);
+
+  // return forces for the initial step.
+  for (int n=0;n<norbits;n++) {
+    // this call goes out in physical units
+    all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                  tphysbegin, orbit[n](0,0),orbit[n](1,0),orbit[n](2,0),
+                  fx, fy, fz,
+                  mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+
+    orbit[n](6,0) = fx;
+    orbit[n](7,0) = fy;
+    orbit[n](8,0) = fz;
+  }
+
+  int j;
+  double tvirnow, tphysnow;
+
+  for (step=1; step<nint; step++) {
+
+    // 'advance' timestep: this is in virial units by definition.
+    tvirnow  = tvirbegin  + dtvir*step;
+    tphysnow = tphysbegin + dtphys*step;
+
+    MW->select_coefficient_time(tvirnow, tcoefsmw);
+    LMC->select_coefficient_time(tvirnow, tcoefslmc);
+    MWD->select_coefficient_time(tvirnow, mwcoscoefs, mwsincoefs);
+
+    for (int n=0;n<norbits;n++) {
+      orbit[n](9,step) = tphysnow; // record the time
+    
+      // advance positions
+      for (j=0; j<3; j++) {
+        orbit[n](j,step) = orbit[n](j,step-1)   + (orbit[n](j+3,step-1)*dt  )  + (0.5*orbit[n](j+6,step-1)  * (dt*dt));
+      }
+
+      // this call goes out in PHYSICAL units
+      all_forces_coefs(tcoefsmw, tcoefslmc, mwcoscoefs, mwsincoefs,
+                     // need to shift the time by one unit to get the proper centre
+                     tphysnow + dtphys, orbit[n](0,step),orbit[n](1,step),orbit[n](2,step),
+                     fx, fy, fz,
+                     mwhharmonicflag, mwdharmonicflag, lmcharmonicflag);
+
+
+    orbit[n](6,step) = fx;
+    orbit[n](7,step) = fy;
+    orbit[n](8,step) = fz;
+
+    // advance velocities
+    for (j=3; j<6; j++) {
+       orbit[n](j,step) = orbit[n](j,step-1) + (0.5*(orbit[n](j+3,step-1)+orbit[n](j+3,step))  * dt );
+    }
+  } //close orbit loop
+
+ }
+
+
+ // convert to physical units again...
+ if (discframe) {
+   for (int n=0; n<nint; n++) {
+     tvirnow  = tvirbegin + dtvir*n;
+     // get the present-day MWD coordinates: the zero of the total
+     return_centre(tvirnow, MWD->orient, disccoords);
+     //std::cout << setw(14) << tvirnow  << setw(14) << zerocoords[0] << setw(14) << zerocoords[1] << setw(14) << zerocoords[2] << std::endl;
+     return_vel_centre(tvirnow, MWD->orient, discvelcoords);
+     for (int n=0;n<norbits;n++) {
+       // shift the coordinates to the disc frame
+       // this is in physical units
+      for (j=0; j<3; j++) {
+        orbit[n](j,n)   = orbit[n](j,n) - virial_to_physical_length(disccoords[j]);
+        orbit[n](j+3,n) = orbit[n](j+3,n) - virial_to_physical_velocity(discvelcoords[j]);
+      }
+    } // orbit loop
+   }
+ }
+
+ return orbit;
+
+}
+
+
 
 
 #endif

@@ -118,7 +118,7 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="mwlmc", 
-    version="1.0.1",
+    version="1.1.0",
     packages=["mwlmc", "mwlmc.util", "mwlmc.plot"],
     # py_modules = ['mwlmc.util', 'mwlmc.plot'],
     ext_package="mwlmc",
